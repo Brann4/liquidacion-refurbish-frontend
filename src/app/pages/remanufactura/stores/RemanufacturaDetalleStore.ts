@@ -1,23 +1,14 @@
-import { inject } from '@angular/core';
-import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
-import { DTOLiquidacionRemanufactura } from '../entities/remanufactura/DTOLiquidacionRemanufactura';
-import { DTOUpdateLiquidacionRemanufactura } from '../entities/remanufactura/DTOUpdateLiquidacionRemanufactura';
-import { DTOCreateLiquidacionRemanufactura } from '../entities/remanufactura/DTOCreateLiquidacionRemanufactura';
-import { LiquidacionRemanufacturaService } from '../services/remanufactura.service';
-import { Estado } from '@/utils/Constants';
-import { ToastService } from '@/layout/service/toast.service';
-
-export enum Eliminar {
-    Correcto = 1,
-    Advertencia = 2
-}
+import { patchState, signalStore, withMethods, withState } from "@ngrx/signals";
+import { DTOLiquidacionRemanufacturaDetalle } from "../entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle";
+import { inject } from "@angular/core";
+import { ToastService } from "@/layout/service/toast.service";
+import { LiquidacionRemanufacturaDetalleService } from "../services/remanufactura-detalle.service";
 
 export type RemanufacturaState = {
-    entities: DTOLiquidacionRemanufactura[];
-    entity: DTOLiquidacionRemanufactura | null;
+    entities: DTOLiquidacionRemanufacturaDetalle[];
+    entity: DTOLiquidacionRemanufacturaDetalle | null;
     isOpenCreate: boolean;
     isOpenEdit: boolean;
-    entityEdit: DTOUpdateLiquidacionRemanufactura | null;
     isSubmitting: boolean;
     error: string | null;
 };
@@ -25,35 +16,30 @@ export type RemanufacturaState = {
 const initialState: RemanufacturaState = {
     entity: null,
     entities: [],
-    entityEdit: null,
     isOpenCreate: false,
     isOpenEdit: false,
     isSubmitting: false,
     error: null
 };
 
-export const RemanufacturaStore = signalStore(
+export const RemanufacturaDetalleStore = signalStore(
     { providedIn: 'root' },
     withState<RemanufacturaState>(initialState),
-    withMethods((store, remanufacturaService = inject(LiquidacionRemanufacturaService), toast = inject(ToastService)) => ({
+    withMethods((store, remanufacturaService = inject(LiquidacionRemanufacturaDetalleService), toast = inject(ToastService)) => ({
         openModalCreate() {
             patchState(store, { isOpenCreate: true });
         },
-        openModalEdit(entity: DTOLiquidacionRemanufactura) {
-            patchState(store, { entityEdit: entity, isOpenEdit: true });
-        },
+
         closeModalCreate() {
             patchState(store, { isOpenCreate: false });
         },
-        closeModalEdit() {
-            patchState(store, { isOpenEdit: false, entityEdit: null });
-        },
+
         setSubmitting(isSubmitting: boolean) {
             patchState(store, { isSubmitting });
         },
 
-        getLiquidaciones(status?: number) {
-            remanufacturaService.list(status).subscribe({
+        getLiquidaciones(nombre: string, status?: number) {
+            remanufacturaService.list(nombre, status).subscribe({
                 next: (entities) => {
                     patchState(store, { entities });
                 },
@@ -75,8 +61,8 @@ export const RemanufacturaStore = signalStore(
                 }
             });
         },
-
-        create(data: DTOCreateLiquidacionRemanufactura) {
+/*
+        create(data: ) {
             patchState(store, { isSubmitting: true });
 
             remanufacturaService.create(data).subscribe({
@@ -127,5 +113,6 @@ export const RemanufacturaStore = signalStore(
                 }
             });
         }
+            */
     }))
 );

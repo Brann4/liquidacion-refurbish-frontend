@@ -1,0 +1,28 @@
+<p-card>
+    @if (remanufacturaStore.isSubmitting()) {
+        <div class="flex justify-center items-center">
+            <p-progressSpinner></p-progressSpinner>
+        </div>
+    } @else if (remanufacturaStore.entity()) {
+        <div class="px-4">
+            <p-button label="Volver" icon="pi pi-arrow-left" severity="secondary" (onClick)="goBack()"></p-button>
+
+            <p-toolbar class="my-6">
+                <ng-template #start>
+                    <h2 class="mb-2">
+                        Detalle de Liquidación: <span class="text-4xl text-primary">{{ remanufacturaStore.entity()?.nombreLiquidacion }}</span>
+                    </h2>
+                </ng-template>
+
+                <ng-template #end>
+                    <p-tag  icon="pi pi-calendar" severity="secondary" [value]="remanufacturaStore.entity()?.fechaIngreso! | shortDate"></p-tag>
+                </ng-template>
+            </p-toolbar>
+        </div>
+    } @else {
+        <p class="text-red-500">No se pudo cargar el detalle.</p>
+    }
+</p-card>
+<p-card class="mt-4">
+
+</p-card>

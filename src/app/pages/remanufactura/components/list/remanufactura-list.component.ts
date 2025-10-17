@@ -12,6 +12,7 @@ import { PrimeModules } from '@/utils/PrimeModule';
 import { RemanufacturaCreateComponent } from '../create/remanufactura-create.component';
 import { DTOUpdateLiquidacionRemanufactura } from '../../entities/remanufactura/DTOUpdateLiquidacionRemanufactura';
 import { EditComponent } from '../edit/remanufactura-edit.component';
+import { ActivatedRoute, Router } from '@angular/router';
 
 interface Column {
     field: string;
@@ -42,6 +43,8 @@ export class RemanufacturaListComponent implements OnInit {
 
     remanufacturaStore = inject(RemanufacturaStore);
     confirmationService = inject(ConfirmationService);
+    router = inject(Router);
+    route = inject(ActivatedRoute);
 
     ngOnInit() {
         this.loadData();
@@ -67,6 +70,10 @@ export class RemanufacturaListComponent implements OnInit {
         if (liquidacion) {
             this.remanufacturaStore.openModalEdit(liquidacion as DTOUpdateLiquidacionRemanufactura);
         }
+    }
+
+    onViewDetail(liquidacion: DTOLiquidacionRemanufactura) {
+        this.router.navigate([liquidacion.id], { relativeTo: this.route });
     }
 
     hideDialog() {

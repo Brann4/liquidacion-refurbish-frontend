@@ -1,8 +1,10 @@
-import { patchState, signalStore, withMethods, withState } from "@ngrx/signals";
-import { DTOLiquidacionRemanufacturaDetalle } from "../entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle";
-import { inject } from "@angular/core";
-import { ToastService } from "@/layout/service/toast.service";
-import { LiquidacionRemanufacturaDetalleService } from "../services/remanufactura-detalle.service";
+import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import { DTOLiquidacionRemanufacturaDetalle } from '../entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle';
+import { inject } from '@angular/core';
+import { ToastService } from '@/layout/service/toast.service';
+import { Estado } from '@/utils/Constants';
+import { RemanufacturaDetalleService } from '../services/remanufactura-detalle.service';
+import { ApiResponseSingle, ImportPreviewResponse } from '@/utils/ApiResponse';
 
 export type RemanufacturaState = {
     entities: DTOLiquidacionRemanufacturaDetalle[];
@@ -25,7 +27,7 @@ const initialState: RemanufacturaState = {
 export const RemanufacturaDetalleStore = signalStore(
     { providedIn: 'root' },
     withState<RemanufacturaState>(initialState),
-    withMethods((store, remanufacturaService = inject(LiquidacionRemanufacturaDetalleService), toast = inject(ToastService)) => ({
+    withMethods((store, remanufacturaService = inject(RemanufacturaDetalleService), toast = inject(ToastService)) => ({
         openModalCreate() {
             patchState(store, { isOpenCreate: true });
         },
@@ -38,7 +40,7 @@ export const RemanufacturaDetalleStore = signalStore(
             patchState(store, { isSubmitting });
         },
 
-        getLiquidaciones(nombre: string, status?: number) {
+        getDetailData(nombre: string, status?: number) {
             remanufacturaService.list(nombre, status).subscribe({
                 next: (entities) => {
                     patchState(store, { entities });
@@ -49,36 +51,31 @@ export const RemanufacturaDetalleStore = signalStore(
             });
         },
 
-        getById(id: number) {
+        previewData(formData: FormData) 
+        {
             patchState(store, { isSubmitting: true });
 
-            remanufacturaService.getById(id).subscribe({
-                next: (response) => {
-                    patchState(store, { entity: response.value, isSubmitting: false });
-                },
-                error: (error) => {
-                    patchState(store, { isSubmitting: false, error: error.message, entity: null });
-                }
-            });
-        },
-/*
-        create(data: ) {
-            patchState(store, { isSubmitting: true });
-
-            remanufacturaService.create(data).subscribe({
-                next: (response) => {
-                    patchState(store, { isSubmitting: false });
-                    toast.success('Liquidación agreda correctamente.');
-                    this.getLiquidaciones(Estado.Todos);
-                    this.closeModalCreate();
+            remanufacturaService.previewData(formData).subscribe({
+                next: (response: ApiResponseSingle<ImportPreviewResponse>) => {
+                    if (!response.status || response.value.tieneErrores) {
+                        patchState(store, { isSubmitting: false });
+                        const errorMsg = response.msg || response.value.errors?.join(', ');
+                        toast.warn(errorMsg || 'El archivo tiene datos incorrectos.');
+                    }
+                    else {
+                        patchState(store, { isSubmitting: false });
+                        toast.success(response.msg || 'Archivo procesado. Detalles cargados.');
+                        this.getDetailData(formData.get('liquidacion')!.toString(), Estado.Todos);
+                        this.closeModalCreate();
+                    }
                 },
                 error: (error) => {
                     patchState(store, { isSubmitting: false, error: error.message });
                     toast.warn(`Advertencia: ${error.msg}`);
                 }
             });
-        },
-
+        }
+        /*
         update(data: DTOUpdateLiquidacionRemanufactura) {
             patchState(store, { isSubmitting: true });
 

@@ -1,29 +1,28 @@
 import { inject } from '@angular/core';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
-import { DTOLiquidacionRemanufactura } from '../entities/remanufactura/DTOLiquidacionRemanufactura';
-import { DTOUpdateLiquidacionRemanufactura } from '../entities/remanufactura/DTOUpdateLiquidacionRemanufactura';
-import { DTOCreateLiquidacionRemanufactura } from '../entities/remanufactura/DTOCreateLiquidacionRemanufactura';
-import { LiquidacionRemanufacturaService } from '../services/remanufactura.service';
 import { Estado } from '@/utils/Constants';
 import { ToastService } from '@/layout/service/toast.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { DTOUsuario } from '../entities/DTOUsuario';
+import { DTOUpdateUsuario } from '../entities/DTOUpdateUsuario';
+import { UsuarioService } from '../services/usuario.service';
+import { DTOCreateUsuario } from '../entities/DTOCreateUsuario';
 
 export enum Eliminar {
     Correcto = 1,
     Advertencia = 2
 }
 
-export type RemanufacturaState = {
-    entities: DTOLiquidacionRemanufactura[];
-    entity: DTOLiquidacionRemanufactura | null;
+export type UsuarioState = {
+    entities: DTOUsuario[];
+    entity: DTOUsuario | null;
     isOpenCreate: boolean;
     isOpenEdit: boolean;
-    entityEdit: DTOUpdateLiquidacionRemanufactura | null;
+    entityEdit: DTOUpdateUsuario | null;
     isSubmitting: boolean;
     error: string | null;
 };
 
-const initialState: RemanufacturaState = {
+const initialState: UsuarioState = {
     entity: null,
     entities: [],
     entityEdit: null,
@@ -33,14 +32,14 @@ const initialState: RemanufacturaState = {
     error: null
 };
 
-export const RemanufacturaStore = signalStore(
+export const UsuarioStore = signalStore(
     { providedIn: 'root' },
-    withState<RemanufacturaState>(initialState),
-    withMethods((store, remanufacturaService = inject(LiquidacionRemanufacturaService), toast = inject(ToastService), router = inject(Router), routerActivate = inject(ActivatedRoute)) => ({
+    withState<UsuarioState>(initialState),
+    withMethods((store, usuarioService = inject(UsuarioService), toast = inject(ToastService)) => ({
         openModalCreate() {
             patchState(store, { isOpenCreate: true });
         },
-        openModalEdit(entity: DTOLiquidacionRemanufactura) {
+        openModalEdit(entity: DTOUpdateUsuario) {
             patchState(store, { entityEdit: entity, isOpenEdit: true });
         },
         closeModalCreate() {
@@ -53,8 +52,8 @@ export const RemanufacturaStore = signalStore(
             patchState(store, { isSubmitting });
         },
 
-        getLiquidaciones(status?: number) {
-            remanufacturaService.list(status).subscribe({
+        getUsuarios(status?: number) {
+            usuarioService.list(status).subscribe({
                 next: (entities) => {
                     patchState(store, { entities });
                 },
@@ -67,7 +66,7 @@ export const RemanufacturaStore = signalStore(
         getById(id: number) {
             patchState(store, { isSubmitting: true });
 
-            remanufacturaService.getById(id).subscribe({
+            usuarioService.getById(id).subscribe({
                 next: (response) => {
                     patchState(store, { entity: response.value, isSubmitting: false });
                 },
@@ -77,36 +76,15 @@ export const RemanufacturaStore = signalStore(
             });
         },
 
-        create(data: DTOCreateLiquidacionRemanufactura, route?: ActivatedRoute) {
+        create(data: DTOCreateUsuario) {
             patchState(store, { isSubmitting: true });
 
-            remanufacturaService.create(data).subscribe({
-                next: (response) => {
-                    if (response.status) {
-                        patchState(store, { isSubmitting: false });
-                        toast.success('Liquidación agreda correctamente.');
-                        this.getLiquidaciones(Estado.Todos);
-                        this.closeModalCreate();
-                        /*REDIRECCION DESPUES DE CREAR*/
-                        if (route) router.navigate([response.value.id], { relativeTo: route });
-                    }
-                },
-                error: (error) => {
-                    patchState(store, { isSubmitting: false, error: error.message });
-                    toast.warn(`Advertencia: ${error.msg}`);
-                }
-            });
-        },
-
-        update(data: DTOUpdateLiquidacionRemanufactura) {
-            patchState(store, { isSubmitting: true });
-
-            remanufacturaService.update(data).subscribe({
+            usuarioService.create(data).subscribe({
                 next: (response) => {
                     patchState(store, { isSubmitting: false });
-                    toast.success('Liquidación actualizada correctamente.');
-                    this.getLiquidaciones(Estado.Todos);
-                    this.closeModalEdit();
+                    toast.success('Usuario agredo correctamente.');
+                    this.closeModalCreate();
+                    this.getUsuarios(Estado.Todos);
                 },
                 error: (error) => {
                     patchState(store, { isSubmitting: false, error: error.message });
@@ -115,16 +93,34 @@ export const RemanufacturaStore = signalStore(
             });
         },
 
-        delete(id: number, nombre: string) {
-            remanufacturaService.delete(id, nombre).subscribe({
+        update(data: DTOUpdateUsuario) {
+            patchState(store, { isSubmitting: true });
+
+            usuarioService.update(data).subscribe({
+                next: (response) => {
+                    patchState(store, { isSubmitting: false });
+                    toast.success('Usuario actualizado correctamente.');
+                    this.closeModalEdit();
+                    this.getUsuarios(Estado.Todos);
+                },
+                error: (error) => {
+                    patchState(store, { isSubmitting: false, error: error.message });
+                    toast.warn(`Advertencia: ${error.msg}`);
+                }
+            });
+        },
+
+        delete(id: number) {
+            usuarioService.delete(id).subscribe({
                 next: (response) => {
                     if (response.value == Eliminar.Correcto) {
                         toast.success(response.msg || 'Eliminado correctamente');
                     }
                     if (response.value == Eliminar.Advertencia) {
-                        toast.warn(response.msg || 'Liquidaciones encontradas');
+                        toast.warn(response.msg || 'Usuarios encontrados');
                     }
-                    this.getLiquidaciones(Estado.Todos);
+                    patchState(store, {entity: null, entityEdit: null})
+                    this.getUsuarios(Estado.Todos);
                 },
                 error: (error) => {
                     patchState(store, { isSubmitting: false, error: error.message });

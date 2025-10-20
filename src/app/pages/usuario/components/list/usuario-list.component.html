@@ -12,11 +12,11 @@
     <p-table
         #dt
         dataKey="id"
-        [value]="this.remanufacturaStore.entities()"
+        [value]="this.usuarioStore.entities()"
         [tableStyle]="{ 'min-width': '75rem' }"
         [rows]="10"
         [paginator]="true"
-        [globalFilterFields]="['nombreLiquidacion']"
+        [globalFilterFields]="['nombreUsuario','nombres','apellidos']"
         [rowHover]="true"
         dataKey="id"
         currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"
@@ -36,17 +36,21 @@
             <tr>
                 <th style="width: 3rem">N°</th>
 
-                <th pSortableColumn="nombreLiquidacion" style="min-width: 16rem">
-                    Nombre
-                    <p-sortIcon field="nombreLiquidacion" />
+                <th pSortableColumn="nombreUsuario" style="min-width: 8rem">
+                    Usuario
+                    <p-sortIcon field="nombreUsuario" />
                 </th>
-                <th pSortableColumn="fechaIngreso" style="min-width: 8rem">
-                    Fecha Ingreso
-                    <p-sortIcon field="fechaIngreso" />
+                <th pSortableColumn="rolId" style="min-width: 8rem">
+                    Rol
+                    <p-sortIcon field="rolId" />
                 </th>
-                <th pSortableColumn="usuarioId" style="min-width: 10rem">
-                    Creado por
-                    <p-sortIcon field="usuarioId" />
+                <th pSortableColumn="nombres" style="min-width: 10rem">
+                    Nombres
+                    <p-sortIcon field="nombres" />
+                </th>
+                <th pSortableColumn="apellidos" style="min-width: 10rem">
+                    Apellidos
+                    <p-sortIcon field="apellidos" />
                 </th>
                 <th pSortableColumn="estado" style="min-width: 12rem">
                     Estado
@@ -56,30 +60,29 @@
                 <th style="min-width: 12rem"></th>
             </tr>
         </ng-template>
-        <ng-template #body let-liquidacion let-rowIndex="rowIndex">
+        <ng-template #body let-usuario let-rowIndex="rowIndex">
             <tr>
                 <td style="width: 3rem">
-                    {{ rowIndex+1 }}
+                    {{ usuario.id }}
                 </td>
 
-                <td style="min-width: 12rem">{{ liquidacion.nombreLiquidacion }}</td>
-                <td>{{ liquidacion.fechaIngreso | shortDate }}</td>
-
-                <td class="text-primary bold">{{ liquidacion.usuario.nombreUsuario }}</td>
+                <td class="text-primary bold">{{ usuario.nombreUsuario }}</td>
+                <td>{{ usuario.rol.descripcion }}</td>
+                <td>{{ usuario.nombres }}</td>
+                <td>{{ usuario.apellidos }}</td>
                 <td>
-                    <p-tag [value]="liquidacion.estado == 1 ? 'Activo' : 'Inactivo'" [severity]="getSeverity(liquidacion.estado)" />
+                    <p-tag [value]="usuario.estado == true ? 'Activo' : 'Inactivo'" [severity]="getSeverity(usuario.estado)" />
                 </td>
                 <td>
-                    <p-button icon="pi pi-eye" class="mr-2" [rounded]="true" pTooltip="Ver Detalle" tooltipPosition="top" (click)="onViewDetail(liquidacion)" />
-                    <p-button icon="pi pi-pencil" severity="info" class="mr-2" pTooltip="Editar" tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="OnEditModal(liquidacion)" />
-                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" pTooltip="Eliminar" tooltipPosition="top" [outlined]="true" (click)="onDeleteModal(liquidacion)" />
+                    <p-button icon="pi pi-pencil" severity="info" class="mr-2" pTooltip="Editar" tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="OnEditModal(usuario)" />
+                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" pTooltip="Eliminar" tooltipPosition="top" [outlined]="true" (click)="onDeleteModal(usuario)" />
                 </td>
             </tr>
         </ng-template>
     </p-table>
 </p-card>
 
-<app-remanufactura-create />
-<app-remanufactura-edit />
+<app-usuario-create />
+<app-usuario-edit />
 
 <p-confirmdialog [style]="{ width: '450px' }" />

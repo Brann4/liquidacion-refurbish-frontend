@@ -1,8 +1,9 @@
 export interface DTOLiquidacionRemanufacturaDetalle {
+  codigoLiquidacion: string;
   plataforma: string
   liquidacion: string,
   codigoEntrega: string,
-  fechaPrevista: Date | null,
+  fechaPrevista: Date | string | null,
   codigoSAP: string,
   nombreProducto: string,
   cantidad: number,

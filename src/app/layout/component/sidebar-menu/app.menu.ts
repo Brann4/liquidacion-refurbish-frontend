@@ -28,14 +28,42 @@ export class AppMenu {
                 items: [
                     {
                         label: 'Recupero',
-                        icon: 'pi pi-fw pi-user',
+                        icon: 'pi pi-fw pi-box',
                         routerLink: ['pages/recupero']
                     },
                      {
                         label: 'Remanufactura',
-                        icon: 'pi pi-fw pi-user',
+                        icon: 'pi pi-fw pi-box',
                         routerLink: ['pages/remanufactura']
+                    },
+                    {
+                        label: 'Post Venta',
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['pages/postventa']
                     }
+                ]
+            },
+
+            {
+                label: 'Mantenimiento',
+                icon: 'pi pi-fw pi-briefcase',
+                routerLink: ['/pages'],
+                items: [
+                    {
+                        label: 'Usuario',
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['pages/usuario']
+                    },
+                     {
+                        label: 'Roles',
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['pages/rol']
+                    },
+                  /*  {
+                        label: 'Post Venta',
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['pages/postventa']
+                    }*/
                 ]
             },
 /*

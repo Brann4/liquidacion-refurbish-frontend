@@ -1,28 +1,153 @@
 <p-card>
-    @if (remanufacturaStore.isSubmitting()) {
-        <div class="flex justify-center items-center">
-            <p-progressSpinner></p-progressSpinner>
-        </div>
-    } @else if (remanufacturaStore.entity()) {
-        <div class="px-4">
+    <div class="px-4">
+        <div class="flex justify-between">
             <p-button label="Volver" icon="pi pi-arrow-left" severity="secondary" (onClick)="goBack()"></p-button>
-
-            <p-toolbar class="my-6">
-                <ng-template #start>
-                    <h2 class="mb-2">
-                        Detalle de Liquidación: <span class="text-4xl text-primary">{{ remanufacturaStore.entity()?.nombreLiquidacion }}</span>
+            <p-button label="Importar Liquidaciones" icon="pi pi-file-import" severity="primary" (onClick)="handleToggleImport()"></p-button>
+        </div>
+        @if (remanufacturaStore.isSubmitting()) {
+            <div class="flex justify-center items-center">
+                <p-progressSpinner></p-progressSpinner>
+            </div>
+        } @else if (remanufacturaStore.entity()) {
+            <p-toolbar class="my-6 flex items-center">
+                <ng-template #start class="flex justify-center">
+                    <h2>
+                        Detalle: <span class="text-4xl text-primary">{{ remanufacturaStore.entity()?.nombreLiquidacion }}</span>
                     </h2>
                 </ng-template>
 
                 <ng-template #end>
-                    <p-tag  icon="pi pi-calendar" severity="secondary" [value]="remanufacturaStore.entity()?.fechaIngreso! | shortDate"></p-tag>
+                    <div class="flex gap-1">
+                        <p-tag icon="pi pi-info-circle" [value]="remanufacturaStore.entity()?.estado == 1 ? 'Activo' : 'Inactivo'" [severity]="getSeverity(remanufacturaStore.entity()!.estado)" />
+                        <p-tag icon="pi pi-calendar" severity="secondary" [value]="remanufacturaStore.entity()?.fechaIngreso! | shortDate"></p-tag>
+                    </div>
                 </ng-template>
             </p-toolbar>
-        </div>
-    } @else {
-        <p class="text-red-500">No se pudo cargar el detalle.</p>
-    }
+            @if (showImportDialog()) {
+                <div class="border-1 border-dashed border-primary p-4 rounded-lg mt-4">
+
+                    <p-blockUI [blocked]="remanufacturaDetalleStore.isSubmitting()" class="flex justify-center items-center">
+                        <p-progressSpinner></p-progressSpinner>
+                    </p-blockUI>
+
+                    <div class="flex justify-center mb-4">
+                        <div class="bounce animation-iteration-infinite animation-duration-2000">
+                            <a (click)="downloadExcelTemplate()" class="text-primary hover:underline cursor-pointer flex items-center gap-2 p-2">
+                                <i class="pi pi-file-excel text-lg"></i>
+                                <span class="font-semibold">Descargar plantilla haciendo click aqui</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <p-fileUpload
+                        #fileUploader
+                        name="file"
+                        mode="advanced"
+                        [multiple]="false"
+                        accept=".xlsx,.xls"
+                        [invalidFileTypeMessageSummary]="'Tipo de archivo no válido. Solo se permiten archivos Excel (.xlsx, .xls).'"
+                        [maxFileSize]="10000000"
+                        [showCancelButton]="false"
+                        chooseLabel="Seleccionar archivo"
+                        uploadLabel="Procesar"
+                        [customUpload]="true"
+                        (uploadHandler)="handleUploadFile($event)"
+                    >
+                        <ng-template pTemplate="empty">
+                            <div class="flex flex-col items-center justify-center p-4">
+                                <i class="pi pi-upload text-4xl text-primary"></i>
+                                <p class="mt-2">Arrastra y suelta el archivo aquí para procesarlo.</p>
+                            </div>
+                        </ng-template>
+
+                        <ng-template pTemplate="file" let-file>
+                            <div class="flex items-center flex-wrap p-3">
+                                <div class="flex items-center gap-3">
+                                    <i class="pi pi-file-excel text-green-600" style="font-size: 2rem"></i>
+                                    <span class="font-semibold">{{ file.name }}</span>
+                                    <p-badge [value]="file.size" severity="secondary"></p-badge>
+                                </div>
+                            </div>
+                        </ng-template>
+                    </p-fileUpload>
+                </div>
+            }
+        } @else {
+            <div class="flex flex-col items-center">
+                <i class="pi pi-exclamation-triangle text-red-800" style="font-size: 2.5rem"></i>
+                <p class="text-red-800">No se pudo cargar el detalle.</p>
+            </div>
+        }
+    </div>
 </p-card>
 <p-card class="mt-4">
+    <p-table
+        #dt
+        dataKey="id"
+        [value]="this.remanufacturaDetalleStore.entities()"
+        [tableStyle]="{ 'min-width': '75rem' }"
+        [rows]="10"
+        [paginator]="true"
+        [globalFilterFields]="['nombreLiquidacion']"
+        [rowHover]="true"
+        dataKey="id"
+        currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"
+        [showCurrentPageReport]="true"
+        [rowsPerPageOptions]="[10, 20, 30]"
+    >
+        <ng-template #caption>
+            <div class="flex items-center justify-between">
+                <h5 class="m-0">Detalles de Liquidación</h5>
+                <p-iconfield>
+                    <p-inputicon class="pi pi-search" />
+                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar por nombre" />
+                </p-iconfield>
+            </div>
+        </ng-template>
+        <ng-template #header>
+            <tr>
+                <th style="width: 3rem">N°</th>
 
+                <th pSortableColumn="nombreLiquidacion" style="min-width: 16rem">
+                    Nombre
+                    <p-sortIcon field="nombreLiquidacion" />
+                </th>
+                <th pSortableColumn="fechaIngreso" style="min-width: 8rem">
+                    Fecha Ingreso
+                    <p-sortIcon field="fechaIngreso" />
+                </th>
+                <th pSortableColumn="usuarioId" style="min-width: 10rem">
+                    Creado por
+                    <p-sortIcon field="usuarioId" />
+                </th>
+                <th pSortableColumn="estado" style="min-width: 12rem">
+                    Estado
+                    <p-sortIcon field="estado" />
+                </th>
+
+                <th style="min-width: 12rem"></th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-detalle let-rowIndex="rowIndex">
+            <tr>
+                <td style="width: 3rem">
+                    {{ detalle.id }}
+                </td>
+
+                <td style="min-width: 12rem">{{ detalle.nombreLiquidacion }}</td>
+                <td>{{ detalle.fechaIngreso | shortDate }}</td>
+
+                <td class="text-primary bold">{{ detalle.usuario.nombreUsuario }}</td>
+                <!-- <td>
+                    <p-tag [value]="detalle.estado == 1 ? 'Activo' : 'Inactivo'" [severity]="getSeverity(detalle.estado)" />
+                </td>
+                <td>
+                    <p-button icon="pi pi-eye" class="mr-2" [rounded]="true" pTooltip="Ver Detalle" tooltipPosition="top" (click)="onViewDetail(liquidacion)" />
+                    <p-button icon="pi pi-pencil" severity="info" class="mr-2" pTooltip="Editar" tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="OnEditModal(liquidacion)" />
+                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" pTooltip="Eliminar" tooltipPosition="top" [outlined]="true" (click)="onDeleteModal(liquidacion)" />
+                </td>
+                 -->
+            </tr>
+        </ng-template>
+    </p-table>
 </p-card>

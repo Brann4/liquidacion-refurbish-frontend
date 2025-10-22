@@ -27,11 +27,11 @@ export class AppMenu {
                 routerLink: ['/pages'],
                 items: [
                     {
-                        label: 'Recupero',
+                        label: 'Producto Descontinuado',
                         icon: 'pi pi-fw pi-user',
-                        routerLink: ['pages/recupero-list']
+                        routerLink: ['pages/producto-descontinuado']
                     },
-                     {
+                    {
                         label: 'Remanufactura',
                         icon: 'pi pi-fw pi-user',
                         routerLink: ['pages/remanufactura-list']

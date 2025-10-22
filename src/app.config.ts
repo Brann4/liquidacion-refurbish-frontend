@@ -6,7 +6,7 @@ import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScroll
 import { providePrimeNG } from 'primeng/config';
 import { appRoutes } from './app.routes';
 import { MyPreset } from './themes';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 
 export const appConfig: ApplicationConfig = {
     providers: [
@@ -31,6 +31,7 @@ export const appConfig: ApplicationConfig = {
             }
         }),
         MessageService,
+        ConfirmationService,
         provideRouter(appRoutes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }), withEnabledBlockingInitialNavigation()),
         provideHttpClient(withFetch()),
         provideAnimationsAsync()

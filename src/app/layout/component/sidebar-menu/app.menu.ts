@@ -27,11 +27,11 @@ export class AppMenu {
                 routerLink: ['/pages'],
                 items: [
                     {
-                        label: 'Recupero',
-                        icon: 'pi pi-fw pi-box',
-                        routerLink: ['pages/recupero']
+                        label: 'Producto Descontinuado',
+                        icon: 'pi pi-fw pi-user',
+                        routerLink: ['pages/producto-descontinuado']
                     },
-                     {
+                    {
                         label: 'Remanufactura',
                         icon: 'pi pi-fw pi-box',
                         routerLink: ['pages/remanufactura']
@@ -54,19 +54,19 @@ export class AppMenu {
                         icon: 'pi pi-fw pi-box',
                         routerLink: ['pages/usuario']
                     },
-                     {
+                    {
                         label: 'Roles',
                         icon: 'pi pi-fw pi-box',
                         routerLink: ['pages/rol']
-                    },
-                  /*  {
+                    }
+                    /*  {
                         label: 'Post Venta',
                         icon: 'pi pi-fw pi-box',
                         routerLink: ['pages/postventa']
                     }*/
                 ]
-            },
-/*
+            }
+            /*
             {
                 label: 'Hierarchy',
                 items: [

@@ -4,6 +4,7 @@ import { RemanufacturaStore } from '../../stores/RemanufacturaStore';
 import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Estado } from '@/utils/Constants';
 import { DTOCreateLiquidacionRemanufactura } from '../../entities/remanufactura/DTOCreateLiquidacionRemanufactura';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
     selector: 'app-remanufactura-create',
@@ -15,6 +16,7 @@ import { DTOCreateLiquidacionRemanufactura } from '../../entities/remanufactura/
 export class RemanufacturaCreateComponent {
     remanufacturaStore = inject(RemanufacturaStore);
     fb = inject(FormBuilder);
+    route = inject(ActivatedRoute);
 
     createForm = this.fb.group({
         nombreLiquidacion: new FormControl<string>('', [Validators.required, Validators.maxLength(100)]),
@@ -52,7 +54,7 @@ export class RemanufacturaCreateComponent {
         this.createForm.markAllAsTouched();
         if (this.createForm.valid) {
             const newRemanufactura = this.createForm.getRawValue();
-            this.remanufacturaStore.create(newRemanufactura as DTOCreateLiquidacionRemanufactura);
+            this.remanufacturaStore.create(newRemanufactura as DTOCreateLiquidacionRemanufactura, this.route);
             this.resetFormData();
         }
         /*Prevencion de errores visuales*/

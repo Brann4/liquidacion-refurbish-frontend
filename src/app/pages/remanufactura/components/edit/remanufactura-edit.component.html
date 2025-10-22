@@ -10,10 +10,7 @@
             <div class="flex flex-col gap-6">
                 <div>
                     <label class="font-bold block mb-2">Codigo de Liquidacion <span class="text-red-700">*</span></label>
-                    <input type="text" class="w-full" pInputText formControlName="nombreLiquidacion" [invalid]="isInvalid('nombreLiquidacion')" required />
-                    @if (isInvalid('nombreLiquidacion')) {
-                        <p-message severity="error" size="small" variant="simple">Codigo de liquidacion invalido </p-message>
-                    }
+                    <input type="text" pInputText [disabled]="true" class="w-full"  formControlName="nombreLiquidacion"  />
                 </div>
 
                 <div class="flex flex-col md:flex-row gap-4">

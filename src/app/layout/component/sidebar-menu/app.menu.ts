@@ -28,64 +28,45 @@ export class AppMenu {
                 items: [
                     {
                         label: 'Recupero',
-                        icon: 'pi pi-fw pi-user',
-                        routerLink: ['pages/recupero-list']
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['pages/recupero']
                     },
                      {
                         label: 'Remanufactura',
-                        icon: 'pi pi-fw pi-user',
-                        routerLink: ['pages/remanufactura-list']
-                    }
-                ]
-            }
-            /*
-            {
-                label: 'Liquidación',
-                icon: 'pi pi-fw pi-briefcase',
-                routerLink: ['/pages'],
-                items: [
-                    {
-                        label: 'Recupero',
-                        icon: 'pi pi-fw pi-user',
-                        items: [
-                            {
-                                label: 'Liquidaciones',
-                                icon: 'pi pi-fw pi-list',
-                                routerLink: ['/auth/login']
-                            },
-
-                        ]
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['pages/remanufactura']
                     },
                     {
-                        label: 'Remanufactura',
-                        icon: 'pi pi-fw pi-user',
-                        items: [
-                            {
-                                label: 'Liquidaciones',
-                                icon: 'pi pi-fw pi-list',
-                                routerLink: ['pages/remanufactura-list']
-                            },
-                        ]
-                    },
-                    {
-                        label: 'PostVenta',
-                        icon: 'pi pi-fw pi-user',
-                        items: [
-                            {
-                                label: 'Liquidaciones',
-                                icon: 'pi pi-fw pi-list',
-                                routerLink: ['/auth/login']
-                            },
-                            {
-                                label: 'Agregar Liquidacion',
-                                icon: 'pi pi-fw pi-plus-circle',
-                                routerLink: ['/auth/error']
-                            }
-                        ]
+                        label: 'Post Venta',
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['pages/postventa']
                     }
                 ]
             },
 
+            {
+                label: 'Mantenimiento',
+                icon: 'pi pi-fw pi-briefcase',
+                routerLink: ['/pages'],
+                items: [
+                    {
+                        label: 'Usuario',
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['pages/usuario']
+                    },
+                     {
+                        label: 'Roles',
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['pages/rol']
+                    },
+                  /*  {
+                        label: 'Post Venta',
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['pages/postventa']
+                    }*/
+                ]
+            },
+/*
             {
                 label: 'Hierarchy',
                 items: [

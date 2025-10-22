@@ -5,8 +5,7 @@ import { environment } from 'src/environments/environment.development';
 import { DTOLiquidacionRemanufactura } from '../entities/remanufactura/DTOLiquidacionRemanufactura';
 import { DTOCreateLiquidacionRemanufactura } from '../entities/remanufactura/DTOCreateLiquidacionRemanufactura';
 import { DTOUpdateLiquidacionRemanufactura } from '../entities/remanufactura/DTOUpdateLiquidacionRemanufactura';
-import { ApiResponse } from '@/utils/ApiResponse';
-import { ApiResponseSingle } from '@/utils/ApiResponseSingle';
+import { ApiResponse, ApiResponseSingle } from '@/utils/ApiResponse';
 
 
 const API = environment;
@@ -32,7 +31,7 @@ export class LiquidacionRemanufacturaService {
   }
 
   create(data: DTOCreateLiquidacionRemanufactura) {
-    return this.http.post<{ message: string }>(`${API.URL}/LiquidacionRemanufactura/Crear`, data);
+    return this.http.post<ApiResponseSingle<DTOLiquidacionRemanufactura>>(`${API.URL}/LiquidacionRemanufactura/Crear`, data);
   }
 
   update(data: DTOUpdateLiquidacionRemanufactura) {

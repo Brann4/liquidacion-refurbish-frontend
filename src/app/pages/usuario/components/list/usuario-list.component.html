@@ -1,10 +1,10 @@
 <p-toolbar class="mb-6">
     <ng-template #start>
-        <p-button label="Nuevo" icon="pi pi-plus" severity="primary" class="mr-2" (onClick)="openCreateModal()" />
+        <breadcrumb-header [breadcrumbs]="breadcrumbs" title="MÓDULO DE USUARIOS"> </breadcrumb-header>
     </ng-template>
 
     <ng-template #end>
-        <!--<p-button label="Exportar" icon="pi pi-upload" severity="secondary" (onClick)="exportCSV()" />-->
+        <p-button label="Nuevo" icon="pi pi-plus" severity="primary" class="mr-2" [raised]="true" size="large" (onClick)="openCreateModal()" />
     </ng-template>
 </p-toolbar>
 
@@ -16,7 +16,7 @@
         [tableStyle]="{ 'min-width': '75rem' }"
         [rows]="10"
         [paginator]="true"
-        [globalFilterFields]="['nombreUsuario','nombres','apellidos']"
+        [globalFilterFields]="['nombreUsuario', 'nombres', 'apellidos']"
         [rowHover]="true"
         dataKey="id"
         currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"

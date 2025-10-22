@@ -27,19 +27,14 @@ export class AppMenu {
                 routerLink: ['/pages'],
                 items: [
                     {
-                        label: 'Producto Descontinuado',
-                        icon: 'pi pi-fw pi-user',
-                        routerLink: ['pages/producto-descontinuado']
-                    },
-                    {
                         label: 'Remanufactura',
                         icon: 'pi pi-fw pi-box',
-                        routerLink: ['pages/remanufactura']
+                        routerLink: ['/pages/remanufactura']
                     },
                     {
                         label: 'Post Venta',
                         icon: 'pi pi-fw pi-box',
-                        routerLink: ['pages/postventa']
+                        routerLink: ['/pages/postventa']
                     }
                 ]
             },
@@ -50,23 +45,31 @@ export class AppMenu {
                 routerLink: ['/pages'],
                 items: [
                     {
+                        label: 'Producto Descontinuado',
+                        icon: 'pi pi-fw pi-user',
+                        routerLink: ['/pages/producto-descontinuado']
+                    },
+                ]
+            },
+
+                        {
+                label: 'Seguridad',
+                icon: 'pi pi-fw pi-briefcase',
+                routerLink: ['/pages'],
+                items: [
+                    {
                         label: 'Usuario',
                         icon: 'pi pi-fw pi-box',
-                        routerLink: ['pages/usuario']
+                        routerLink: ['/pages/usuario']
                     },
                     {
                         label: 'Roles',
                         icon: 'pi pi-fw pi-box',
-                        routerLink: ['pages/rol']
+                        routerLink: ['/pages/rol']
                     }
-                    /*  {
-                        label: 'Post Venta',
-                        icon: 'pi pi-fw pi-box',
-                        routerLink: ['pages/postventa']
-                    }*/
                 ]
-            }
-            /*
+            },
+/*
             {
                 label: 'Hierarchy',
                 items: [

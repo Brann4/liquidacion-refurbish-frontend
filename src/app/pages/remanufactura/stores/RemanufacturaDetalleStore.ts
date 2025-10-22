@@ -31,7 +31,7 @@ export const RemanufacturaDetalleStore = signalStore(
     withState<RemanufacturaState>(initialState),
     withMethods((store, remanufacturaService = inject(RemanufacturaDetalleService), toast = inject(ToastService)) => ({
         clear() {
-            patchState(store, { isSubmitting: false, entityPreview: [], entity: null });
+            patchState(store, { isSubmitting: false, entityPreview: [], entity: null , entities: []});
         },
         openModalCreate() {
             patchState(store, { isOpenCreate: true });
@@ -96,7 +96,7 @@ export const RemanufacturaDetalleStore = signalStore(
                 }
             });
         }
-        
+
         /*
         update(data: DTOUpdateLiquidacionRemanufactura) {
             patchState(store, { isSubmitting: true });

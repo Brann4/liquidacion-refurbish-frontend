@@ -49,10 +49,14 @@ export class AppMenu {
                         icon: 'pi pi-fw pi-user',
                         routerLink: ['/pages/producto-descontinuado']
                     },
+                    {
+                        label: 'Contrata',
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['/pages/contrata']
+                    }
                 ]
             },
-
-                        {
+            {
                 label: 'Seguridad',
                 icon: 'pi pi-fw pi-briefcase',
                 routerLink: ['/pages'],
@@ -66,7 +70,8 @@ export class AppMenu {
                         label: 'Roles',
                         icon: 'pi pi-fw pi-box',
                         routerLink: ['/pages/rol']
-                    }
+                    },
+
                 ]
             },
 /*

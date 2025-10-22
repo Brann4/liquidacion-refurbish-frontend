@@ -37,6 +37,10 @@ export const RemanufacturaStore = signalStore(
     { providedIn: 'root' },
     withState<RemanufacturaState>(initialState),
     withMethods((store, remanufacturaService = inject(LiquidacionRemanufacturaService), toast = inject(ToastService), router = inject(Router), routerActivate = inject(ActivatedRoute)) => ({
+
+        clear() {
+            patchState(store, { isSubmitting: false, entity: null , entities: []});
+        },
         openModalCreate() {
             patchState(store, { isOpenCreate: true });
         },

@@ -1,5 +1,5 @@
 import { PrimeModules } from '@/utils/PrimeModule';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RemanufacturaStore } from '../../stores/RemanufacturaStore';
 import { ShortDatePipe } from '@/layout/pipes/shortDate.pipe';
@@ -19,10 +19,12 @@ import { DTOLiquidacionRemanufacturaDetalle } from '../../entities/remanufactura
     imports: [PrimeModules, ShortDatePipe],
     templateUrl: './remanufactura-detail.component.html',
     styleUrl: './remanufactura-detail.component.css',
-
+    changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [MessageService, ConfirmationService]
 })
 export class RemanufacturaDetailComponent implements OnInit {
+    breadcrumbs = [{ label: 'Remanufactura' }];
+
     route = inject(ActivatedRoute);
     router = inject(Router);
     remanufacturaStore = inject(RemanufacturaStore);
@@ -34,47 +36,21 @@ export class RemanufacturaDetailComponent implements OnInit {
 
     showImportDialog = signal<boolean>(false);
     loadingImport = signal<boolean>(false);
-    exportOptions: MenuItem[] = [];
     @ViewChild('fileUploader') fileUploader?: FileUpload;
 
     constructor() {
         effect(() => {
             const entity = this.remanufacturaStore.entity();
-            if (entity?.nombreLiquidacion) {
-                this.remanufacturaDetalleStore.getDetailData(entity.nombreLiquidacion, Estado.Activo);
-            }
+            if (entity) {
+                if (entity?.nombreLiquidacion) {
+                    this.remanufacturaDetalleStore.getDetailData(entity.nombreLiquidacion, Estado.Activo);
+                }
 
-            if (!this.remanufacturaDetalleStore.isSubmitting() && this.fileUploader?.hasFiles()) {
-                this.fileUploader.clear();
+                if (!this.remanufacturaDetalleStore.isSubmitting() && this.fileUploader?.hasFiles()) {
+                    this.fileUploader.clear();
+                }
             }
         });
-
-        this.exportOptions = [
-            {
-                label: 'Tabla',
-                icon: 'pi pi-file-import',
-                command: () => {
-                    console.log('EXPORTAR 1');
-                }
-            },
-            {
-                label: 'Delete',
-                icon: 'pi pi-file-import',
-                command: () => {
-                    console.log('EXPORTAR 2');
-                }
-            },
-            {
-                separator: true
-            },
-            {
-                label: 'Quit',
-                icon: 'pi pi-file-import',
-                command: () => {
-                    console.log('EXPORTAR 3');
-                }
-            }
-        ];
     }
 
     ngOnInit(): void {
@@ -83,8 +59,8 @@ export class RemanufacturaDetailComponent implements OnInit {
     }
 
     goBack() {
-        this.router.navigate(['../'], { relativeTo: this.route });
         this.remanufacturaDetalleStore.clear();
+        this.router.navigate(['../'], { relativeTo: this.route });
     }
 
     onGlobalFilter(table: Table, event: Event) {
@@ -160,7 +136,8 @@ export class RemanufacturaDetailComponent implements OnInit {
     exportDataTable() {
         const data = this.remanufacturaDetalleStore.entities();
         console.log(data);
-        this.remanufacturaDetalleService.fakeDataExport(1).subscribe({
+
+        /*this.remanufacturaDetalleService.fakeDataExport(1).subscribe({
             next: (response) => {
                 const fileName = `LiquidacionRemanufactura_${new Date().toISOString().split('T')[0]}.xlsx`;
 
@@ -177,7 +154,7 @@ export class RemanufacturaDetailComponent implements OnInit {
             error(err) {
                 console.error('Error exportando archivo:', err);
             }
-        });
+        });*/
     }
 
     clearFilters(table: Table) {

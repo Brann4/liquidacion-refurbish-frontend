@@ -8,19 +8,22 @@ import { Estado } from '@/utils/Constants';
 import { Helper } from '@/utils/Helper';
 import { DTOUpdateUsuario } from '../../entities/DTOUpdateUsuario';
 import { PrimeModules } from '@/utils/PrimeModule';
-import { CreateComponent } from "../create/usuario-create.component";
-import { EditComponent } from "../edit/usuario-edit.component";
+import { CreateComponent } from '../create/usuario-create.component';
+import { EditComponent } from '../edit/usuario-edit.component';
+import { BreadcrumbHeader } from '@/layout/component/breadcrumb/breadcrumb.header';
 
 @Component({
     selector: 'app-list',
     standalone: true,
-    imports: [PrimeModules, CreateComponent, EditComponent],
+    imports: [PrimeModules, CreateComponent, EditComponent, BreadcrumbHeader],
     templateUrl: './usuario-list.component.html',
     styleUrl: './usuario-list.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [MessageService, ConfirmationService]
 })
 export class UsuarioListComponent {
+    breadcrumbs = [{ label: 'Usuario' }];
+
     usuarioDialog: boolean = false;
     usuarios = signal<DTOUsuario[]>([]);
     submitted = signal<boolean>(false);

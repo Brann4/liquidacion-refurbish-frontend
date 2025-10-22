@@ -20,7 +20,9 @@ export class RolEditComponent {
     updateForm = this.fb.group({
         id: new FormControl<number>({ value: 0, disabled: true }, { validators: [Validators.min(1)], nonNullable: true }),
         descripcion: new FormControl<string>('', [Validators.required]),
-        estado: new FormControl<boolean>(false, [Validators.required])
+        estado: new FormControl<boolean>(false, [Validators.required]),
+        usuarioCreacion: new FormControl<number>(1, [Validators.required]),
+        fechaRegistro : new FormControl<Date | null >( null, [Validators.required])
     });
     stateOptions = signal<any[]>([
         { label: 'Activo', value: true },
@@ -43,7 +45,8 @@ export class RolEditComponent {
         const usuario = this.rolStore.entityEdit();
         if (usuario) {
             this.updateForm.patchValue({
-                ...usuario
+                ...usuario,
+                usuarioCreacion: 1
             });
             this.hasLoaded.set(true);
         }
@@ -52,7 +55,9 @@ export class RolEditComponent {
         this.updateForm.reset({
             id: 0,
             descripcion: '',
-            estado: false
+            estado: false,
+            usuarioCreacion: 0,
+            fechaRegistro: null
         });
     }
 
@@ -72,6 +77,7 @@ export class RolEditComponent {
 
         if (this.updateForm.valid) {
             const newRemanufactura = this.updateForm.getRawValue();
+            console.log(newRemanufactura);
             this.rolStore.update(newRemanufactura as DTOUpdateRol);
         }
         /*Prevencion de errores visuales*/

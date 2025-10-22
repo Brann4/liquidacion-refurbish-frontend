@@ -1,11 +1,15 @@
 import { Estado } from './Constants';
 
 export class Helper {
-    static setStatus(status: number): 'success' | 'danger' | 'info' {
+    static setStatus(status: number | boolean): 'success' | 'danger' | 'info' {
+        if (typeof status === 'boolean') {
+            return status ? 'success' : 'danger';
+        }
+
         switch (status) {
             case Estado.Activo:
                 return 'success';
-            case 0:
+            case Estado.Inactivo:
                 return 'danger';
             default:
                 return 'info';

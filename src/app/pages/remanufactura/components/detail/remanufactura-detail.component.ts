@@ -10,15 +10,16 @@ import { Helper } from '@/utils/Helper';
 import { ToastService } from '@/layout/service/toast.service';
 import { RemanufacturaDetalleService } from '../../services/remanufactura-detalle.service';
 import { FileUpload } from 'primeng/fileupload';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { DTOLiquidacionRemanufacturaDetalle } from '../../entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle';
 
 @Component({
-    selector: 'app-detail',
+    selector: 'remanufactura-detail',
     standalone: true,
     imports: [PrimeModules, ShortDatePipe],
     templateUrl: './remanufactura-detail.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    styleUrl: './remanufactura-detail.component.css',
+
     providers: [MessageService, ConfirmationService]
 })
 export class RemanufacturaDetailComponent implements OnInit {
@@ -33,7 +34,7 @@ export class RemanufacturaDetailComponent implements OnInit {
 
     showImportDialog = signal<boolean>(false);
     loadingImport = signal<boolean>(false);
-
+    exportOptions: MenuItem[] = [];
     @ViewChild('fileUploader') fileUploader?: FileUpload;
 
     constructor() {
@@ -47,7 +48,35 @@ export class RemanufacturaDetailComponent implements OnInit {
                 this.fileUploader.clear();
             }
         });
+
+        this.exportOptions = [
+            {
+                label: 'Tabla',
+                icon: 'pi pi-file-import',
+                command: () => {
+                    console.log('EXPORTAR 1');
+                }
+            },
+            {
+                label: 'Delete',
+                icon: 'pi pi-file-import',
+                command: () => {
+                    console.log('EXPORTAR 2');
+                }
+            },
+            {
+                separator: true
+            },
+            {
+                label: 'Quit',
+                icon: 'pi pi-file-import',
+                command: () => {
+                    console.log('EXPORTAR 3');
+                }
+            }
+        ];
     }
+
     ngOnInit(): void {
         const id = Number(this.route.snapshot.paramMap.get('id'));
         if (id) this.remanufacturaStore.getById(id);
@@ -116,9 +145,10 @@ export class RemanufacturaDetailComponent implements OnInit {
             rejectIcon: 'pi pi-times',
             accept: () => {
                 console.log('ERNVIADO');
+                /*PAYLOAD*/
                 const payload = {
                     detalles: this.remanufacturaDetalleStore.entityPreview()
-                }
+                };
                 this.remanufacturaDetalleStore.createDetail(payload);
             },
             reject: () => {
@@ -127,8 +157,31 @@ export class RemanufacturaDetailComponent implements OnInit {
         });
     }
 
-    clearFilters(table: Table){
+    exportDataTable() {
+        const data = this.remanufacturaDetalleStore.entities();
+        console.log(data);
+        this.remanufacturaDetalleService.fakeDataExport(1).subscribe({
+            next: (response) => {
+                const fileName = `LiquidacionRemanufactura_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+                // Crea un enlace temporal y descarga el archivo
+                const url = window.URL.createObjectURL(response);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                a.click();
+                window.URL.revokeObjectURL(url); // libera memoria
+
+                console.log('Archivo exportado correctamente.');
+            },
+            error(err) {
+                console.error('Error exportando archivo:', err);
+            }
+        });
+    }
+
+    clearFilters(table: Table) {
         table.clear();
-        table.filterGlobal('','');
+        table.filterGlobal('', '');
     }
 }

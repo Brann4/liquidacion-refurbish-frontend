@@ -58,6 +58,11 @@ export class AppMenu {
                         label: 'Roles',
                         icon: 'pi pi-fw pi-box',
                         routerLink: ['pages/rol']
+                    },
+                    {
+                        label: 'Contrata',
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['pages/contrata']
                     }
                     /*  {
                         label: 'Post Venta',

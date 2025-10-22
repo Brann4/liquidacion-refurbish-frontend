@@ -2,9 +2,10 @@
     <div class="px-4">
         <div class="flex justify-between">
             <p-button label="Volver" icon="pi pi-arrow-left" severity="secondary" (onClick)="goBack()"></p-button>
-            <p-button label="Importar Liquidaciones" icon="pi pi-file-import" severity="primary" (onClick)="handleToggleImport()"></p-button>
+            <p-button label="Importar Liquidaciones" [disabled]="remanufacturaDetalleStore.entityPreview().length > 0 && !remanufacturaStore.isSubmitting()" icon="pi pi-file-import" severity="primary" (onClick)="handleToggleImport()"></p-button>
         </div>
-        @if (remanufacturaStore.isSubmitting()) {
+
+        @if (!remanufacturaStore.entity() && remanufacturaStore.isSubmitting()) {
             <div class="flex justify-center items-center">
                 <p-progressSpinner></p-progressSpinner>
             </div>
@@ -23,13 +24,14 @@
                     </div>
                 </ng-template>
             </p-toolbar>
+            @if (!showImportDialog() && remanufacturaDetalleStore.isSubmitting()) {
+                <div class="flex justify-center items-center">
+                    <p-progressSpinner></p-progressSpinner>
+                </div>
+            }
+
             @if (showImportDialog()) {
                 <div class="border-1 border-dashed border-primary p-4 rounded-lg mt-4">
-
-                    <p-blockUI [blocked]="remanufacturaDetalleStore.isSubmitting()" class="flex justify-center items-center">
-                        <p-progressSpinner></p-progressSpinner>
-                    </p-blockUI>
-
                     <div class="flex justify-center mb-4">
                         <div class="bounce animation-iteration-infinite animation-duration-2000">
                             <a (click)="downloadExcelTemplate()" class="text-primary hover:underline cursor-pointer flex items-center gap-2 p-2">
@@ -65,11 +67,57 @@
                                 <div class="flex items-center gap-3">
                                     <i class="pi pi-file-excel text-green-600" style="font-size: 2rem"></i>
                                     <span class="font-semibold">{{ file.name }}</span>
-                                    <p-badge [value]="file.size" severity="secondary"></p-badge>
+                                    <p-badge (value)="(file.size)" severity="secondary"></p-badge>
                                 </div>
                             </div>
                         </ng-template>
                     </p-fileUpload>
+                </div>
+            }
+
+            @if (remanufacturaDetalleStore.entityPreview().length > 0 && !remanufacturaStore.isSubmitting()) {
+                <div class="mt-6 border-1 border-dashed border-primary p-4 rounded-lg">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-semibold">Previsualización de Datos</h3>
+                        <div class="flex gap-1">
+                            <p-button label="Volver a importar" [outlined]="true" icon="pi pi-arrow-left" [loading]="remanufacturaStore.isSubmitting()" (onClick)="handleImportAgain()"> </p-button>
+                            <p-button label="Guardar Datos Importados" icon="pi pi-save" [loading]="remanufacturaStore.isSubmitting()" (onClick)="handleSubmitDetail()"> </p-button>
+                        </div>
+                    </div>
+
+                    <p-table
+                        [value]="remanufacturaDetalleStore.entityPreview()"
+                        [paginator]="true"
+                        [rows]="10"
+                        [rowsPerPageOptions]="[10, 25, 50, 100]"
+                        [totalRecords]="remanufacturaDetalleStore.entityPreview().length"
+                        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} filas"
+                        [showCurrentPageReport]="true"
+                        class="p-datatable-striped"
+                    >
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th style="min-width: 8rem">Cód. SAP</th>
+                                <th style="min-width: 8rem">Cód. Entrega</th>
+                                <th style="min-width: 8rem">Serie Final</th>
+                                <th style="min-width: 12rem">Nombre Producto</th>
+                                <th style="min-width: 8rem">Cantidad</th>
+                                <th style="min-width: 8rem">Estado</th>
+                                <th style="min-width: 8rem">Costo Unidad (S/.)</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-detalle>
+                            <tr>
+                                <td>{{ detalle.codigoSAP }}</td>
+                                <td>{{ detalle.codigoEntrega }}</td>
+                                <td>{{ detalle.serieFinal }}</td>
+                                <td>{{ detalle.nombreProducto }}</td>
+                                <td>{{ detalle.cantidad }}</td>
+                                <td><p-tag [value]="detalle.estado" severity="info"></p-tag></td>
+                                <td>{{ detalle.costoUnitario }}</td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
                 </div>
             }
         } @else {
@@ -80,6 +128,7 @@
         }
     </div>
 </p-card>
+
 <p-card class="mt-4">
     <p-table
         #dt
@@ -97,47 +146,91 @@
     >
         <ng-template #caption>
             <div class="flex items-center justify-between">
-                <h5 class="m-0">Detalles de Liquidación</h5>
-                <p-iconfield>
-                    <p-inputicon class="pi pi-search" />
-                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar por nombre" />
-                </p-iconfield>
+                 <div class="flex flex-row gap-2">
+                    <p-iconfield>
+                        <p-inputicon class="pi pi-search" />
+                        <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar por nombre" />
+                    </p-iconfield>
+                    <p-button label="Limpiar Filtros" [outlined]="true" icon="pi pi-filter-slash" (click)="clearFilters(dt)" />
+                </div>
+
+                <div class="flex flex-row gap-2">
+                    <p-button label="Descargar Reporte" severity="success" icon="pi pi-file-excel" (click)="clearFilters(dt)" />
+                </div>
             </div>
         </ng-template>
         <ng-template #header>
             <tr>
                 <th style="width: 3rem">N°</th>
 
-                <th pSortableColumn="nombreLiquidacion" style="min-width: 16rem">
-                    Nombre
-                    <p-sortIcon field="nombreLiquidacion" />
+                <th pSortableColumn="liquidacion" style="min-width: 10rem">
+                    Liquidacion
+                    <p-columnFilter type="text" field="liquidacion" display="menu" />
                 </th>
-                <th pSortableColumn="fechaIngreso" style="min-width: 8rem">
-                    Fecha Ingreso
-                    <p-sortIcon field="fechaIngreso" />
+                <th pSortableColumn="plataforma" style="min-width: 10rem">
+                    Plataforma
+                    <p-columnFilter type="text" field="plataforma" display="menu" />
                 </th>
-                <th pSortableColumn="usuarioId" style="min-width: 10rem">
-                    Creado por
-                    <p-sortIcon field="usuarioId" />
+                <th pSortableColumn="codigoLiquidacion" style="min-width: 8rem">
+                    Codigo
+                    <p-columnFilter type="text" field="codigoLiquidacion" display="menu" />
+                </th>
+                <th pSortableColumn="codigoEntrega" style="min-width: 12rem">
+                    Codigo Entrega
+                    <p-columnFilter type="text" field="codigoEntrega" display="menu" />
+                </th>
+                <th pSortableColumn="fechaPrevista" style="min-width: 12rem">
+                    Fecha Prevista
+                    <p-columnFilter type="text" field="fechaPrevista" display="menu" />
+                </th>
+                <th pSortableColumn="codigoSAP" style="min-width: 10rem">
+                    Codigo SAP
+                    <p-columnFilter type="text" field="codigoSAP" display="menu" />
+                </th>
+                <th pSortableColumn="nombreProducto" style="min-width: 16rem">
+                    Producto
+                    <p-columnFilter type="text" field="nombreProducto" display="menu" />
+                </th>
+                <th pSortableColumn="cantidad" style="min-width: 10rem">
+                    Cantidad
+                    <p-columnFilter type="text" field="cantidad" display="menu" />
+                </th>
+                <th pSortableColumn="serieOrigen" style="min-width: 12rem">
+                    Serie Origen
+                    <p-columnFilter type="text" field="serieOrigen" display="menu" />
+                </th>
+                <th pSortableColumn="serieFinal" style="min-width: 12rem">
+                    Serie Final
+                    <p-columnFilter type="text" field="serieFinal" display="menu" />
+                </th>
+                <th pSortableColumn="trabajoRealizado" style="min-width: 14rem">
+                    Trabajo realizado
+                    <p-columnFilter type="text" field="trabajoRealizado" display="menu" />
                 </th>
                 <th pSortableColumn="estado" style="min-width: 12rem">
                     Estado
-                    <p-sortIcon field="estado" />
+                    <p-columnFilter type="text" field="estado" display="menu" />
                 </th>
-
-                <th style="min-width: 12rem"></th>
             </tr>
         </ng-template>
         <ng-template #body let-detalle let-rowIndex="rowIndex">
             <tr>
                 <td style="width: 3rem">
-                    {{ detalle.id }}
+                    {{ rowIndex + 1 }}
                 </td>
+                <td class="text-primary font-bold">{{ detalle.liquidacion }}</td>
+                <td class="">{{ detalle.plataforma }}</td>
+                <td class="font-light">{{ detalle.codigoLiquidacion }}</td>
+                <td class="font-light">{{ detalle.codigoEntrega }}</td>
+                <td class="font-light">{{ detalle.fechaPrevista | shortDate }}</td>
+                <td class="font-light">{{ detalle.codigoSAP }}</td>
+                <td class="font-light">{{ detalle.nombreProducto }}</td>
+                <td class="font-light" style="width: 0.5rem">{{ detalle.cantidad }}</td>
+                <td class="font-light">{{ detalle.serieOrigen != null || detalle.serieOrigen == '' ? 'S/N' : detalle.serieOrigen }}</td>
+                <td class="font-light">{{ detalle.serieFinal }}</td>
+                <td class="font-light">{{ detalle.trabajoRealizado }}</td>
+                <td class="font-light">{{ detalle.estado }}</td>
 
-                <td style="min-width: 12rem">{{ detalle.nombreLiquidacion }}</td>
-                <td>{{ detalle.fechaIngreso | shortDate }}</td>
-
-                <td class="text-primary bold">{{ detalle.usuario.nombreUsuario }}</td>
                 <!-- <td>
                     <p-tag [value]="detalle.estado == 1 ? 'Activo' : 'Inactivo'" [severity]="getSeverity(detalle.estado)" />
                 </td>
@@ -151,3 +244,5 @@
         </ng-template>
     </p-table>
 </p-card>
+
+<p-confirmdialog [style]="{ width: '450px' }" />

@@ -21,7 +21,7 @@ export class RemanufacturaDetalleService {
         return this.http.post<ApiResponseSingle<ImportPreviewResponse>>(`${API.URL}/LiquidacionRemanufacturaDetalle/Importacion/VistaPrevia`, data);
     }
 
-    delete(id: number, nombre: string) {
-        return this.http.delete<ApiResponseSingle<number>>(`${API.URL}/LiquidacionRemanufacturaDetalle/Eliminar/${id}/${nombre}`);
+    createDetail(data: any) {
+       return this.http.post<ApiResponseSingle<ImportPreviewResponse>>(`${API.URL}/LiquidacionRemanufacturaDetalle/Importacion/Guardar`, data);
     }
 }

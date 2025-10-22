@@ -12,7 +12,7 @@ import { MessageService } from 'primeng/api';
     imports: [PrimeModules, ReactiveFormsModule],
     templateUrl: './remanufactura-edit.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers:[MessageService]
+    providers: [MessageService]
 })
 export class EditComponent {
     remanufacturaStore = inject(RemanufacturaStore);
@@ -20,7 +20,7 @@ export class EditComponent {
 
     updateForm = this.fb.group({
         id: new FormControl<number>({ value: 0, disabled: true }, { validators: [Validators.min(1)], nonNullable: true }),
-        nombreLiquidacion: new FormControl<string>('', [Validators.required, Validators.maxLength(100)]),
+        nombreLiquidacion: new FormControl<string>({ value: '', disabled: true }, [Validators.required, Validators.maxLength(100)]),
         fechaIngreso: new FormControl<Date | null>(null, [Validators.required]),
         estado: new FormControl<number>(Estado.Inactivo, [Validators.required]),
         usuarioId: new FormControl<number>(1)

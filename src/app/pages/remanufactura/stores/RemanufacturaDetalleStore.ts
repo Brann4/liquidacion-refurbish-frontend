@@ -5,10 +5,12 @@ import { ToastService } from '@/layout/service/toast.service';
 import { Estado } from '@/utils/Constants';
 import { RemanufacturaDetalleService } from '../services/remanufactura-detalle.service';
 import { ApiResponseSingle, ImportPreviewResponse } from '@/utils/ApiResponse';
+import { HttpErrorResponse } from '@angular/common/http';
 
 export type RemanufacturaState = {
     entities: DTOLiquidacionRemanufacturaDetalle[];
     entity: DTOLiquidacionRemanufacturaDetalle | null;
+    entityPreview: DTOLiquidacionRemanufacturaDetalle[];
     isOpenCreate: boolean;
     isOpenEdit: boolean;
     isSubmitting: boolean;
@@ -17,6 +19,7 @@ export type RemanufacturaState = {
 
 const initialState: RemanufacturaState = {
     entity: null,
+    entityPreview: [],
     entities: [],
     isOpenCreate: false,
     isOpenEdit: false,
@@ -28,6 +31,9 @@ export const RemanufacturaDetalleStore = signalStore(
     { providedIn: 'root' },
     withState<RemanufacturaState>(initialState),
     withMethods((store, remanufacturaService = inject(RemanufacturaDetalleService), toast = inject(ToastService)) => ({
+        clear() {
+            patchState(store, { isSubmitting: false, entityPreview: [], entity: null });
+        },
         openModalCreate() {
             patchState(store, { isOpenCreate: true });
         },
@@ -51,8 +57,7 @@ export const RemanufacturaDetalleStore = signalStore(
             });
         },
 
-        previewData(formData: FormData) 
-        {
+        previewData(formData: FormData) {
             patchState(store, { isSubmitting: true });
 
             remanufacturaService.previewData(formData).subscribe({
@@ -61,17 +66,34 @@ export const RemanufacturaDetalleStore = signalStore(
                         patchState(store, { isSubmitting: false });
                         const errorMsg = response.msg || response.value.errors?.join(', ');
                         toast.warn(errorMsg || 'El archivo tiene datos incorrectos.');
-                    }
-                    else {
-                        patchState(store, { isSubmitting: false });
+                    } else {
+                        patchState(store, { isSubmitting: false, entityPreview: response.value.detalles });
                         toast.success(response.msg || 'Archivo procesado. Detalles cargados.');
-                        this.getDetailData(formData.get('liquidacion')!.toString(), Estado.Todos);
                         this.closeModalCreate();
+                    }
+                },
+                error: (error: HttpErrorResponse) => {
+                    patchState(store, { isSubmitting: false, error: error.error.message });
+                    const errorMsg = error.error?.msg || 'Error desconocido al procesar el archivo.';
+                    toast.warn(`Advertencia: ${errorMsg}`);
+                }
+            });
+        },
+
+        createDetail(data: any) {
+            patchState(store, { isSubmitting: true });
+            remanufacturaService.createDetail(data).subscribe({
+                next: (response) => {
+                    if (response.status) {
+                        patchState(store, { isSubmitting: false });
+                        toast.info(response.msg);
+                        this.clear();
                     }
                 },
                 error: (error) => {
                     patchState(store, { isSubmitting: false, error: error.message });
-                    toast.warn(`Advertencia: ${error.msg}`);
+                    const errorMsg = error.msg || 'Error desconocido al procesar el archivo.';
+                    toast.warn(`Advertencia: ${errorMsg}`);
                 }
             });
         }
@@ -93,23 +115,6 @@ export const RemanufacturaDetalleStore = signalStore(
             });
         },
 
-        delete(id: number, nombre: string) {
-            remanufacturaService.delete(id, nombre).subscribe({
-                next: (response) => {
-                    if (response.value == Eliminar.Correcto) {
-                        toast.success(response.msg || 'Eliminado correctamente');
-                    }
-                    if (response.value == Eliminar.Advertencia) {
-                        toast.warn(response.msg || 'Liquidaciones encontradas');
-                    }
-                    this.getLiquidaciones(Estado.Todos);
-                },
-                error: (error) => {
-                    patchState(store, { isSubmitting: false, error: error.message });
-                    toast.error('No se pudo eliminar el registro');
-                }
-            });
-        }
             */
     }))
 );

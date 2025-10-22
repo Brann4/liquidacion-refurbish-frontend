@@ -92,8 +92,8 @@ export const RemanufacturaStore = signalStore(
                     }
                 },
                 error: (error) => {
-                    patchState(store, { isSubmitting: false, error: error.message });
-                    toast.warn(`Advertencia: ${error.msg}`);
+                    patchState(store, { isSubmitting: false, error: error.error.message });
+                    toast.warn(`Advertencia: ${error.error.msg}`);
                 }
             });
         },
@@ -122,13 +122,13 @@ export const RemanufacturaStore = signalStore(
                         toast.success(response.msg || 'Eliminado correctamente');
                     }
                     if (response.value == Eliminar.Advertencia) {
-                        toast.warn(response.msg || 'Liquidaciones encontradas');
+                        toast.warn('Liquidaciones importadas estan asociadas en este registro');
                     }
                     this.getLiquidaciones(Estado.Todos);
                 },
                 error: (error) => {
                     patchState(store, { isSubmitting: false, error: error.message });
-                    toast.error('No se pudo eliminar el registro');
+                    toast.error(error.error.msg);
                 }
             });
         }

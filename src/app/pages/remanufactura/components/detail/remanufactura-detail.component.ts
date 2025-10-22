@@ -1,5 +1,5 @@
 import { PrimeModules } from '@/utils/PrimeModule';
-import { ChangeDetectionStrategy, Component, effect, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RemanufacturaStore } from '../../stores/RemanufacturaStore';
 import { ShortDatePipe } from '@/layout/pipes/shortDate.pipe';
@@ -8,16 +8,18 @@ import { Estado } from '@/utils/Constants';
 import { Table } from 'primeng/table';
 import { Helper } from '@/utils/Helper';
 import { ToastService } from '@/layout/service/toast.service';
-import { formatDate } from '@angular/common';
 import { RemanufacturaDetalleService } from '../../services/remanufactura-detalle.service';
 import { FileUpload } from 'primeng/fileupload';
+import { ConfirmationService, MessageService } from 'primeng/api';
+import { DTOLiquidacionRemanufacturaDetalle } from '../../entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle';
 
 @Component({
     selector: 'app-detail',
     standalone: true,
     imports: [PrimeModules, ShortDatePipe],
     templateUrl: './remanufactura-detail.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [MessageService, ConfirmationService]
 })
 export class RemanufacturaDetailComponent implements OnInit {
     route = inject(ActivatedRoute);
@@ -25,7 +27,9 @@ export class RemanufacturaDetailComponent implements OnInit {
     remanufacturaStore = inject(RemanufacturaStore);
     remanufacturaDetalleStore = inject(RemanufacturaDetalleStore);
     remanufacturaDetalleService = inject(RemanufacturaDetalleService);
+
     toast = inject(ToastService);
+    confirmationService = inject(ConfirmationService);
 
     showImportDialog = signal<boolean>(false);
     loadingImport = signal<boolean>(false);
@@ -39,8 +43,8 @@ export class RemanufacturaDetailComponent implements OnInit {
                 this.remanufacturaDetalleStore.getDetailData(entity.nombreLiquidacion, Estado.Activo);
             }
 
-            if(!this.remanufacturaDetalleStore.isSubmitting() && this.fileUploader?.hasFiles()){
-                this.fileUploader.clear()
+            if (!this.remanufacturaDetalleStore.isSubmitting() && this.fileUploader?.hasFiles()) {
+                this.fileUploader.clear();
             }
         });
     }
@@ -51,6 +55,7 @@ export class RemanufacturaDetailComponent implements OnInit {
 
     goBack() {
         this.router.navigate(['../'], { relativeTo: this.route });
+        this.remanufacturaDetalleStore.clear();
     }
 
     onGlobalFilter(table: Table, event: Event) {
@@ -69,6 +74,11 @@ export class RemanufacturaDetailComponent implements OnInit {
         console.log('descargaando template');
     }
 
+    handleImportAgain() {
+        this.remanufacturaDetalleStore.clear();
+        this.showImportDialog.set(true);
+    }
+
     handleUploadFile(event: { files: File[] }): void {
         const file = event.files[0];
         const nombreLiquidacion = this.remanufacturaStore.entity()?.nombreLiquidacion;
@@ -81,13 +91,44 @@ export class RemanufacturaDetailComponent implements OnInit {
 
         const formData = new FormData();
         formData.append('File', file, file.name);
-        formData.append('liquidacion',nombreLiquidacion);
+        formData.append('liquidacion', nombreLiquidacion);
 
         this.remanufacturaDetalleStore.previewData(formData);
-        /*
-        CUANDO TEMRINE DE CARGAR
-             this.loadingImport.set(false);
+
+        this.loadingImport.set(false);
         this.showImportDialog.set(false);
-        */
+    }
+
+    handleSubmitDetail() {
+        this.confirmationService.confirm({
+            message: `Estas seguro de guardar los datos ?`,
+            header: 'Confirmación',
+            icon: 'pi pi-question-circle',
+            acceptButtonProps: {
+                label: 'Confirmar'
+            },
+            rejectButtonProps: {
+                label: 'Cancelar',
+                severity: 'secondary',
+                text: true
+            },
+            acceptIcon: 'pi pi-check',
+            rejectIcon: 'pi pi-times',
+            accept: () => {
+                console.log('ERNVIADO');
+                const payload = {
+                    detalles: this.remanufacturaDetalleStore.entityPreview()
+                }
+                this.remanufacturaDetalleStore.createDetail(payload);
+            },
+            reject: () => {
+                console.log('ERROR');
+            }
+        });
+    }
+
+    clearFilters(table: Table){
+        table.clear();
+        table.filterGlobal('','');
     }
 }

@@ -155,9 +155,11 @@
                 </div>
 
                 <div class="flex flex-row gap-2">
-                    <div class="card flex justify-center">
-                        <p-button label="Descargar Reporte" severity="success" icon="pi pi-file-excel" (click)="exportDataTable()" />
-                    </div>
+                    @if (this.remanufacturaDetalleStore.entities()) {
+                        <div class="card flex justify-center">
+                            <p-button label="Descargar Reporte" severity="success" icon="pi pi-file-excel" [disabled]="remanufacturaDetalleStore.isExporting()" [loading]="remanufacturaDetalleStore.isExporting()" (click)="exportDataTable()" />
+                        </div>
+                    }
                 </div>
             </div>
         </ng-template>
@@ -232,16 +234,6 @@
                 <td class="font-light">{{ detalle.serieFinal }}</td>
                 <td class="font-light">{{ detalle.trabajoRealizado }}</td>
                 <td class="font-light">{{ detalle.estado }}</td>
-
-                <!-- <td>
-                    <p-tag [value]="detalle.estado == 1 ? 'Activo' : 'Inactivo'" [severity]="getSeverity(detalle.estado)" />
-                </td>
-                <td>
-                    <p-button icon="pi pi-eye" class="mr-2" [rounded]="true" pTooltip="Ver Detalle" tooltipPosition="top" (click)="onViewDetail(liquidacion)" />
-                    <p-button icon="pi pi-pencil" severity="info" class="mr-2" pTooltip="Editar" tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="OnEditModal(liquidacion)" />
-                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" pTooltip="Eliminar" tooltipPosition="top" [outlined]="true" (click)="onDeleteModal(liquidacion)" />
-                </td>
-                 -->
             </tr>
         </ng-template>
     </p-table>

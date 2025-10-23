@@ -30,4 +30,9 @@ export class RemanufacturaDetalleService {
             responseType: 'blob'
         });
     }
+
+    exportDataTable(nombreLiquidacion: string | undefined) {
+        const query = `${API.URL}/LiquidacionRemanufacturaDetalle/Exportar/${nombreLiquidacion}`;
+        return this.http.get(query, { responseType: 'blob' });
+    }
 }

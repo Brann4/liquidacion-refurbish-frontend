@@ -24,13 +24,6 @@ export class RemanufacturaDetalleService {
     createDetail(data: any) {
         return this.http.post<ApiResponseSingle<ImportPreviewResponse>>(`${API.URL}/LiquidacionRemanufacturaDetalle/Importacion/Guardar`, data);
     }
-
-    fakeDataExport(id: number) {
-        return this.http.get(`${API.URL}/LiquidacionRecuperoDetalle/export/${id}`, {
-            responseType: 'blob'
-        });
-    }
-
     exportDataTable(nombreLiquidacion: string | undefined) {
         const query = `${API.URL}/LiquidacionRemanufacturaDetalle/Exportar/${nombreLiquidacion}`;
         return this.http.get(query, { responseType: 'blob' });

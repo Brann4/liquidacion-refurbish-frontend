@@ -119,8 +119,8 @@ export const PartidaStore = signalStore(
             });
         },
 
-        delete(id: number, nombre: string) {
-            partidaService.delete(id, nombre).subscribe({
+        delete(id: number) {
+            partidaService.delete(id).subscribe({
                 next: (response) => {
                     if (response.value == Eliminar.Correcto) {
                         toast.success(response.msg || 'Eliminado correctamente');

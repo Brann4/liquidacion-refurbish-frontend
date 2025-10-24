@@ -32,9 +32,9 @@ export class AppMenu {
                         routerLink: ['/pages/remanufactura']
                     },
                     {
-                        label: 'Post Venta',
+                        label: 'Recupero',
                         icon: 'pi pi-fw pi-box',
-                        routerLink: ['/pages/postventa']
+                        routerLink: ['/pages/recupero']
                     }
                 ]
             },

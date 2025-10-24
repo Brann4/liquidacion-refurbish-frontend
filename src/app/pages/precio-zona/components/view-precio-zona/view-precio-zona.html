@@ -1,0 +1,116 @@
+<div class="flex flex-col gap-6">
+    <p-toolbar>
+        <ng-template #start>
+            <div class="flex flex-col gap-4">
+                <div class="flex gap-4 items-end">
+                    <div class="min-w-[250px]">
+                        <p-select
+                            [options]="contratas()"
+                            [(ngModel)]="selectedContrata"
+                            (onChange)="onContrataChange($event.value)"
+                            optionLabel="razonSocial"
+                            placeholder="Selecciona una contrata"
+                            class="w-full"
+                            [filter]="true"
+                            filterBy="razonSocial,ruc"
+                            [showClear]="true"
+                        />
+                    </div>
+                    <p-button
+                        label="Nuevo Precio"
+                        icon="pi pi-plus"
+                        severity="primary"
+                        (onClick)="openCreateModal()"
+                        [disabled]="!selectedContrata()"
+                        [title]="!selectedContrata() ? 'Selecciona una contrata primero' : 'Crear nuevo precio de zona'"
+                    />
+                </div>
+            </div>
+        </ng-template>
+    </p-toolbar>
+
+    @if (selectedContrata()) {
+        <p-card>
+            <p-table
+                dataKey="id"
+                [value]="preciosZona()"
+                [rows]="10"
+                [rowHover]="true"
+                [paginator]="true"
+                [showCurrentPageReport]="true"
+                [rowsPerPageOptions]="[10, 20, 30]"
+                currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"
+                [tableStyle]="{ 'min-width': '75rem' }"
+                [loading]="isLoading()"
+            >
+                <ng-template #caption>
+                    <div class="flex items-center justify-between">
+                        <h5>Precios de Zona - {{ selectedContrata()?.razonSocial }}</h5>
+                    </div>
+                </ng-template>
+                <ng-template #header>
+                    <tr>
+                        <th>
+                            Id
+                        </th>
+                        <th pSortableColumn="tipoZonaId" style="width:30%">
+                            <div class="flex items-center gap-2">
+                                Tipo de Zona
+                                <p-sortIcon field="tipoZonaId" />
+                            </div>
+                        </th>
+                        <th pSortableColumn="precio" style="width:30%">
+                            <div class="flex items-center gap-2">
+                                Precio
+                                <p-sortIcon field="precio" />
+                            </div>
+                        </th>
+                        <th>
+                            Acciones
+                        </th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-item>
+                    <tr>
+                        <td>{{ item.id }}</td>
+                        <td>
+                            <p-tag [value]="getTipoZonaLabel(item.tipoZonaId)"
+                                   [severity]="getTipoZonaSeverity(item.tipoZonaId)" />
+                        </td>
+                        <td>
+                            <span class="font-semibold">{{ item.precio | formatCurrency }}</span>
+                        </td>
+                        <td>
+                            <div class="flex items-center gap-2">
+                                <p-button icon="pi pi-pencil" [rounded]="true" [outlined]="true"
+                                          (click)="onEditPrecioZona(item)" title="Editar precio de zona" />
+                                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
+                                          (click)="onDeletePrecioZona(item)" title="Eliminar precio de zona" />
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template #emptymessage>
+                    <tr>
+                        <td colspan="5" class="text-center py-4">
+                            <div class="flex flex-col items-center gap-2">
+                                <i class="pi pi-info-circle" style="font-size: 1.5rem"></i>
+                                <span>No se encontraron precios de zona para esta contrata</span>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </p-card>
+    } @else {
+        <p-card>
+            <div class="flex flex-col items-center gap-4 py-8">
+                <i class="pi pi-building" style="font-size: 2.5rem"></i>
+                <h5 style="margin: 0;">Selecciona una contrata</h5>
+                <p>Elige una contrata de la lista desplegable para ver y gestionar sus precios de zona</p>
+            </div>
+        </p-card>
+    }
+</div>
+
+<app-precio-zona-modal />

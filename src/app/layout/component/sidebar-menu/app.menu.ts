@@ -52,7 +52,12 @@ export class AppMenu {
                     {
                         label: 'Contrata',
                         icon: 'pi pi-fw pi-box',
-                        routerLink: ['/pages/contrata']
+                        routerLink: ['pages/contrata']
+                    },
+                    {
+                        label: 'Precio Zona',
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['pages/precio-zona']
                     }
                 ]
             },
@@ -70,11 +75,10 @@ export class AppMenu {
                         label: 'Roles',
                         icon: 'pi pi-fw pi-box',
                         routerLink: ['/pages/rol']
-                    },
-
+                    }
                 ]
-            },
-/*
+            }
+            /*
             {
                 label: 'Hierarchy',
                 items: [

@@ -10,8 +10,7 @@ import { Helper } from '@/utils/Helper';
 import { ToastService } from '@/layout/service/toast.service';
 import { RemanufacturaDetalleService } from '../../services/remanufactura-detalle.service';
 import { FileUpload } from 'primeng/fileupload';
-import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
-import { DTOLiquidacionRemanufacturaDetalle } from '../../entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle';
+import { ConfirmationService, MessageService } from 'primeng/api';
 
 @Component({
     selector: 'remanufactura-detail',
@@ -134,27 +133,10 @@ export class RemanufacturaDetailComponent implements OnInit {
     }
 
     exportDataTable() {
-        const data = this.remanufacturaDetalleStore.entities();
-        console.log(data);
+        const nombre = this.remanufacturaStore.entity()?.nombreLiquidacion;
+        if (!nombre) return this.toast.warn('No hay una liquidación seleccionada.');
 
-        /*this.remanufacturaDetalleService.fakeDataExport(1).subscribe({
-            next: (response) => {
-                const fileName = `LiquidacionRemanufactura_${new Date().toISOString().split('T')[0]}.xlsx`;
-
-                // Crea un enlace temporal y descarga el archivo
-                const url = window.URL.createObjectURL(response);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = fileName;
-                a.click();
-                window.URL.revokeObjectURL(url); // libera memoria
-
-                console.log('Archivo exportado correctamente.');
-            },
-            error(err) {
-                console.error('Error exportando archivo:', err);
-            }
-        });*/
+        this.remanufacturaDetalleStore.exportDataTable(nombre);
     }
 
     clearFilters(table: Table) {

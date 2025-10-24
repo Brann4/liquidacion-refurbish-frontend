@@ -13,6 +13,7 @@ export type RemanufacturaState = {
     isOpenCreate: boolean;
     isOpenEdit: boolean;
     isSubmitting: boolean;
+    isExporting:boolean;
     error: string | null;
 };
 
@@ -23,6 +24,7 @@ const initialState: RemanufacturaState = {
     isOpenCreate: false,
     isOpenEdit: false,
     isSubmitting: false,
+    isExporting: false,
     error: null
 };
 
@@ -31,7 +33,7 @@ export const RemanufacturaDetalleStore = signalStore(
     withState<RemanufacturaState>(initialState),
     withMethods((store, remanufacturaService = inject(RemanufacturaDetalleService), toast = inject(ToastService)) => ({
         clear() {
-            patchState(store, { isSubmitting: false, entityPreview: [], entity: null , entities: []});
+            patchState(store, { isSubmitting: false, entityPreview: [], entity: null, entities: [] });
         },
         openModalCreate() {
             patchState(store, { isOpenCreate: true });
@@ -95,26 +97,32 @@ export const RemanufacturaDetalleStore = signalStore(
                     toast.warn(`Advertencia: ${errorMsg}`);
                 }
             });
-        }
-
-        /*
-        update(data: DTOUpdateLiquidacionRemanufactura) {
-            patchState(store, { isSubmitting: true });
-
-            remanufacturaService.update(data).subscribe({
-                next: (response) => {
-                    patchState(store, { isSubmitting: false });
-                    toast.success('Liquidación actualizada correctamente.');
-                    this.getLiquidaciones(Estado.Todos);
-                    this.closeModalEdit();
-                },
-                error: (error) => {
-                    patchState(store, { isSubmitting: false, error: error.message });
-                    toast.warn(`Advertencia: ${error.msg}`);
-                }
-            });
         },
 
-            */
+        exportDataTable(nombreLiquidacion: string) {
+            patchState(store, { isExporting: true });
+
+            remanufacturaService.exportDataTable(nombreLiquidacion).subscribe({
+                next: (response) => {
+                    const fileName = `LiquidacionRemanufactura_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+                    // Crear enlace temporal para descargar el archivo
+                    const url = window.URL.createObjectURL(response);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+
+                    patchState(store, { isExporting: false });
+                    toast.success('Archivo descargado exitosamente');
+                },
+                error: (err) => {
+                    console.error('Error exportando archivo:', err);
+                    patchState(store, { isExporting: false, error: err.error?.message || 'Error al exportar.' });
+                    toast.warn('Error al exportar el archivo');
+                }
+            });
+        }
     }))
 );

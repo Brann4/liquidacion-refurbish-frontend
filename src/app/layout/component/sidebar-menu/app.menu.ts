@@ -63,6 +63,11 @@ export class AppMenu {
                         label: 'Contrata',
                         icon: 'pi pi-fw pi-box',
                         routerLink: ['pages/contrata']
+                    },
+                    {
+                        label: 'Precio Zona',
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['pages/precio-zona']
                     }
                     /*  {
                         label: 'Post Venta',

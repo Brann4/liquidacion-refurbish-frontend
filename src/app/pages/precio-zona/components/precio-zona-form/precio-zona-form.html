@@ -1,0 +1,54 @@
+<p-dialog
+    [modal]="true"
+    [visible]="visible()"
+    [breakpoints]="{ '650px': '90vw' }"
+    [style]="{ 'width': '30vw', 'min-width': '450px' }"
+    (visibleChange)="onDialogVisibilityChange($event)"
+    [header]="formTitle()"
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="false">
+
+    <ng-template #content>
+        <form [formGroup]="precioZonaForm" (ngSubmit)="onSubmitForm()" class="flex flex-col gap-4 p-4">
+            <div class="flex flex-col gap-2">
+                <label for="tipoZonaId" class="text-sm font-medium">Tipo de Zona</label>
+                <p-select
+                    id="tipoZonaId"
+                    formControlName="tipoZonaId"
+                    [options]="tipoZonaOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Selecciona el tipo de zona"
+                    [invalid]="isInvalid(controls.tipoZonaId)"
+                    class="w-full"
+                />
+                @if (isInvalid(controls.tipoZonaId)) {
+                    <app-form-control-error [control]="controls.tipoZonaId" controlName="Tipo de Zona" />
+                }
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label for="precio" class="text-sm font-medium">Precio</label>
+                <p-inputnumber
+                    id="precio"
+                    formControlName="precio"
+                    mode="currency"
+                    currency="PEN"
+                    locale="es-PE"
+                    placeholder="0.00"
+                    [invalid]="isInvalid(controls.precio)"
+                    class="w-full"></p-inputnumber>
+                @if (isInvalid(controls.precio)) {
+                    <app-form-control-error [control]="controls.precio" controlName="Precio" />
+                }
+            </div>
+        </form>
+    </ng-template>
+
+    <ng-template #footer>
+        <p-button label="Cancelar" icon="pi pi-times" text (click)="onCancelForm()" />
+        <p-button label="Guardar" icon="pi pi-check" (click)="onSubmitForm()" [loading]="isLoading()"
+                  [disabled]="isLoading()" />
+    </ng-template>
+</p-dialog>

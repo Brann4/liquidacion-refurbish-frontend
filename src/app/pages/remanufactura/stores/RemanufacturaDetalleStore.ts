@@ -13,7 +13,7 @@ export type RemanufacturaState = {
     isOpenCreate: boolean;
     isOpenEdit: boolean;
     isSubmitting: boolean;
-    isExporting:boolean;
+    isExporting: boolean;
     error: string | null;
 };
 
@@ -104,13 +104,29 @@ export const RemanufacturaDetalleStore = signalStore(
 
             remanufacturaService.exportDataTable(nombreLiquidacion).subscribe({
                 next: (response) => {
-                    const fileName = `LiquidacionRemanufactura_${new Date().toISOString().split('T')[0]}.xlsx`;
+                    const blob = response.body;
+                    if (!blob || blob.size === 0) {
+                        // Manejar caso de blob vacío o nulo
+                        patchState(store, { isExporting: false });
+                        toast.warn('El archivo devuelto por el servidor está vacío.');
+                        return;
+                    }
 
-                    // Crear enlace temporal para descargar el archivo
-                    const url = window.URL.createObjectURL(response);
+                    // 2. Extrae el nombre del archivo del header 'Content-Disposition'
+                    const contentDisposition = response.headers.get('content-disposition');
+                    let fileName = `Reporte_${new Date().toISOString().split('T')[0]}`; // Nombre por defecto
+
+                    if (contentDisposition) {
+                        const fileNameMatch = contentDisposition.match(/filename="?(.+)"?/i);
+                        if (fileNameMatch && fileNameMatch.length > 1) {
+                            fileName = fileNameMatch[1]; // Usa el nombre del header
+                        }
+                    }
+
+                    const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = fileName;
+                    a.download = fileName; // <-- Usa el nombre extraído o el por defecto
                     a.click();
                     window.URL.revokeObjectURL(url);
 

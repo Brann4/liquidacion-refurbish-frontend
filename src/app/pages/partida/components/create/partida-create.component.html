@@ -1,0 +1,50 @@
+<p-dialog header="Nueva Liquidacion" [modal]="true" [visible]="partidaStore.isOpenCreate()" [breakpoints]="{ '450px': '90vw', '640px': '100vw' }" (visibleChange)="handleCloseModal()">
+    <ng-template #content>
+        <form class="flex-col pt-2  rounded-xl p-4" [formGroup]="createForm" (ngSubmit)="handleSubmit()">
+            <div class="flex flex-col gap-6">
+                <div class="flex flex-col gap-1">
+                    <label class="font-bold block mb-2">Nombre <span class="text-red-700">*</span></label>
+                    <input type="text" class="w-full" pInputText formControlName="partidaNombre" [invalid]="isInvalid('partidaNombre')" required />
+                    @if (isInvalid('partidaNombre')) {
+                        <p-message severity="error" size="small" variant="simple">Nombre de partida no valido </p-message>
+                    }
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <label class="font-bold block mb-2">Precio General: <span class="text-red-700">*</span></label>
+                    <p-input-number  mode="currency" class="w-full" formControlName="precioGeneral" [invalid]="isInvalid('precioGeneral')" required />
+                    @if (isInvalid('precioGeneral')) {
+                        <p-message severity="error" size="small" variant="simple">Precio General no valido </p-message>
+                    }
+                </div>
+
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-1 pt-4">
+                        <div class="flex-auto">
+                            <label for="icondisplay" class="font-bold block mb-2"> Fecha de ingreso <span class="text-red-700">*</span> </label>
+                            <p-datepicker [iconDisplay]="'input'" formControlName="fechaIngreso" appendTo="body" [showIcon]="true" inputId="icondisplay" />
+                        </div>
+                        @if (isInvalid('fechaIngreso')) {
+                            <p-message severity="error" size="small" variant="simple">Fecha no valida </p-message>
+                        }
+                    </div>
+                    <div class="flex-1 pt-4">
+                        <label class="font-bold block mb-2"> Estado <span class="text-red-700">*</span></label>
+                        <div class="flex flex-col gap-1">
+                            <p-select-button class="p-1" [options]="stateOptions()" formControlName="estado" [invalid]="isInvalid('value')" optionLabel="label" optionValue="value" />
+                            @if (isInvalid('estado')) {
+                                <p-message severity="error" size="small" variant="simple">Debe de seleccionar un estado</p-message>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+    </ng-template>
+
+    <ng-template #footer>
+        <p-button label="Cancelar" icon="pi pi-times" text (click)="handleCloseModal()" />
+        <p-button label="Guardar" icon="pi pi-check" (click)="handleSubmit()" />
+    </ng-template>
+</p-dialog>

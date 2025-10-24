@@ -12,7 +12,7 @@
     <p-table
         #dt
         dataKey="id"
-        [value]="this.remanufacturaStore.entities()"
+        [value]="partidaStore.entities()"
         [tableStyle]="{ 'min-width': '75rem' }"
         [rows]="10"
         [paginator]="true"
@@ -88,8 +88,8 @@
         </ng-template>
     </p-table>
 </p-card>
-
+<!--
 <app-remanufactura-create />
 <app-remanufactura-edit />
-
+-->
 <p-confirmdialog [style]="{ width: '450px' }" />

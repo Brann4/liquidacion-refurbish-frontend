@@ -10,17 +10,19 @@ import { RolStore } from '../../stores/RolStore';
 import { DTOUpdateRol } from '../../entities/DTOUpdateRol';
 import { RolEditComponent } from '../edit/rol-edit.component';
 import { RolCreateComponent } from '../create/rol-create.component';
+import { BreadcrumbHeader } from '@/layout/component/breadcrumb/breadcrumb.header';
 
 @Component({
     selector: 'app-rol-list',
     standalone: true,
-    imports: [PrimeModules, RolEditComponent, RolCreateComponent],
+    imports: [PrimeModules, RolEditComponent, RolCreateComponent, BreadcrumbHeader],
     templateUrl: './rol-list.component.html',
     styleUrl: './rol-list.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [MessageService, ConfirmationService]
 })
 export class RolListComponent implements OnInit {
+    breadcrumbs = [{ label: 'Roles' }];
     rolDialog: boolean = false;
     roles = signal<DTORol[]>([]);
     submitted = signal<boolean>(false);

@@ -13,35 +13,28 @@ import { RemanufacturaCreateComponent } from '../create/remanufactura-create.com
 import { DTOUpdateLiquidacionRemanufactura } from '../../entities/remanufactura/DTOUpdateLiquidacionRemanufactura';
 import { EditComponent } from '../edit/remanufactura-edit.component';
 import { ActivatedRoute, Router } from '@angular/router';
-
-interface Column {
-    field: string;
-    header: string;
-    customExportHeader?: string;
-}
-
-interface ExportColumn {
-    title: string;
-    dataKey: string;
-}
+import { RemanufacturaDetalleStore } from '../../stores/RemanufacturaDetalleStore';
+import { BreadcrumbHeader } from '@/layout/component/breadcrumb/breadcrumb.header';
 
 @Component({
     selector: 'remanufactura-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, PrimeModules, ShortDatePipe, RemanufacturaCreateComponent, EditComponent],
+    imports: [CommonModule, FormsModule, PrimeModules, ShortDatePipe, RemanufacturaCreateComponent, EditComponent, BreadcrumbHeader],
     templateUrl: './remanufactura-list.component.html',
     providers: [MessageService, ConfirmationService]
 })
 export class RemanufacturaListComponent implements OnInit {
+    breadcrumbs = [{ label: 'Remanufactura' }];
+
     productDialog: boolean = false;
     liquidaciones = signal<DTOLiquidacionRemanufactura[]>([]);
     submitted = signal<boolean>(false);
     statuses!: any[];
     @ViewChild('dt') dt!: Table;
-    exportColumns!: ExportColumn[];
-    cols!: Column[];
 
     remanufacturaStore = inject(RemanufacturaStore);
+    remanufacturaDetalleStore = inject(RemanufacturaDetalleStore);
+
     confirmationService = inject(ConfirmationService);
     router = inject(Router);
     route = inject(ActivatedRoute);
@@ -73,6 +66,7 @@ export class RemanufacturaListComponent implements OnInit {
     }
 
     onViewDetail(liquidacion: DTOLiquidacionRemanufactura) {
+        this.remanufacturaStore.clear();
         this.router.navigate([liquidacion.id], { relativeTo: this.route });
     }
 

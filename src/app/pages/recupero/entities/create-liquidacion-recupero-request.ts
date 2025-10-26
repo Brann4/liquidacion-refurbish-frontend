@@ -1,5 +1,5 @@
 export interface CreateLiquidacionRecuperoRequest {
     contrataId: number;
-    fechaIngreso: Date;
+    fechaIngreso: string;
     usuarioId: number;
 }

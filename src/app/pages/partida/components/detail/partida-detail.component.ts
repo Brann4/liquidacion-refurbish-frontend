@@ -124,8 +124,31 @@ export class PartidaDetailComponent implements OnInit {
         table.filterGlobal('', '');
     }
 
-    onDeleteModal(id: number | null) {
-        if (id || id != null) this.partidaDetalleStore.delete(id);
+    onDeleteModal(data: DTOPartidaItem) {
+        if (data.id || data.id != null) {
+            this.confirmationService.confirm({
+                message: `Estas seguro que desea eliminar ${data.descripcion} ?`,
+                header: 'Confirmación',
+                icon: 'pi pi-exclamation-triangle',
+                acceptButtonProps: {
+                    label: 'Eliminar',
+                    severity: 'danger'
+                },
+                rejectButtonProps: {
+                    label: 'Cancelar',
+                    severity: 'secondary',
+                    text: true
+                },
+                acceptIcon: 'pi pi-check',
+                rejectIcon: 'pi pi-times',
+                accept: () => {
+                    this.partidaDetalleStore.delete(data, this.partidaStore.entity()!.id);
+                },
+                reject: () => {
+                    console.log('ERROR');
+                }
+            });
+        }
     }
 
     onRowEditInit(data: DTOPartidaItem) {

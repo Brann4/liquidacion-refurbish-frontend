@@ -122,14 +122,12 @@ export const PartidaStore = signalStore(
         delete(id: number) {
             partidaService.delete(id).subscribe({
                 next: (response) => {
-                    if (response.value == Eliminar.Correcto) {
-                        toast.success(response.msg || 'Eliminado correctamente');
-                    }
+                    toast.info('Partida eliminada correctamente.');
                     this.list(Estado.Todos);
                 },
                 error: (error) => {
                     patchState(store, { isSubmitting: false, error: error.message });
-                    toast.error(error.error.msg);
+                    toast.error(error.error.msg || "Error al enviar solicitud al servidor");
                 }
             });
         }

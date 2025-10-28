@@ -111,15 +111,15 @@ export const PartidaDetalleStore = signalStore(
             });
         },
 
-        delete(id: number) {
-            partidaDetalleService.delete(id).subscribe({
+        delete(data: DTOPartidaItem, idPartida: number) {
+            partidaDetalleService.delete(data.id).subscribe({
                 next: (response) => {
                     toast.success(response.msg || 'Eliminado correctamente');
-                    this.getDetailData(response.value.id, Estado.Todos);
+                    this.getDetailData(idPartida, Estado.Todos);
                 },
                 error: (error) => {
                     patchState(store, { isSubmitting: false, error: error.message });
-                    toast.error(error.error.msg);
+                    toast.error(error.error.msg || "Error al enviar solicitud al servidor");
                 }
             });
         }

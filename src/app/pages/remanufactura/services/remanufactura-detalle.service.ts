@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { environment } from 'src/environments/environment.development';
@@ -24,8 +24,8 @@ export class RemanufacturaDetalleService {
     createDetail(data: any) {
         return this.http.post<ApiResponseSingle<ImportPreviewResponse>>(`${API.URL}/LiquidacionRemanufacturaDetalle/Importacion/Guardar`, data);
     }
-    exportDataTable(nombreLiquidacion: string | undefined) {
+    exportDataTable(nombreLiquidacion: string | undefined) : Observable<HttpResponse<Blob>> {
         const query = `${API.URL}/LiquidacionRemanufacturaDetalle/Exportar/${nombreLiquidacion}`;
-        return this.http.get(query, { responseType: 'blob' });
+        return this.http.get(query, {observe: 'response', responseType: 'blob' });
     }
 }

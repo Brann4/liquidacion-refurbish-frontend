@@ -1,39 +1,40 @@
 import { Component, inject, OnInit, signal, ViewChild } from '@angular/core';
-import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { Table } from 'primeng/table';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Estado } from '@/utils/Constants';
-import { DTOLiquidacionRemanufactura } from '../../entities/remanufactura/DTOLiquidacionRemanufactura';
-import { RemanufacturaStore } from '../../stores/RemanufacturaStore';
 import { Helper } from '@/utils/Helper';
 import { ShortDatePipe } from '@/layout/pipes/shortDate.pipe';
 import { PrimeModules } from '@/utils/PrimeModule';
-import { RemanufacturaCreateComponent } from '../create/remanufactura-create.component';
-import { DTOUpdateLiquidacionRemanufactura } from '../../entities/remanufactura/DTOUpdateLiquidacionRemanufactura';
-import { EditComponent } from '../edit/remanufactura-edit.component';
 import { ActivatedRoute, Router } from '@angular/router';
-import { RemanufacturaDetalleStore } from '../../stores/RemanufacturaDetalleStore';
 import { BreadcrumbHeader } from '@/layout/component/breadcrumb/breadcrumb.header';
+import type { DTOPartida } from '../../entities/partida/DTOPartida';
+import { PartidaStore } from '../../stores/PartidaStore';
+import { PartidaDetalleStore } from '../../stores/PartidaDetalleStore';
+import { DTOUpdatePartida } from '../../entities/partida/DTOUpdatePartida';
+import { FormatCurrencyPipe } from '@/utils/format-currency-pipe';
+import { PartidaCreateComponent } from "../create/partida-create.component";
+import { PartidaEditComponent } from "../edit/partida-edit.component";
 
 @Component({
-    selector: 'remanufactura-list',
+    selector: 'partida-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, PrimeModules, ShortDatePipe, RemanufacturaCreateComponent, EditComponent, BreadcrumbHeader],
-    templateUrl: './remanufactura-list.component.html',
+    imports: [CommonModule, FormsModule, PrimeModules, FormatCurrencyPipe /*, RemanufacturaCreateComponent, EditComponent*/, BreadcrumbHeader, PartidaCreateComponent, PartidaEditComponent],
+    templateUrl: './partida-list.component.html',
     providers: [MessageService, ConfirmationService]
 })
-export class RemanufacturaListComponent implements OnInit {
-    breadcrumbs = signal<MenuItem[]>([{ label: 'Remanufactura' }]);
+export class PartidaListComponent implements OnInit {
+    breadcrumbs = [{ label: 'Partida' }];
 
     productDialog: boolean = false;
-    liquidaciones = signal<DTOLiquidacionRemanufactura[]>([]);
+    liquidaciones = signal<DTOPartida[]>([]);
     submitted = signal<boolean>(false);
     statuses!: any[];
     @ViewChild('dt') dt!: Table;
 
-    remanufacturaStore = inject(RemanufacturaStore);
-    remanufacturaDetalleStore = inject(RemanufacturaDetalleStore);
+    partidaStore = inject(PartidaStore);
+    partidaDetalleStore = inject(PartidaDetalleStore);
 
     confirmationService = inject(ConfirmationService);
     router = inject(Router);
@@ -44,7 +45,7 @@ export class RemanufacturaListComponent implements OnInit {
     }
 
     loadData() {
-        this.remanufacturaStore.getLiquidaciones(Estado.Todos);
+        this.partidaStore.list(Estado.Todos);
     }
 
     exportCSV() {
@@ -56,17 +57,17 @@ export class RemanufacturaListComponent implements OnInit {
     }
 
     openCreateModal() {
-        this.remanufacturaStore.openModalCreate();
+        this.partidaStore.openModalCreate();
     }
 
-    OnEditModal(liquidacion: any) {
-        if (liquidacion) {
-            this.remanufacturaStore.openModalEdit(liquidacion as DTOUpdateLiquidacionRemanufactura);
+    OnEditModal(entity: any) {
+        if (entity) {
+            this.partidaStore.openModalEdit(entity as DTOUpdatePartida);
         }
     }
 
-    onViewDetail(liquidacion: DTOLiquidacionRemanufactura) {
-        this.remanufacturaStore.clear();
+    onViewDetail(liquidacion: any) {
+        this.partidaStore.clear();
         this.router.navigate([liquidacion.id], { relativeTo: this.route });
     }
 
@@ -75,9 +76,9 @@ export class RemanufacturaListComponent implements OnInit {
         this.submitted.set(false);
     }
 
-    onDeleteModal(liquidacion: DTOLiquidacionRemanufactura) {
+    onDeleteModal(liquidacion: DTOPartida) {
         this.confirmationService.confirm({
-            message: `Estas seguro que desea eliminar ${liquidacion.nombreLiquidacion} ?`,
+            message: `Estas seguro que desea eliminar ${liquidacion.partidaNombre} ?`,
             header: 'Confirmación',
             icon: 'pi pi-exclamation-triangle',
             acceptButtonProps: {
@@ -92,7 +93,7 @@ export class RemanufacturaListComponent implements OnInit {
             acceptIcon: 'pi pi-check',
             rejectIcon: 'pi pi-times',
             accept: () => {
-                this.remanufacturaStore.delete(liquidacion.id, liquidacion.nombreLiquidacion);
+                this.partidaStore.delete(liquidacion.id);
             },
             reject: () => {
                 console.log('ERROR');

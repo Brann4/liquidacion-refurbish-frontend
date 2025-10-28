@@ -1,5 +1,5 @@
 import { PrimeModules } from '@/utils/PrimeModule';
-import { ChangeDetectionStrategy, Component, effect, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RemanufacturaStore } from '../../stores/RemanufacturaStore';
 import { ShortDatePipe } from '@/layout/pipes/shortDate.pipe';
@@ -35,6 +35,8 @@ export class RemanufacturaDetailComponent implements OnInit {
 
     showImportDialog = signal<boolean>(false);
     loadingImport = signal<boolean>(false);
+    statusActive = computed(() => !!this.remanufacturaStore.entity()?.estado);
+
     @ViewChild('fileUploader') fileUploader?: FileUpload;
 
     constructor() {
@@ -50,6 +52,7 @@ export class RemanufacturaDetailComponent implements OnInit {
                 }
             }
         });
+        this.verifyStatus();
     }
 
     ngOnInit(): void {
@@ -66,8 +69,12 @@ export class RemanufacturaDetailComponent implements OnInit {
         table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
     }
 
-    handleToggleImport() {
-        this.showImportDialog.set(!this.showImportDialog());
+    handleToggleImport(entityStatus?: number) {
+        if(entityStatus == 1){
+            this.showImportDialog.set(!this.showImportDialog());
+        }else{
+            this.toast.warn("La liquidacion debe de estar activada")
+        }
     }
 
     getSeverity(status: number) {
@@ -101,6 +108,10 @@ export class RemanufacturaDetailComponent implements OnInit {
 
         this.loadingImport.set(false);
         this.showImportDialog.set(false);
+    }
+
+    verifyStatus(){
+        return !!this.remanufacturaStore.entity()?.estado
     }
 
     handleSubmitDetail() {

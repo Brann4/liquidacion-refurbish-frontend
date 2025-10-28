@@ -1,0 +1,67 @@
+<p-dialog header="Nueva Partida" [modal]="true" [visible]="partidaStore.isOpenCreate()" [breakpoints]="{ '575px': '100vw' }" [style]="{ width: '500px', maxHeight: '100%' }" (visibleChange)="handleCloseModal()">
+    <ng-template #content>
+        <form class="flex-col pt-2 rounded-xl p-4" [formGroup]="createForm" (ngSubmit)="handleSubmit()">
+            <div class="flex flex-col gap-6">
+                <div class="flex flex-col gap-1">
+                    <label class="font-bold block mb-2">Codigo <span class="text-red-700">*</span></label>
+                    <input type="text" class="w-full" pInputText formControlName="codigo" [invalid]="isInvalid('codigo')" required />
+                    @if (isInvalid('codigo')) {
+                        <p-message severity="error" size="small" variant="simple">Codigo no valido </p-message>
+                    }
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="font-bold block mb-2">Nombre <span class="text-red-700">*</span></label>
+                    <input type="text" class="w-full" pInputText formControlName="partidaNombre" [invalid]="isInvalid('partidaNombre')" required />
+                    @if (isInvalid('partidaNombre')) {
+                        <p-message severity="error" size="small" variant="simple">Nombre de partida no valido </p-message>
+                    }
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <label class="font-bold block mb-2">Precio General: <span class="text-red-700">*</span></label>
+                    <p-input-number class="w-full" formControlName="precioGeneral" [invalid]="isInvalid('precioGeneral')" required />
+                    @if (isInvalid('precioGeneral')) {
+                        <p-message severity="error" size="small" variant="simple">Precio General no valido </p-message>
+                    }
+                </div>
+
+                <div>
+                    <label class="font-bold block">Unidad Medida General <span class="text-red-700">*</span></label>
+                    <div class="flex flex-col gap-1">
+                        <p-select
+                            class="w-full"
+                            formControlName="unidadGeneral"
+                            appendTo="body"
+                            [options]="unidadesMedida()"
+                            optionLabel="label"
+                            optionValue="value"
+                            inputId="value"
+                            [filter]="true"
+                            filterBy="label"
+                            [showClear]="true"
+                            placeholder="Seleccione una unidad de medida"
+                            emptyFilterMessage="No se encontraron resultados"
+                            emptyMessage="No se encontraron resultados"
+                        >
+                        </p-select>
+                    </div>
+                </div>
+
+                <div class="flex-1 pt-4">
+                    <label class="font-bold block mb-2"> Estado <span class="text-red-700">*</span></label>
+                    <div class="flex flex-col gap-1">
+                        <p-select-button class="p-1" [options]="stateOptions()" formControlName="estado" [invalid]="isInvalid('value')" optionLabel="label" optionValue="value" />
+                        @if (isInvalid('estado')) {
+                            <p-message severity="error" size="small" variant="simple">Debe de seleccionar un estado</p-message>
+                        }
+                    </div>
+                </div>
+            </div>
+        </form>
+    </ng-template>
+
+    <ng-template #footer>
+        <p-button label="Cancelar" icon="pi pi-times" text (click)="handleCloseModal()" />
+        <p-button label="Guardar" icon="pi pi-check" (click)="handleSubmit()" />
+    </ng-template>
+</p-dialog>

@@ -58,6 +58,11 @@ export class AppMenu {
                         label: 'Precio Zona',
                         icon: 'pi pi-fw pi-box',
                         routerLink: ['pages/precio-zona']
+                    },
+                                        {
+                        label: 'Partidas',
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['pages/partida']
                     }
                 ]
             },

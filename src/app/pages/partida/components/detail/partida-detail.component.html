@@ -1,0 +1,180 @@
+<p-card>
+    <div class="px-4">
+        <div class="flex justify-between">
+            <p-button label="Volver" icon="pi pi-arrow-left" severity="secondary" (onClick)="goBack()"></p-button>
+        </div>
+
+        @if (!partidaStore.entity() && partidaStore.isSubmitting()) {
+            <div class="flex justify-center items-center">
+                <p-progressSpinner></p-progressSpinner>
+            </div>
+        } @else if (partidaStore.entity()) {
+            <p-toolbar class="my-6 flex items-center">
+                <ng-template #start>
+                    <div>
+                        <h2>
+                            <span class="text-3xl">Código:</span><span class="text-3xl text-primary"> {{ partidaStore.entity()?.codigo }}</span>
+                        </h2>
+                        <p>
+                            <span class="text-2xl max-w-[900px]"> {{ partidaStore.entity()?.partidaNombre }}</span>
+                        </p>
+                        <p>
+                            Precio General: <span class="text-lg max-w-[900px] block text-amber-500">{{ partidaStore.entity()?.precioGeneral | formatCurrency }}</span>
+                        </p>
+                        <p>
+                            Unidad de Medida General: <span class="text-lg max-w-[900px] block">{{ partidaStore.entity()?.unidadGeneral }}</span>
+                        </p>
+                    </div>
+                </ng-template>
+
+                <ng-template #end class="flex justify-end items-end">
+                    <p-tag icon="pi pi-info-circle" [value]="partidaStore.entity()!.estado ? 'Activo' : 'Inactivo'" [severity]="getSeverity(partidaStore.entity()!.estado)" />
+                </ng-template>
+            </p-toolbar>
+        } @else {
+            <div class="flex flex-col items-center">
+                <i class="pi pi-exclamation-triangle text-red-800" style="font-size: 2.5rem"></i>
+                <p class="text-red-800">No se pudo cargar el detalle.</p>
+            </div>
+        }
+    </div>
+</p-card>
+
+<p-card class="mt-4">
+    <p-table
+        #dt
+        dataKey="id"
+        editMode="row"
+        [value]="partidaDetalleStore.entities()"
+        [tableStyle]="{ 'min-width': '75rem' }"
+        [rows]="10"
+        [paginator]="true"
+        [globalFilterFields]="['descripcion']"
+        [rowHover]="true"
+        dataKey="id"
+        currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"
+        [showCurrentPageReport]="true"
+        [rowsPerPageOptions]="[10, 20, 30]"
+    >
+        <ng-template #caption>
+            <div class="flex flex-col-reverse md:flex-row items-center justify-between">
+                <div class="flex flex-col md:flex-row gap-2">
+                    <p-iconfield>
+                        <p-inputicon class="pi pi-search" />
+                        <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar por nombre" />
+                    </p-iconfield>
+                    <p-button label="Limpiar Filtros" [outlined]="true" icon="pi pi-filter-slash" (click)="clearFilters(dt)" />
+                </div>
+                <div class="flex flex-row gap-2">
+                    <div class="card flex">
+                        <p-button label="Agregar nuevo Item" icon="pi pi-plus" [disabled]="partidaStore.isSubmitting()" [loading]="partidaStore.isSubmitting()" (click)="openCreateModal()" />
+                    </div>
+                </div>
+            </div>
+        </ng-template>
+
+        <ng-template #header>
+            <tr>
+                <th style="width: 3rem">Item</th>
+
+                <th pSortableColumn="descripcion" style="min-width: 10rem">
+                    Descripcion
+                    <p-columnFilter type="text" field="descripcion" display="menu" />
+                </th>
+                <th pSortableColumn="plataforma" style="min-width: 10rem">
+                    Precio Individual
+                    <p-columnFilter type="text" field="plataforma" display="menu" />
+                </th>
+                <th pSortableColumn="plataforma" style="min-width: 10rem">
+                    Unidad Medida Individual
+                    <p-columnFilter type="text" field="plataforma" display="menu" />
+                </th>
+                <th pSortableColumn="codigoLiquidacion" style="min-width: 8rem">
+                    Estado
+                    <p-columnFilter type="text" field="codigoLiquidacion" display="menu" />
+                </th>
+                <th></th>
+            </tr>
+        </ng-template>
+
+        <ng-template #body let-detalle let-editing="editing" let-rowIndex="rowIndex">
+            <tr [pEditableRow]="detalle" [pSelectableRow]="detalle">
+                <td style="width: 3rem">
+                    {{ rowIndex + 1 }}
+                </td>
+                <td class="font-light">
+                    <p-cellEditor>
+                        <ng-template #input>
+                            <input pInputText type="text" [(ngModel)]="detalle.descripcion" />
+                        </ng-template>
+                        <ng-template #output>
+                            {{ detalle.descripcion }}
+                        </ng-template>
+                    </p-cellEditor>
+                </td>
+                <td class="font-light">
+                    <p-cellEditor>
+                        <ng-template #input>
+                            <input pInputText type="text" [(ngModel)]="detalle.precioItem" />
+                        </ng-template>
+                        <ng-template #output>
+                            {{ detalle.precioItem | formatCurrency }}
+                        </ng-template>
+                    </p-cellEditor>
+                </td>
+
+                <td class="font-light">
+                    <p-cellEditor>
+                        <ng-template #input>
+                            <p-select [options]="unidadesMedida()" appendTo="body" [(ngModel)]="detalle.unidadItem" [style]="{ width: '100%' }" />
+                        </ng-template>
+                        <ng-template #output>
+                            {{ detalle.unidadItem != '' ? detalle.unidadItem : 'S/N' }}
+                        </ng-template>
+                    </p-cellEditor>
+                </td>
+
+                <td>
+                    <p-cellEditor>
+                        <ng-template #input>
+                            <p-select [options]="statuses" appendTo="body" [(ngModel)]="detalle.estado" [style]="{ width: '100%' }" />
+                        </ng-template>
+                        <ng-template #output>
+                            <p-tag [value]="detalle.estado ? 'Activo' : 'Inactivo'" [severity]="getSeverity(detalle.estado)" />
+                        </ng-template>
+                    </p-cellEditor>
+                </td>
+
+                <td>
+                    <div>
+                        @if (!editing) {
+                            <button pButton pRipple type="button" pInitEditableRow icon="pi pi-pencil" (click)="onRowEditInit(detalle)" text rounded severity="secondary"></button>
+                        }
+
+                        @if (editing) {
+                            <button pButton pRipple type="button" pSaveEditableRow icon="pi pi-check" (click)="onRowEditSave(detalle)" text rounded severity="secondary"></button>
+                            <button pButton pRipple type="button" pCancelEditableRow icon="pi pi-times" (click)="onRowEditCancel(detalle, rowIndex)" text rounded severity="secondary"></button>
+                        }
+                    </div>
+
+                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" pTooltip="Eliminar" tooltipPosition="top" [outlined]="true" (click)="onDeleteModal(detalle)" />
+                </td>
+            </tr>
+        </ng-template>
+
+        <ng-template #emptymessage>
+            <tr>
+                <td colspan="13" class="text-center py-4">
+                    <div class="flex flex-col items-center gap-2">
+                        <i class="pi pi-info-circle" style="font-size: 1.5rem"></i>
+                        <span>No se encontraron datos para mostrar</span>
+                    </div>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</p-card>
+
+<partida-detail-create [partidaDetalleEntity]="this.partidaStore.entity()" />
+
+<p-confirmdialog [style]="{ width: '450px' }" />

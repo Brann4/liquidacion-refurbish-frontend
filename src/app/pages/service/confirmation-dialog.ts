@@ -17,7 +17,7 @@ export interface DialogOptions {
 export class ConfirmationDialog {
     private confirmationService = inject(ConfirmationService);
 
-    confirmDelete(message: string = '¿Realmente deseas eliminar este registro? Esta acción no se puede deshacer.'): Observable<boolean> {
+    confirmDelete(message: string = '¿Realmente deseas eliminar este elemento? Esta acción no se puede deshacer.'): Observable<boolean> {
         const options: DialogOptions = {
             header: 'Confirmar Eliminación',
             message: message,
@@ -28,12 +28,23 @@ export class ConfirmationDialog {
         return this.confirmAction(options);
     }
 
-    confirmSave(message: string = '¿Deseas guardar los cambios realizados?'): Observable<boolean> {
+    confirmSave(message: string = '¿Deseas guardar la información ingresada?'): Observable<boolean> {
         const options: DialogOptions = {
-            header: 'Confirmar Cambios',
+            header: 'Confirmar Guardado',
             message: message,
             icon: 'pi pi-save',
             acceptLabel: 'Guardar',
+            acceptSeverity: 'success'
+        };
+        return this.confirmAction(options);
+    }
+
+    confirmUpdate(message: string = '¿Deseas aplicar los cambios?'): Observable<boolean> {
+        const options: DialogOptions = {
+            header: 'Confirmar Cambios',
+            message: message,
+            icon: 'pi pi-pencil',
+            acceptLabel: 'Guardar Cambios',
             acceptSeverity: 'primary'
         };
         return this.confirmAction(options);

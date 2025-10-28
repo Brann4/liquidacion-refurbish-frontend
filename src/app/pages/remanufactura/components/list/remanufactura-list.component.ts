@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal, ViewChild } from '@angular/core';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { Table } from 'primeng/table';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -24,7 +24,7 @@ import { BreadcrumbHeader } from '@/layout/component/breadcrumb/breadcrumb.heade
     providers: [MessageService, ConfirmationService]
 })
 export class RemanufacturaListComponent implements OnInit {
-    breadcrumbs = [{ label: 'Remanufactura' }];
+    breadcrumbs = signal<MenuItem[]>([{ label: 'Remanufactura' }]);
 
     productDialog: boolean = false;
     liquidaciones = signal<DTOLiquidacionRemanufactura[]>([]);

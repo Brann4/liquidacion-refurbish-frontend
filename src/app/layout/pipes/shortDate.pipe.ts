@@ -5,8 +5,8 @@ import { Pipe, PipeTransform } from '@angular/core';
     standalone: true
 })
 export class ShortDatePipe implements PipeTransform {
-    transform(value: string | Date): string {
-        if (!value) return '';
+    transform(value: string | Date | null): string {
+        if (!value || value == null) return '';
         const date = new Date(value);
         const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
 

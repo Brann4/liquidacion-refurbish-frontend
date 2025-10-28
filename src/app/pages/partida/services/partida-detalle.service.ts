@@ -31,7 +31,7 @@ export class PartidaDetalleService {
         return this.http.put<ApiResponseSingle<DTOPartidaItem>>(`${API.URL}/PartidaDetalle/Editar`, data);
     }
 
-    delete(id: number, nombre: string) {
-        return this.http.delete<ApiResponseSingle<DTOPartidaItem>>(`${API.URL}/PartidaDetalle/Eliminar/${id}/${nombre}`);
+    delete(id: number) {
+        return this.http.delete<ApiResponseSingle<DTOPartidaItem>>(`${API.URL}/PartidaDetalle/Eliminar/${id}`);
     }
 }

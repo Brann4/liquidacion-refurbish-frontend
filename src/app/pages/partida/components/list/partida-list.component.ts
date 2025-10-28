@@ -9,20 +9,23 @@ import { ShortDatePipe } from '@/layout/pipes/shortDate.pipe';
 import { PrimeModules } from '@/utils/PrimeModule';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BreadcrumbHeader } from '@/layout/component/breadcrumb/breadcrumb.header';
-import { DTOPartida } from '../../entities/partida/DTOPartida';
+import type { DTOPartida } from '../../entities/partida/DTOPartida';
 import { PartidaStore } from '../../stores/PartidaStore';
 import { PartidaDetalleStore } from '../../stores/PartidaDetalleStore';
 import { DTOUpdatePartida } from '../../entities/partida/DTOUpdatePartida';
+import { FormatCurrencyPipe } from '@/utils/format-currency-pipe';
+import { PartidaCreateComponent } from "../create/partida-create.component";
+import { PartidaEditComponent } from "../edit/partida-edit.component";
 
 @Component({
     selector: 'partida-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, PrimeModules, ShortDatePipe/*, RemanufacturaCreateComponent, EditComponent*/, BreadcrumbHeader],
+    imports: [CommonModule, FormsModule, PrimeModules, FormatCurrencyPipe /*, RemanufacturaCreateComponent, EditComponent*/, BreadcrumbHeader, PartidaCreateComponent, PartidaEditComponent],
     templateUrl: './partida-list.component.html',
     providers: [MessageService, ConfirmationService]
 })
-export class RemanufacturaListComponent implements OnInit {
-    breadcrumbs = [{ label: 'Remanufactura' }];
+export class PartidaListComponent implements OnInit {
+    breadcrumbs = [{ label: 'Partida' }];
 
     productDialog: boolean = false;
     liquidaciones = signal<DTOPartida[]>([]);
@@ -42,7 +45,7 @@ export class RemanufacturaListComponent implements OnInit {
     }
 
     loadData() {
-        this.partidaStore.getLiquidaciones(Estado.Todos);
+        this.partidaStore.list(Estado.Todos);
     }
 
     exportCSV() {

@@ -1,34 +1,38 @@
 import { PrimeModules } from '@/utils/PrimeModule';
 import { ChangeDetectionStrategy, Component, effect, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { RemanufacturaStore } from '../../stores/RemanufacturaStore';
 import { ShortDatePipe } from '@/layout/pipes/shortDate.pipe';
-import { RemanufacturaDetalleStore } from '../../stores/RemanufacturaDetalleStore';
-import { Estado } from '@/utils/Constants';
 import { Table } from 'primeng/table';
 import { Helper } from '@/utils/Helper';
 import { ToastService } from '@/layout/service/toast.service';
-import { RemanufacturaDetalleService } from '../../services/remanufactura-detalle.service';
 import { FileUpload } from 'primeng/fileupload';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService, SelectItem } from 'primeng/api';
+import { PartidaStore } from '../../stores/PartidaStore';
+import { PartidaDetalleStore } from '../../stores/PartidaDetalleStore';
+import { Estado } from '@/utils/Constants';
+import { FormatCurrencyPipe } from '@/utils/format-currency-pipe';
+import { DTOUpdatePartidaItem } from '../../entities/partidaItem/DTOUpdatePartidaItem';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { DTOPartidaItem } from '../../entities/partidaItem/DTOPartidaItem';
+import { PartidaDetailCreate } from './create-detail/partida-detail-create.component';
 
 @Component({
     selector: 'partida-detail',
     standalone: true,
-    imports: [PrimeModules, ShortDatePipe],
+    imports: [PrimeModules, FormatCurrencyPipe, CommonModule, FormsModule, PartidaDetailCreate],
     templateUrl: './partida-detail.component.html',
     styleUrl: './partida-detail.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [MessageService, ConfirmationService]
 })
-export class RemanufacturaDetailComponent implements OnInit {
+export class PartidaDetailComponent implements OnInit {
     breadcrumbs = [{ label: 'Remanufactura' }];
 
     route = inject(ActivatedRoute);
     router = inject(Router);
-    remanufacturaStore = inject(RemanufacturaStore);
-    remanufacturaDetalleStore = inject(RemanufacturaDetalleStore);
-    remanufacturaDetalleService = inject(RemanufacturaDetalleService);
+    partidaStore = inject(PartidaStore);
+    partidaDetalleStore = inject(PartidaDetalleStore);
 
     toast = inject(ToastService);
     confirmationService = inject(ConfirmationService);
@@ -37,16 +41,23 @@ export class RemanufacturaDetailComponent implements OnInit {
     loadingImport = signal<boolean>(false);
     @ViewChild('fileUploader') fileUploader?: FileUpload;
 
+    statuses!: SelectItem[];
+    clonedProducts: { [s: number]: DTOPartidaItem } = {};
+
+    unidadesMedida = signal<{ label: string; value: string }[]>([
+        { label: 'MOVIMIENTO', value: 'Mov' },
+        { label: 'PERSONA', value: 'Persona' },
+        { label: 'DÍA', value: 'dia' },
+        { label: 'HORAS', value: 'hrs' },
+        { label: 'UNIDAD', value: 'und' }
+    ]);
+
     constructor() {
         effect(() => {
-            const entity = this.remanufacturaStore.entity();
+            const entity = this.partidaStore.entity();
             if (entity) {
-                if (entity?.nombreLiquidacion) {
-                    this.remanufacturaDetalleStore.getDetailData(entity.nombreLiquidacion, Estado.Activo);
-                }
-
-                if (!this.remanufacturaDetalleStore.isSubmitting() && this.fileUploader?.hasFiles()) {
-                    this.fileUploader.clear();
+                if (entity?.id) {
+                    this.partidaDetalleStore.getDetailData(entity.id, Estado.Todos);
                 }
             }
         });
@@ -54,11 +65,16 @@ export class RemanufacturaDetailComponent implements OnInit {
 
     ngOnInit(): void {
         const id = Number(this.route.snapshot.paramMap.get('id'));
-        if (id) this.remanufacturaStore.getById(id);
+        if (id) this.partidaStore.getById(id);
+
+        this.statuses = [
+            { label: 'Activo', value: true },
+            { label: 'Inactivo', value: false }
+        ];
     }
 
     goBack() {
-        this.remanufacturaDetalleStore.clear();
+        this.partidaStore.clear();
         this.router.navigate(['../'], { relativeTo: this.route });
     }
 
@@ -70,37 +86,8 @@ export class RemanufacturaDetailComponent implements OnInit {
         this.showImportDialog.set(!this.showImportDialog());
     }
 
-    getSeverity(status: number) {
+    getSeverity(status: number | boolean) {
         return Helper.setStatus(status);
-    }
-
-    downloadExcelTemplate() {
-        console.log('descargaando template');
-    }
-
-    handleImportAgain() {
-        this.remanufacturaDetalleStore.clear();
-        this.showImportDialog.set(true);
-    }
-
-    handleUploadFile(event: { files: File[] }): void {
-        const file = event.files[0];
-        const nombreLiquidacion = this.remanufacturaStore.entity()?.nombreLiquidacion;
-
-        if (!file || !nombreLiquidacion) {
-            this.toast.error('Falta el archivo o no se ha cargado la liquidación.');
-            return;
-        }
-        this.loadingImport.set(true);
-
-        const formData = new FormData();
-        formData.append('File', file, file.name);
-        formData.append('liquidacion', nombreLiquidacion);
-
-        this.remanufacturaDetalleStore.previewData(formData);
-
-        this.loadingImport.set(false);
-        this.showImportDialog.set(false);
     }
 
     handleSubmitDetail() {
@@ -121,10 +108,10 @@ export class RemanufacturaDetailComponent implements OnInit {
             accept: () => {
                 console.log('ERNVIADO');
                 /*PAYLOAD*/
-                const payload = {
-                    detalles: this.remanufacturaDetalleStore.entityPreview()
-                };
-                this.remanufacturaDetalleStore.createDetail(payload);
+                //  const payload = {
+                //      detalles: this.partidaStore.entityPreview()
+                // };
+                //  this.partidaStore.createDetail(payload);
             },
             reject: () => {
                 console.log('ERROR');
@@ -132,15 +119,36 @@ export class RemanufacturaDetailComponent implements OnInit {
         });
     }
 
-    exportDataTable() {
-        const nombre = this.remanufacturaStore.entity()?.nombreLiquidacion;
-        if (!nombre) return this.toast.warn('No hay una liquidación seleccionada.');
-
-        this.remanufacturaDetalleStore.exportDataTable(nombre);
-    }
-
     clearFilters(table: Table) {
         table.clear();
         table.filterGlobal('', '');
+    }
+
+    onDeleteModal(id: number | null) {
+        if (id || id != null) this.partidaDetalleStore.delete(id);
+    }
+
+    onRowEditInit(data: DTOPartidaItem) {
+        this.clonedProducts[data.id] = { ...data };
+    }
+
+    onRowEditSave(data: DTOUpdatePartidaItem) {
+        if (data) {
+            delete this.clonedProducts[data.id];
+            data.fechaModificacion = new Date(); //Ingresar fecha manualmente
+            this.partidaDetalleStore.update(data);
+        } else {
+            this.toast.warn('No debe existir ningun dato vacio');
+        }
+    }
+
+    onRowEditCancel(data: DTOPartidaItem, index: number) {
+        this.partidaDetalleStore.entities()[index] = this.clonedProducts[data.id];
+        delete this.clonedProducts[data.id];
+        this.partidaDetalleStore.getDetailData(this.partidaStore.entity()!.id, Estado.Activo);
+    }
+
+    openCreateModal() {
+        this.partidaDetalleStore.openModalCreate();
     }
 }

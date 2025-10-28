@@ -18,27 +18,27 @@ export class PartidaService {
 
   list(estado? : number): Observable<DTOPartida[]> {
     return this.http
-      .get<ApiResponse<DTOPartida>>(`${API.URL}/LiquidacionRemanufactura/${estado}`)
+      .get<ApiResponse<DTOPartida>>(`${API.URL}/Partida/${estado}`)
       .pipe(map((response) => response.value));
   }
 
   getById(id: number) {
     return this.http
       .get<ApiResponseSingle<DTOPartida>>(
-        `${API.URL}/LiquidacionRemanufactura/Detalle/${id}`
+        `${API.URL}/Partida/Detalle/${id}`
       )
       .pipe(map((response) => response));
   }
 
   create(data: DTOCreatePartida) {
-    return this.http.post<ApiResponseSingle<DTOPartida>>(`${API.URL}/LiquidacionRemanufactura/Crear`, data);
+    return this.http.post<ApiResponseSingle<DTOPartida>>(`${API.URL}/Partida/Crear`, data);
   }
 
   update(data: DTOUpdatePartida) {
-    return this.http.put<{ message: string }>(`${API.URL}/LiquidacionRemanufactura/Editar`, data);
+    return this.http.put<{ message: string }>(`${API.URL}/Partida/Editar`, data);
   }
 
   delete(id: number) {
-    return this.http.delete<ApiResponseSingle<number>>(`${API.URL}/LiquidacionRemanufactura/Eliminar/${id}`);
+    return this.http.delete<ApiResponseSingle<number>>(`${API.URL}/Partida/Eliminar/${id}`);
   }
 }

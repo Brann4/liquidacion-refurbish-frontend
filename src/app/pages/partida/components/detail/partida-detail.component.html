@@ -2,135 +2,35 @@
     <div class="px-4">
         <div class="flex justify-between">
             <p-button label="Volver" icon="pi pi-arrow-left" severity="secondary" (onClick)="goBack()"></p-button>
-            <p-button label="Importar Liquidaciones" [disabled]="remanufacturaDetalleStore.entityPreview().length > 0 && !remanufacturaStore.isSubmitting()" icon="pi pi-file-import" severity="primary" (onClick)="handleToggleImport()"></p-button>
         </div>
 
-        @if (!remanufacturaStore.entity() && remanufacturaStore.isSubmitting()) {
+        @if (!partidaStore.entity() && partidaStore.isSubmitting()) {
             <div class="flex justify-center items-center">
                 <p-progressSpinner></p-progressSpinner>
             </div>
-        } @else if (remanufacturaStore.entity()) {
+        } @else if (partidaStore.entity()) {
             <p-toolbar class="my-6 flex items-center">
-                <ng-template #start class="flex justify-center">
-                    <h2>
-                        Detalle: <span class="text-4xl text-primary">{{ remanufacturaStore.entity()?.nombreLiquidacion }}</span>
-                    </h2>
+                <ng-template #start>
+                    <div>
+                        <h2>
+                            <span class="text-3xl">Código:</span><span class="text-3xl text-primary"> {{ partidaStore.entity()?.codigo }}</span>
+                        </h2>
+                        <p>
+                            <span class="text-2xl max-w-[900px]"> {{ partidaStore.entity()?.partidaNombre }}</span>
+                        </p>
+                        <p>
+                            Precio General: <span class="text-lg max-w-[900px] block text-amber-500">{{ partidaStore.entity()?.precioGeneral | formatCurrency }}</span>
+                        </p>
+                        <p>
+                            Unidad de Medida General: <span class="text-lg max-w-[900px] block">{{ partidaStore.entity()?.unidadGeneral }}</span>
+                        </p>
+                    </div>
                 </ng-template>
 
-                <ng-template #end>
-                    <div class="flex gap-1">
-                        <p-tag icon="pi pi-info-circle" [value]="remanufacturaStore.entity()?.estado == 1 ? 'Activo' : 'Inactivo'" [severity]="getSeverity(remanufacturaStore.entity()!.estado)" />
-                        <p-tag icon="pi pi-calendar" severity="secondary" [value]="remanufacturaStore.entity()?.fechaIngreso! | shortDate"></p-tag>
-                    </div>
+                <ng-template #end class="flex justify-end items-end">
+                    <p-tag icon="pi pi-info-circle" [value]="partidaStore.entity()!.estado ? 'Activo' : 'Inactivo'" [severity]="getSeverity(partidaStore.entity()!.estado)" />
                 </ng-template>
             </p-toolbar>
-            @if (!showImportDialog() && remanufacturaDetalleStore.isSubmitting()) {
-                <div class="flex justify-center items-center">
-                    <p-progressSpinner></p-progressSpinner>
-                </div>
-            }
-
-            @if (showImportDialog()) {
-                <div class="border-1 border-dashed border-primary p-4 rounded-lg mt-4">
-                    <div class="flex justify-center mb-4">
-                        <div class="bounce animation-iteration-infinite animation-duration-2000">
-                            <a (click)="downloadExcelTemplate()" class="text-primary hover:underline cursor-pointer flex items-center gap-2 p-2">
-                                <i class="pi pi-file-excel text-lg"></i>
-                                <span class="font-semibold">Descargar plantilla haciendo click aqui</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <p-fileUpload
-                        #fileUploader
-                        name="file"
-                        mode="advanced"
-                        [multiple]="false"
-                        accept=".xlsx,.xls"
-                        [invalidFileTypeMessageSummary]="'Tipo de archivo no válido. Solo se permiten archivos Excel (.xlsx, .xls).'"
-                        [maxFileSize]="10000000"
-                        [showCancelButton]="false"
-                        chooseLabel="Seleccionar archivo"
-                        uploadLabel="Procesar"
-                        [customUpload]="true"
-                        (uploadHandler)="handleUploadFile($event)"
-                    >
-                        <ng-template pTemplate="empty">
-                            <div class="flex flex-col items-center justify-center p-4">
-                                <i class="pi pi-upload text-4xl text-primary"></i>
-                                <p class="mt-2">Arrastra y suelta el archivo aquí para procesarlo.</p>
-                            </div>
-                        </ng-template>
-
-                        <ng-template pTemplate="file" let-file>
-                            <div class="flex items-center flex-wrap p-3">
-                                <div class="flex items-center gap-3">
-                                    <i class="pi pi-file-excel text-green-600" style="font-size: 2rem"></i>
-                                    <span class="font-semibold">{{ file.name }}</span>
-                                    <p-badge (value)="(file.size)" severity="secondary"></p-badge>
-                                </div>
-                            </div>
-                        </ng-template>
-                    </p-fileUpload>
-                </div>
-            }
-
-            @if (remanufacturaDetalleStore.entityPreview().length > 0 && !remanufacturaStore.isSubmitting()) {
-                <div class="mt-6 border-1 border-dashed border-primary p-4 rounded-lg">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-xl font-semibold">Previsualización de Datos</h3>
-                        <div class="flex gap-1">
-                            <p-button label="Volver a importar" [outlined]="true" icon="pi pi-arrow-left" [loading]="remanufacturaStore.isSubmitting()" (onClick)="handleImportAgain()"> </p-button>
-                            <p-button label="Guardar Datos Importados" icon="pi pi-save" [loading]="remanufacturaStore.isSubmitting()" (onClick)="handleSubmitDetail()"> </p-button>
-                        </div>
-                    </div>
-
-                    <p-table
-                        [value]="remanufacturaDetalleStore.entityPreview()"
-                        [paginator]="true"
-                        [rows]="10"
-                        [rowsPerPageOptions]="[10, 25, 50, 100]"
-                        [totalRecords]="remanufacturaDetalleStore.entityPreview().length"
-                        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} filas"
-                        [showCurrentPageReport]="true"
-                        class="p-datatable-striped"
-                    >
-                        <ng-template pTemplate="header">
-                            <tr>
-                                <th style="min-width: 8rem">Cód. SAP</th>
-                                <th style="min-width: 8rem">Cód. Entrega</th>
-                                <th style="min-width: 8rem">Serie Final</th>
-                                <th style="min-width: 12rem">Nombre Producto</th>
-                                <th style="min-width: 8rem">Cantidad</th>
-                                <th style="min-width: 8rem">Estado</th>
-                                <th style="min-width: 8rem">Costo Unidad (S/.)</th>
-                            </tr>
-                        </ng-template>
-                        <ng-template pTemplate="body" let-detalle>
-                            <tr>
-                                <td>{{ detalle.codigoSAP }}</td>
-                                <td>{{ detalle.codigoEntrega }}</td>
-                                <td>{{ detalle.serieFinal }}</td>
-                                <td>{{ detalle.nombreProducto }}</td>
-                                <td>{{ detalle.cantidad }}</td>
-                                <td><p-tag [value]="detalle.estado" severity="info"></p-tag></td>
-                                <td>{{ detalle.costoUnitario }}</td>
-                            </tr>
-                        </ng-template>
-
-                        <ng-template #emptymessage>
-                            <tr>
-                                <td colspan="7" class="text-center py-4">
-                                    <div class="flex flex-col items-center gap-2">
-                                        <i class="pi pi-info-circle" style="font-size: 1.5rem"></i>
-                                        <span>No se encontraron datos para mostrar</span>
-                                    </div>
-                                </td>
-                            </tr>
-                        </ng-template>
-                    </p-table>
-                </div>
-            }
         } @else {
             <div class="flex flex-col items-center">
                 <i class="pi pi-exclamation-triangle text-red-800" style="font-size: 2.5rem"></i>
@@ -144,11 +44,12 @@
     <p-table
         #dt
         dataKey="id"
-        [value]="this.remanufacturaDetalleStore.entities()"
+        editMode="row"
+        [value]="partidaDetalleStore.entities()"
         [tableStyle]="{ 'min-width': '75rem' }"
         [rows]="10"
         [paginator]="true"
-        [globalFilterFields]="['nombreLiquidacion']"
+        [globalFilterFields]="['descripcion']"
         [rowHover]="true"
         dataKey="id"
         currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"
@@ -156,97 +57,108 @@
         [rowsPerPageOptions]="[10, 20, 30]"
     >
         <ng-template #caption>
-            <div class="flex items-center justify-between">
-                <div class="flex flex-row gap-2">
+            <div class="flex flex-col-reverse md:flex-row items-center justify-between">
+                <div class="flex flex-col md:flex-row gap-2">
                     <p-iconfield>
                         <p-inputicon class="pi pi-search" />
                         <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar por nombre" />
                     </p-iconfield>
                     <p-button label="Limpiar Filtros" [outlined]="true" icon="pi pi-filter-slash" (click)="clearFilters(dt)" />
                 </div>
-
                 <div class="flex flex-row gap-2">
-                    @if (this.remanufacturaDetalleStore.entities()) {
-                        <div class="card flex justify-center">
-                            <p-button label="Descargar Reporte" severity="success" icon="pi pi-file-excel" [disabled]="remanufacturaDetalleStore.isExporting()" [loading]="remanufacturaDetalleStore.isExporting()" (click)="exportDataTable()" />
-                        </div>
-                    }
+                    <div class="card flex">
+                        <p-button label="Agregar nuevo Item" icon="pi pi-plus" [disabled]="partidaStore.isSubmitting()" [loading]="partidaStore.isSubmitting()" (click)="openCreateModal()" />
+                    </div>
                 </div>
             </div>
         </ng-template>
 
         <ng-template #header>
             <tr>
-                <th style="width: 3rem">N°</th>
+                <th style="width: 3rem">Item</th>
 
-                <th pSortableColumn="liquidacion" style="min-width: 10rem">
-                    Liquidacion
-                    <p-columnFilter type="text" field="liquidacion" display="menu" />
+                <th pSortableColumn="descripcion" style="min-width: 10rem">
+                    Descripcion
+                    <p-columnFilter type="text" field="descripcion" display="menu" />
                 </th>
                 <th pSortableColumn="plataforma" style="min-width: 10rem">
-                    Plataforma
+                    Precio Individual
+                    <p-columnFilter type="text" field="plataforma" display="menu" />
+                </th>
+                <th pSortableColumn="plataforma" style="min-width: 10rem">
+                    Unidad Medida Individual
                     <p-columnFilter type="text" field="plataforma" display="menu" />
                 </th>
                 <th pSortableColumn="codigoLiquidacion" style="min-width: 8rem">
-                    Codigo
+                    Estado
                     <p-columnFilter type="text" field="codigoLiquidacion" display="menu" />
                 </th>
-                <th pSortableColumn="codigoEntrega" style="min-width: 12rem">
-                    Codigo Entrega
-                    <p-columnFilter type="text" field="codigoEntrega" display="menu" />
-                </th>
-                <th pSortableColumn="fechaPrevista" style="min-width: 12rem">
-                    Fecha Prevista
-                    <p-columnFilter type="text" field="fechaPrevista" display="menu" />
-                </th>
-                <th pSortableColumn="codigoSAP" style="min-width: 10rem">
-                    Codigo SAP
-                    <p-columnFilter type="text" field="codigoSAP" display="menu" />
-                </th>
-                <th pSortableColumn="nombreProducto" style="min-width: 16rem">
-                    Producto
-                    <p-columnFilter type="text" field="nombreProducto" display="menu" />
-                </th>
-                <th pSortableColumn="cantidad" style="min-width: 10rem">
-                    Cantidad
-                    <p-columnFilter type="text" field="cantidad" display="menu" />
-                </th>
-                <th pSortableColumn="serieOrigen" style="min-width: 12rem">
-                    Serie Origen
-                    <p-columnFilter type="text" field="serieOrigen" display="menu" />
-                </th>
-                <th pSortableColumn="serieFinal" style="min-width: 12rem">
-                    Serie Final
-                    <p-columnFilter type="text" field="serieFinal" display="menu" />
-                </th>
-                <th pSortableColumn="trabajoRealizado" style="min-width: 14rem">
-                    Trabajo realizado
-                    <p-columnFilter type="text" field="trabajoRealizado" display="menu" />
-                </th>
-                <th pSortableColumn="estado" style="min-width: 12rem">
-                    Estado
-                    <p-columnFilter type="text" field="estado" display="menu" />
-                </th>
+                <th></th>
             </tr>
         </ng-template>
 
-        <ng-template #body let-detalle let-rowIndex="rowIndex">
-            <tr>
+        <ng-template #body let-detalle let-editing="editing" let-rowIndex="rowIndex">
+            <tr [pEditableRow]="detalle" [pSelectableRow]="detalle">
                 <td style="width: 3rem">
                     {{ rowIndex + 1 }}
                 </td>
-                <td class="text-primary font-bold">{{ detalle.liquidacion }}</td>
-                <td class="">{{ detalle.plataforma }}</td>
-                <td class="font-light">{{ detalle.codigoLiquidacion }}</td>
-                <td class="font-light">{{ detalle.codigoEntrega }}</td>
-                <td class="font-light">{{ detalle.fechaPrevista | shortDate }}</td>
-                <td class="font-light">{{ detalle.codigoSAP }}</td>
-                <td class="font-light">{{ detalle.nombreProducto }}</td>
-                <td class="font-light" style="width: 0.5rem">{{ detalle.cantidad }}</td>
-                <td class="font-light">{{ detalle.serieOrigen != null || detalle.serieOrigen == '' ? 'S/N' : detalle.serieOrigen }}</td>
-                <td class="font-light">{{ detalle.serieFinal }}</td>
-                <td class="font-light">{{ detalle.trabajoRealizado }}</td>
-                <td class="font-light">{{ detalle.estado }}</td>
+                <td class="font-light">
+                    <p-cellEditor>
+                        <ng-template #input>
+                            <input pInputText type="text" [(ngModel)]="detalle.descripcion" />
+                        </ng-template>
+                        <ng-template #output>
+                            {{ detalle.descripcion }}
+                        </ng-template>
+                    </p-cellEditor>
+                </td>
+                <td class="font-light">
+                    <p-cellEditor>
+                        <ng-template #input>
+                            <input pInputText type="text" [(ngModel)]="detalle.precioItem" />
+                        </ng-template>
+                        <ng-template #output>
+                            {{ detalle.precioItem | formatCurrency }}
+                        </ng-template>
+                    </p-cellEditor>
+                </td>
+
+                <td class="font-light">
+                    <p-cellEditor>
+                        <ng-template #input>
+                            <p-select [options]="unidadesMedida()" appendTo="body" [(ngModel)]="detalle.unidadItem" [style]="{ width: '100%' }" />
+                        </ng-template>
+                        <ng-template #output>
+                            {{ detalle.unidadItem != '' ? detalle.unidadItem : 'S/N' }}
+                        </ng-template>
+                    </p-cellEditor>
+                </td>
+
+                <td>
+                    <p-cellEditor>
+                        <ng-template #input>
+                            <p-select [options]="statuses" appendTo="body" [(ngModel)]="detalle.estado" [style]="{ width: '100%' }" />
+                        </ng-template>
+                        <ng-template #output>
+                            <p-tag [value]="detalle.estado ? 'Activo' : 'Inactivo'" [severity]="getSeverity(detalle.estado)" />
+                        </ng-template>
+                    </p-cellEditor>
+                </td>
+
+                <td>
+                    <div>
+                        @if (!editing) {
+                            <button pButton pRipple type="button" pInitEditableRow icon="pi pi-pencil" (click)="onRowEditInit(detalle)" text rounded severity="secondary"></button>
+                        }
+
+                        @if (editing) {
+                            <button pButton pRipple type="button" pSaveEditableRow icon="pi pi-check" (click)="onRowEditSave(detalle)" text rounded severity="secondary"></button>
+                            <button pButton pRipple type="button" pCancelEditableRow icon="pi pi-times" (click)="onRowEditCancel(detalle, rowIndex)" text rounded severity="secondary"></button>
+                        }
+                    </div>
+
+                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" pTooltip="Eliminar" tooltipPosition="top" [outlined]="true" (click)="onDeleteModal(detalle)" />
+                </td>
             </tr>
         </ng-template>
 
@@ -260,8 +172,9 @@
                 </td>
             </tr>
         </ng-template>
-
     </p-table>
 </p-card>
+
+<partida-detail-create [partidaDetalleEntity]="this.partidaStore.entity()" />
 
 <p-confirmdialog [style]="{ width: '450px' }" />

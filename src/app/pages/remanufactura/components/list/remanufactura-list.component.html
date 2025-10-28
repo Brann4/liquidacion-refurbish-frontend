@@ -1,6 +1,6 @@
 <p-toolbar class="mb-6">
     <ng-template #start>
-        <breadcrumb-header [breadcrumbs]="breadcrumbs" title="MÓDULO DE LIQUIDACIONES REMANUFACTURA"> </breadcrumb-header>
+        <breadcrumb-header [breadcrumbs]="breadcrumbs()" title="MÓDULO DE REMANUFACTURA"> </breadcrumb-header>
     </ng-template>
 
     <ng-template #end>
@@ -33,7 +33,6 @@
         </ng-template>
         <ng-template #header>
             <tr>
-                <th style="width: 3rem">N°</th>
 
                 <th pSortableColumn="nombreLiquidacion" style="min-width: 16rem">
                     Nombre
@@ -57,11 +56,10 @@
         </ng-template>
         <ng-template #body let-liquidacion let-rowIndex="rowIndex">
             <tr>
-                <td style="width: 3rem">
-                    {{ rowIndex + 1 }}
-                </td>
 
-                <td style="min-width: 12rem">{{ liquidacion.nombreLiquidacion }}</td>
+                <td style="min-width: 12rem">
+                    <p-button class="mr-2 text-primary font-extrabold"  (click)="onViewDetail(liquidacion)"    [label]="liquidacion.nombreLiquidacion"  link />
+                </td>
                 <td>{{ liquidacion.fechaIngreso | shortDate }}</td>
 
                 <td class="text-primary bold">{{ liquidacion.usuario.nombreUsuario }}</td>
@@ -69,7 +67,6 @@
                     <p-tag [value]="liquidacion.estado == 1 ? 'Activo' : 'Inactivo'" [severity]="getSeverity(liquidacion.estado)" />
                 </td>
                 <td>
-                    <p-button icon="pi pi-eye" class="mr-2" [rounded]="true" pTooltip="Ver Detalle" tooltipPosition="top" (click)="onViewDetail(liquidacion)" />
                     <p-button icon="pi pi-pencil" severity="info" class="mr-2" pTooltip="Editar" tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="OnEditModal(liquidacion)" />
                     <p-button icon="pi pi-trash" severity="danger" [rounded]="true" pTooltip="Eliminar" tooltipPosition="top" [outlined]="true" (click)="onDeleteModal(liquidacion)" />
                 </td>

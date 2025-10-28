@@ -5,7 +5,6 @@ import { DTOPartidaItem } from '../entities/partidaItem/DTOPartidaItem';
 import { DTOUpdatePartidaItem } from '../entities/partidaItem/DTOUpdatePartidaItem';
 import { PartidaDetalleService } from '../services/partida-detalle.service';
 import { DTOCreatePartidaItem } from '../entities/partidaItem/DTOCreatePartidaItem';
-import { ActivatedRoute } from '@angular/router';
 import { Estado } from '@/utils/Constants';
 
 export enum Eliminar {
@@ -77,15 +76,15 @@ export const PartidaDetalleStore = signalStore(
             });
         },
 
-        create(data: DTOCreatePartidaItem, route?: ActivatedRoute) {
+        create(data: DTOCreatePartidaItem) {
             patchState(store, { isSubmitting: true });
 
             partidaDetalleService.create(data).subscribe({
                 next: (response) => {
                     if (response.status) {
                         patchState(store, { isSubmitting: false });
-                        toast.success('Liquidación agreda correctamente.');
-                        this.getDetailData(response.value.partidaId!, Estado.Todos);
+                        toast.success('Item agregado correctamente.');
+                        this.getDetailData(data.partidaId!, Estado.Todos);
                         this.closeModalCreate();
                     }
                 },
@@ -102,8 +101,7 @@ export const PartidaDetalleStore = signalStore(
             partidaDetalleService.update(data).subscribe({
                 next: (response) => {
                     patchState(store, { isSubmitting: false });
-                    toast.success('Liquidación actualizada correctamente.');
-                    this.getDetailData(response.value.partidaId!, Estado.Todos);
+                    toast.success('Item actualizado correctamente.');
                     this.closeModalEdit();
                 },
                 error: (error) => {
@@ -113,11 +111,11 @@ export const PartidaDetalleStore = signalStore(
             });
         },
 
-        delete(id: number, nombre: string) {
-            partidaDetalleService.delete(id, nombre).subscribe({
+        delete(id: number) {
+            partidaDetalleService.delete(id).subscribe({
                 next: (response) => {
                     toast.success(response.msg || 'Eliminado correctamente');
-                    this.getDetailData(response.value.id ,Estado.Todos);
+                    this.getDetailData(response.value.id, Estado.Todos);
                 },
                 error: (error) => {
                     patchState(store, { isSubmitting: false, error: error.message });

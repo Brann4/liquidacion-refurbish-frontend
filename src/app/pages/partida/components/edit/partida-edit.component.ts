@@ -14,22 +14,31 @@ import { DTOUpdatePartida } from '../../entities/partida/DTOUpdatePartida';
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [MessageService]
 })
-export class EditComponent {
+export class PartidaEditComponent {
     partidaStore = inject(PartidaStore);
     fb = inject(FormBuilder);
 
     updateForm = this.fb.group({
         id: new FormControl<number>(0, { nonNullable: true }),
-        partidaId: new FormControl<number | null>(null),
-        descripcion: new FormControl<string>('', [Validators.required, Validators.maxLength(100)]),
-        precioItem: new FormControl<number>(0, [Validators.required, Validators.min(0)]),
-        unidadItem: new FormControl<number>(0, [Validators.required, Validators.min(1)]),
-        fechaModificacion: new FormControl<Date | null>(null)
+        codigo: new FormControl<string>('', [Validators.required, Validators.maxLength(20)]),
+        partidaNombre: new FormControl<string>('', [Validators.required, Validators.maxLength(100)]),
+        precioGeneral: new FormControl<number>(0, [Validators.required, Validators.min(0)]),
+        unidadGeneral: new FormControl<string>('', [Validators.required, Validators.min(1)]),
+        estado: new FormControl<boolean>(false, [Validators.required]),
+        fechaModificacion: new FormControl<Date | null>(null, [Validators.required])
     });
 
     stateOptions = signal<any[]>([
-        { label: 'Activo', value: Estado.Activo },
-        { label: 'Inactivo', value: Estado.Inactivo }
+        { label: 'Activo', value: true },
+        { label: 'Inactivo', value: false }
+    ]);
+
+    unidadesMedida = signal<{ label: string; value: string }[]>([
+        { label: 'MOVIMIENTO', value: 'Mov' },
+        { label: 'PERSONA', value: 'Persona' },
+        { label: 'DÍA', value: 'dia' },
+        { label: 'HORAS', value: 'hrs' },
+        { label: 'UNIDAD', value: 'und' }
     ]);
 
     hasLoaded = signal<boolean>(false);
@@ -48,7 +57,7 @@ export class EditComponent {
         const entity = this.partidaStore.entityEdit();
         if (entity) {
             this.updateForm.patchValue({
-                ...entity,
+                ...entity
             });
             this.hasLoaded.set(true);
         }
@@ -56,10 +65,11 @@ export class EditComponent {
     resetFormData() {
         this.updateForm.reset({
             id: 0,
-            partidaId: null,
-            descripcion: '',
-            precioItem: 0,
-            unidadItem: 0,
+            codigo: '',
+            partidaNombre: '',
+            precioGeneral: 0,
+            unidadGeneral: '',
+            estado: false,
             fechaModificacion: null
         });
     }
@@ -77,6 +87,8 @@ export class EditComponent {
 
     handleSubmit() {
         this.updateForm.markAllAsTouched();
+        this.updateForm.patchValue({ fechaModificacion: new Date() });
+
         if (this.updateForm.valid) {
             const newRemanufactura = this.updateForm.getRawValue();
             this.partidaStore.update(newRemanufactura as DTOUpdatePartida);

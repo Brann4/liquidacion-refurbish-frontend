@@ -7,39 +7,51 @@ import { PartidaStore } from '../../stores/PartidaStore';
 import { DTOCreatePartida } from '../../entities/partida/DTOCreatePartida';
 
 @Component({
-    selector: 'apartida-create',
+    selector: 'partida-create',
     standalone: true,
     imports: [PrimeModules, ReactiveFormsModule],
     templateUrl: './partida-create.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class RemanufacturaCreateComponent {
+export class PartidaCreateComponent {
     partidaStore = inject(PartidaStore);
     fb = inject(FormBuilder);
     route = inject(ActivatedRoute);
 
     createForm = this.fb.group({
+        codigo: new FormControl<string>('', [Validators.required, Validators.maxLength(20)]),
         partidaNombre: new FormControl<string>('', [Validators.required, Validators.maxLength(100)]),
         precioGeneral: new FormControl<number>(0, [Validators.required, Validators.min(0)]),
-        unidadGeneral: new FormControl<number>(0, [Validators.required, Validators.min(1)]),
-        usuarioCreacion: new FormControl<number>(0, [Validators.required]),
-        fechaCreacion: new FormControl<Date | null>(null, [Validators.required]),
+        unidadGeneral: new FormControl<string>('', [Validators.required, Validators.min(1)]),
+        usuarioCreacion: new FormControl<number>(1, [Validators.required]),
+        estado: new FormControl<boolean>(false, [Validators.required]),
+        fechaCreacion: new FormControl<Date | null>(null, [Validators.required])
     });
 
     stateOptions = signal<any[]>([
-        { label: 'Activo', value: Estado.Activo },
-        { label: 'Inactivo', value: Estado.Inactivo }
+        { label: 'Activo', value: true },
+        { label: 'Inactivo', value: false }
+    ]);
+
+    unidadesMedida = signal<{ label: string; value: string }[]>([
+        { label: 'MOVIMIENTO', value: 'Mov' },
+        { label: 'PERSONA', value: 'Persona' },
+        { label: 'DÍA', value: 'dia' },
+        { label: 'HORAS', value: 'hrs' },
+        { label: 'UNIDAD', value: 'und' }
     ]);
 
     isSubmitting = signal<boolean>(false);
 
     resetFormData() {
         this.createForm.reset({
+            codigo: '',
             partidaNombre: '',
             precioGeneral: 0,
-            unidadGeneral: 0,
+            unidadGeneral: '',
             fechaCreacion: null,
-            usuarioCreacion: 0
+            estado: false,
+            usuarioCreacion: 1
         });
     }
 
@@ -54,10 +66,14 @@ export class RemanufacturaCreateComponent {
     }
     handleSubmit() {
         this.createForm.markAllAsTouched();
+        this.createForm.patchValue({ fechaCreacion: new Date() });
+
         if (this.createForm.valid) {
-            const newRemanufactura = this.createForm.getRawValue();
-            this.partidaStore.create(newRemanufactura as DTOCreatePartida, this.route);
+            const newData = this.createForm.getRawValue();
+            this.partidaStore.create(newData as DTOCreatePartida, this.route);
             this.resetFormData();
+        } else {
+            this;
         }
         /*Prevencion de errores visuales*/
         this.createForm.markAsPristine();

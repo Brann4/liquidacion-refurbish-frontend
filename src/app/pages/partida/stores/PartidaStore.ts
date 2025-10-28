@@ -57,7 +57,7 @@ export const PartidaStore = signalStore(
             patchState(store, { isSubmitting });
         },
 
-        getLiquidaciones(status?: number) {
+        list(status?: number) {
             partidaService.list(status).subscribe({
                 next: (entities) => {
                     patchState(store, { entities });
@@ -88,8 +88,8 @@ export const PartidaStore = signalStore(
                 next: (response) => {
                     if (response.status) {
                         patchState(store, { isSubmitting: false });
-                        toast.success('Liquidación agreda correctamente.');
-                        this.getLiquidaciones(Estado.Todos);
+                        toast.success('Partida agreda correctamente.');
+                        this.list(Estado.Todos);
                         this.closeModalCreate();
                         /*REDIRECCION DESPUES DE CREAR*/
                         if (route) router.navigate([response.value.id], { relativeTo: route });
@@ -108,8 +108,8 @@ export const PartidaStore = signalStore(
             partidaService.update(data).subscribe({
                 next: (response) => {
                     patchState(store, { isSubmitting: false });
-                    toast.success('Liquidación actualizada correctamente.');
-                    this.getLiquidaciones(Estado.Todos);
+                    toast.success('Partida actualizada correctamente.');
+                    this.list(Estado.Todos);
                     this.closeModalEdit();
                 },
                 error: (error) => {
@@ -125,10 +125,7 @@ export const PartidaStore = signalStore(
                     if (response.value == Eliminar.Correcto) {
                         toast.success(response.msg || 'Eliminado correctamente');
                     }
-                    if (response.value == Eliminar.Advertencia) {
-                        toast.warn('Liquidaciones importadas estan asociadas en este registro');
-                    }
-                    this.getLiquidaciones(Estado.Todos);
+                    this.list(Estado.Todos);
                 },
                 error: (error) => {
                     patchState(store, { isSubmitting: false, error: error.message });

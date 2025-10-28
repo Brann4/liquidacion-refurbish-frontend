@@ -1,7 +1,9 @@
-export interface DTOUpdatePartida{
-  id: number;
-  partidaNombre?: string;
-  precioGeneral?: number;
-  unidadGeneral?: number;
-  fechaModificacion?: Date | null;
+export interface DTOUpdatePartida {
+    id: number;
+    codigo?: string;
+    partidaNombre?: string;
+    precioGeneral?: number;
+    estado: boolean;
+    unidadGeneral?: string;
+    fechaModificacion?: Date | null;
 }

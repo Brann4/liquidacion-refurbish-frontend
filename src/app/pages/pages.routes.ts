@@ -8,5 +8,6 @@ export const PAGES_ROUTES: Routes = [
     { path: 'usuario', loadChildren: () => import('./usuario/usuario.routes').then((m) => m.USUARIO_ROUTES) },
     { path: 'rol', loadChildren: () => import('./rol/rol.routes').then((m) => m.ROL_ROUTES) },
     { path: 'permiso', loadChildren: () => import('./permiso/permiso.routes').then((m) => m.PERMISO_ROUTES) },
+    { path: 'partida', loadChildren: () => import('./partida/partida.routes').then((m) => m.PARTIDA_ROUTES) },
     { path: '**', redirectTo: '/notfound' }
 ];

@@ -3,6 +3,7 @@ export interface DTOCreatePartidaItem{
   descripcion: string;
   precioItem: number;
   unidadItem: number;
+  estado: boolean;
   usuarioCreacion: number;
   fechaCreacion: Date;
 }

@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal, ViewChild } from '@angular/core';
-import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
+import {  MenuItem } from 'primeng/api';
 import { Table } from 'primeng/table';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,16 +15,17 @@ import { EditComponent } from '../edit/remanufactura-edit.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RemanufacturaDetalleStore } from '../../stores/RemanufacturaDetalleStore';
 import { BreadcrumbHeader } from '@/layout/component/breadcrumb/breadcrumb.header';
+import { ConfirmationDialog } from '@/pages/service/confirmation-dialog';
 
 @Component({
     selector: 'remanufactura-list',
     standalone: true,
     imports: [CommonModule, FormsModule, PrimeModules, ShortDatePipe, RemanufacturaCreateComponent, EditComponent, BreadcrumbHeader],
-    templateUrl: './remanufactura-list.component.html',
-    providers: [MessageService, ConfirmationService]
+    templateUrl: './remanufactura-list.component.html'
 })
 export class RemanufacturaListComponent implements OnInit {
     breadcrumbs = signal<MenuItem[]>([{ label: 'Remanufactura' }]);
+    confirmationDialogService = inject(ConfirmationDialog);
 
     productDialog: boolean = false;
     liquidaciones = signal<DTOLiquidacionRemanufactura[]>([]);
@@ -34,8 +35,6 @@ export class RemanufacturaListComponent implements OnInit {
 
     remanufacturaStore = inject(RemanufacturaStore);
     remanufacturaDetalleStore = inject(RemanufacturaDetalleStore);
-
-    confirmationService = inject(ConfirmationService);
     router = inject(Router);
     route = inject(ActivatedRoute);
 
@@ -76,26 +75,9 @@ export class RemanufacturaListComponent implements OnInit {
     }
 
     onDeleteModal(liquidacion: DTOLiquidacionRemanufactura) {
-        this.confirmationService.confirm({
-            message: `Estas seguro que desea eliminar ${liquidacion.nombreLiquidacion} ?`,
-            header: 'Confirmación',
-            icon: 'pi pi-exclamation-triangle',
-            acceptButtonProps: {
-                label: 'Eliminar',
-                severity: 'danger'
-            },
-            rejectButtonProps: {
-                label: 'Cancelar',
-                severity: 'secondary',
-                text: true
-            },
-            acceptIcon: 'pi pi-check',
-            rejectIcon: 'pi pi-times',
-            accept: () => {
+        this.confirmationDialogService.confirmDelete().subscribe((accepted) => {
+            if (accepted) {
                 this.remanufacturaStore.delete(liquidacion.id, liquidacion.nombreLiquidacion);
-            },
-            reject: () => {
-                console.log('ERROR');
             }
         });
     }

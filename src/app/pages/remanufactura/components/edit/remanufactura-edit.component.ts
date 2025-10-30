@@ -22,14 +22,10 @@ export class EditComponent {
         id: new FormControl<number>({ value: 0, disabled: true }, { validators: [Validators.min(1)], nonNullable: true }),
         nombreLiquidacion: new FormControl<string>({ value: '', disabled: true }, [Validators.required, Validators.maxLength(100)]),
         fechaIngreso: new FormControl<Date | null>(null, [Validators.required]),
-        estado: new FormControl<number>(Estado.Inactivo, [Validators.required]),
+        estado: new FormControl<boolean>(false, [Validators.required]),
         usuarioId: new FormControl<number>(1)
     });
 
-    stateOptions = signal<any[]>([
-        { label: 'Activo', value: Estado.Activo },
-        { label: 'Inactivo', value: Estado.Inactivo }
-    ]);
 
     hasLoaded = signal<boolean>(false);
     isSubmitting = signal<boolean>(false);
@@ -57,7 +53,7 @@ export class EditComponent {
         this.updateForm.reset({
             nombreLiquidacion: '',
             fechaIngreso: null,
-            estado: Estado.Inactivo,
+            estado: false,
             usuarioId: 1
         });
     }
@@ -75,6 +71,7 @@ export class EditComponent {
 
     handleSubmit() {
         this.updateForm.markAllAsTouched();
+
         if (this.updateForm.valid) {
             const newRemanufactura = this.updateForm.getRawValue();
             this.remanufacturaStore.update(newRemanufactura as DTOUpdateLiquidacionRemanufactura);

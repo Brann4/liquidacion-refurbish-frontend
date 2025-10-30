@@ -7,86 +7,92 @@
         <p-button label="Nuevo" icon="pi pi-plus" severity="primary" class="mr-2" [raised]="true" size="large" (onClick)="openCreateModal()" />
     </ng-template>
 </p-toolbar>
-
-<p-card>
-    <p-table
-        #dt
-        dataKey="id"
-        [value]="this.remanufacturaStore.entities()"
-        [tableStyle]="{ 'min-width': '75rem' }"
-        [rows]="10"
-        [paginator]="true"
-        [globalFilterFields]="['nombreLiquidacion']"
-        [rowHover]="true"
-        currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"
-        [showCurrentPageReport]="true"
-        [rowsPerPageOptions]="[10, 20, 30]"
-    >
-        <ng-template #caption>
-            <div class="flex items-center justify-between">
-                <h5 class="m-0">Administrador de Liquidaciones</h5>
-                <p-iconfield>
-                    <p-inputicon class="pi pi-search" />
-                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar por nombre" />
-                </p-iconfield>
+<div class="flex flex-col flex-1 h-[calc(100vh-20rem)]">
+    <p-card class="mt-4 flex-1 relative overflow-hidden">
+        @if (this.remanufacturaStore.isLoadingData()) {
+            <div class="absolute inset-0 bg-black/40 flex items-center justify-center rounded-xl">
+                <div class="flex flex-col justify-center items-center">
+                    <p-progressSpinner class="w-10 h-10" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
+                    <span class="text-2xl text-shadow-white font-bold mt-2"> Cargando datos . . . </span>
+                </div>
             </div>
-        </ng-template>
-        <ng-template #header>
-            <tr>
-
-                <th pSortableColumn="nombreLiquidacion" style="min-width: 16rem">
-                    Nombre
-                    <p-sortIcon field="nombreLiquidacion" />
-                </th>
-                <th pSortableColumn="fechaIngreso" style="min-width: 8rem">
-                    Fecha Ingreso
-                    <p-sortIcon field="fechaIngreso" />
-                </th>
-                <th pSortableColumn="usuarioId" style="min-width: 10rem">
-                    Creado por
-                    <p-sortIcon field="usuarioId" />
-                </th>
-                <th pSortableColumn="estado" style="min-width: 12rem">
-                    Estado
-                    <p-sortIcon field="estado" />
-                </th>
-
-                <th style="min-width: 12rem"></th>
-            </tr>
-        </ng-template>
-        <ng-template #body let-liquidacion let-rowIndex="rowIndex">
-            <tr>
-
-                <td style="min-width: 12rem">
-                    <p-button class="mr-2 text-primary font-extrabold"  (click)="onViewDetail(liquidacion)"    [label]="liquidacion.nombreLiquidacion"  link />
-                </td>
-                <td>{{ liquidacion.fechaIngreso | shortDate }}</td>
-
-                <td class="text-primary bold">{{ liquidacion.usuario.nombreUsuario }}</td>
-                <td>
-                    <p-tag [value]="liquidacion.estado == 1 ? 'Activo' : 'Inactivo'" [severity]="getSeverity(liquidacion.estado)" />
-                </td>
-                <td>
-                    <p-button icon="pi pi-pencil" severity="info" class="mr-2" pTooltip="Editar" tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="OnEditModal(liquidacion)" />
-                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" pTooltip="Eliminar" tooltipPosition="top" [outlined]="true" (click)="onDeleteModal(liquidacion)" />
-                </td>
-            </tr>
-        </ng-template>
-
-        <ng-template #emptymessage>
-            <tr>
-                <td colspan="6" class="text-center py-4">
-                    <div class="flex flex-col items-center gap-2">
-                        <i class="pi pi-info-circle" style="font-size: 1.5rem"></i>
-                        <span>No se encontraron datos para mostrar</span>
+        } @else {
+            <p-table
+                #dt
+                dataKey="id"
+                [value]="this.remanufacturaStore.entities()"
+                [tableStyle]="{ 'min-width': '75rem' }"
+                [rows]="10"
+                [paginator]="true"
+                [globalFilterFields]="['nombreLiquidacion']"
+                [rowHover]="true"
+                currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"
+                [showCurrentPageReport]="true"
+                [rowsPerPageOptions]="[10, 20, 30]"
+            >
+                <ng-template #caption>
+                    <div class="flex items-center justify-between">
+                        <h5 class="m-0">Administrador de Liquidaciones</h5>
+                        <p-iconfield>
+                            <p-inputicon class="pi pi-search" />
+                            <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar por nombre" />
+                        </p-iconfield>
                     </div>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
-</p-card>
+                </ng-template>
+                <ng-template #header>
+                    <tr>
+                        <th pSortableColumn="nombreLiquidacion" style="min-width: 16rem">
+                            Nombre
+                            <p-sortIcon field="nombreLiquidacion" />
+                        </th>
+                        <th pSortableColumn="fechaIngreso" style="min-width: 8rem">
+                            Fecha Ingreso
+                            <p-sortIcon field="fechaIngreso" />
+                        </th>
+                        <th pSortableColumn="usuarioId" style="min-width: 10rem">
+                            Creado por
+                            <p-sortIcon field="usuarioId" />
+                        </th>
+                        <th pSortableColumn="estado" style="min-width: 12rem">
+                            Estado
+                            <p-sortIcon field="estado" />
+                        </th>
+
+                        <th style="min-width: 12rem"></th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-liquidacion let-rowIndex="rowIndex">
+                    <tr>
+                        <td style="min-width: 12rem">
+                            <p-button class="mr-2 text-primary font-extrabold" (click)="onViewDetail(liquidacion)" [label]="liquidacion.nombreLiquidacion" link />
+                        </td>
+                        <td>{{ liquidacion.fechaIngreso | shortDate }}</td>
+
+                        <td class="text-primary bold">{{ liquidacion.usuario.nombreUsuario }}</td>
+                        <td>
+                            <p-tag [value]="liquidacion.estado == 1 ? 'Activo' : 'Inactivo'" [severity]="getSeverity(liquidacion.estado)" />
+                        </td>
+                        <td>
+                            <p-button icon="pi pi-pencil" severity="info" class="mr-2" pTooltip="Editar" tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="OnEditModal(liquidacion)" />
+                            <p-button icon="pi pi-trash" severity="danger" [rounded]="true" pTooltip="Eliminar" tooltipPosition="top" [outlined]="true" (click)="onDeleteModal(liquidacion)" />
+                        </td>
+                    </tr>
+                </ng-template>
+
+                <ng-template #emptymessage>
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <div class="flex flex-col items-center gap-2">
+                                <i class="pi pi-info-circle" style="font-size: 1.5rem"></i>
+                                <span>No se encontraron datos para mostrar</span>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        }
+    </p-card>
+</div>
 
 <app-remanufactura-create />
 <app-remanufactura-edit />
-
-<p-confirmdialog [style]="{ width: '450px' }" />

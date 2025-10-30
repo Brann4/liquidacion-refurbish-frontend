@@ -1,6 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Table } from 'primeng/table';
 import { PrecioZonaStore } from '@/pages/precio-zona/store/precio-zona.store';
 import { ContrataStore } from '@/pages/contrata/store/contrata.store';
 import { PrecioZona, TipoZona } from '@/pages/precio-zona/entities/precio-zona';

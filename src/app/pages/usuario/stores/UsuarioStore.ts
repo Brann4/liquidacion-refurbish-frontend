@@ -113,14 +113,12 @@ export const UsuarioStore = signalStore(
         delete(id: number) {
             usuarioService.delete(id).subscribe({
                 next: (response) => {
-                    if (response.value == Eliminar.Correcto) {
+                    if (response.status) {
                         toast.success(response.msg || 'Eliminado correctamente');
+                        patchState(store, {entity: null, entityEdit: null})
+                        this.getUsuarios(Estado.Todos);
                     }
-                    if (response.value == Eliminar.Advertencia) {
-                        toast.warn(response.msg || 'Usuarios encontrados');
-                    }
-                    patchState(store, {entity: null, entityEdit: null})
-                    this.getUsuarios(Estado.Todos);
+
                 },
                 error: (error) => {
                     patchState(store, { isSubmitting: false, error: error.message });

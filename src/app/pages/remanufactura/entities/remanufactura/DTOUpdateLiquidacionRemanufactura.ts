@@ -3,5 +3,5 @@ export interface DTOUpdateLiquidacionRemanufactura {
   usuarioId: number;
   nombreLiquidacion: string;
   fechaIngreso:  Date | null;
-  estado: number;
+  estado: boolean;
 }

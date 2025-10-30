@@ -1,0 +1,306 @@
+<div class="flex flex-col gap-4">
+    <p-card>
+        <div class="flex justify-between">
+            <p-button label="Volver" icon="pi pi-arrow-left" severity="secondary" (click)="onGoBack()"></p-button>
+            <p-button label="Importar" [disabled]="isLoadingCreate() || isLoadingPreview()" icon="pi pi-file-import"
+                      severity="primary" (click)="onImportClick()"></p-button>
+        </div>
+
+        <p-toolbar class="my-6 flex items-center">
+            <ng-template pTemplate="start">
+                <div class="flex items-center justify-center">
+                    <p class="text-4xl font-bold">
+                        Contrata: <span class="text-4xl text-primary">{{ contrata()?.razonSocial }}</span>
+                    </p>
+                </div>
+            </ng-template>
+
+            <ng-template pTemplate="end">
+                <div class="flex items-center justify-center gap-1">
+                    <p-tag [value]="getEstadoLiquidacionLabel()" [severity]="getEstadoLiquidacionSeverity()" />
+                    <p-tag [value]="formatFechaIngreso(liquidacionRecupero()?.fechaIngreso)" icon="pi pi-calendar"
+                           severity="secondary" />
+                </div>
+            </ng-template>
+        </p-toolbar>
+
+        @if (showUploadSection()) {
+            <div class="border-1 border-dashed border-primary p-4 rounded-lg mt-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Importar archivo</h3>
+                    <p-button label="Cancelar" [outlined]="true" icon="pi pi-times"
+                              (click)="onCancelUpload()"></p-button>
+                </div>
+
+                <div class="flex justify-center mb-4">
+                    <div class="bounce animation-iteration-infinite animation-duration-2000">
+                        <a class="text-primary hover:underline cursor-pointer flex items-center gap-2 p-2">
+                            <i class="pi pi-file-excel text-lg"></i>
+                            <span class="font-semibold">Descargar plantilla</span>
+                        </a>
+                    </div>
+                </div>
+
+                <p-fileupload
+                    name="file"
+                    mode="advanced"
+                    chooseLabel="Seleccionar archivo"
+                    uploadLabel="Procesar"
+                    accept=".xlsx,.xls"
+                    invalidFileTypeMessageSummary="Tipo de archivo no válido."
+                    invalidFileTypeMessageDetail="Solo se permiten archivos Excel (.xlsx, .xls)."
+                    [maxFileSize]="10485760"
+                    [showCancelButton]="false"
+                    [multiple]="false"
+                    [customUpload]="true"
+                    (uploadHandler)="onUpload($event)"
+                >
+                    <ng-template pTemplate="empty">
+                        <div class="flex flex-col items-center justify-center gap-2 p-4">
+                            <i class="pi pi-upload text-4xl text-primary"></i>
+                            <p>Arrastra y suelta el archivo aquí para procesarlo.</p>
+                        </div>
+                    </ng-template>
+
+                    <ng-template pTemplate="file" let-file>
+                        <div class="flex items-center flex-wrap p-3">
+                            <div class="flex items-center justify-center gap-3">
+                                <i class="pi pi-file-excel text-green-600" style="font-size: 2rem"></i>
+                                <span class="font-semibold">{{ file.name }}</span>
+                                <p-badge [value]="formatFileSize(file.size)" severity="secondary"></p-badge>
+                            </div>
+                        </div>
+                    </ng-template>
+                </p-fileupload>
+            </div>
+        }
+
+        @if (isLoadingPreview()) {
+            <div class="mt-6 border-1 border-dashed border-primary p-4 rounded-lg">
+                <div class="flex flex-col justify-center items-center gap-4 py-8">
+                    <p-progressSpinner></p-progressSpinner>
+                    <p class="text-lg font-medium text-center">Procesando archivo...</p>
+                </div>
+            </div>
+        }
+
+        @if (entitiesPreview().length) {
+            <div class="mt-6 border-1 border-dashed border-primary p-4 rounded-lg">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-semibold">Vista previa</h3>
+                    <div class="flex gap-1">
+                        <p-button label="Reimportar" [outlined]="true" icon="pi pi-arrow-left" (click)="onReimport()"
+                                  [disabled]="isLoadingPreview()"></p-button>
+                        <p-button label="Guardar" icon="pi pi-save"
+                                  [disabled]="isLoadingCreate() || !entitiesPreview().length"
+                                  [loading]="isLoadingCreate()" (click)="onSave()"></p-button>
+                    </div>
+                </div>
+
+                <p-table
+                    [value]="entitiesPreview()"
+                    [paginator]="true"
+                    [rows]="10"
+                    [rowsPerPageOptions]="[10, 25, 50, 100]"
+                    [showCurrentPageReport]="true"
+                    [loading]="isLoadingPreview()"
+                    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} filas"
+                >
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th style="min-width: 15rem">Código SAP</th>
+                            <th style="min-width: 25rem">Descripción</th>
+                            <th style="min-width: 15rem">Serie Principal</th>
+                            <th style="min-width: 15rem">Serie Secundaria</th>
+                            <th style="min-width: 15rem">Código SOT</th>
+                            <th style="min-width: 15rem">Código Cliente</th>
+                            <th style="min-width: 15rem">Cliente</th>
+                            <th style="min-width: 15rem">Contabilizado</th>
+                            <th style="min-width: 15rem">Orden de Compra</th>
+                            <th style="min-width: 15rem">Zona</th>
+                            <th style="min-width: 15rem">Distrito</th>
+                            <th style="min-width: 15rem">Fecha de Recibo</th>
+                            <th style="min-width: 15rem">Plataforma</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-item>
+                        <tr>
+                            <td>{{ item.codigoSAP }}</td>
+                            <td>{{ item.descripcion }}</td>
+                            <td>{{ item.seriePrincipal }}</td>
+                            <td>{{ item.serieSecundaria }}</td>
+                            <td>{{ item.codigoSOT }}</td>
+                            <td>{{ item.codigoCliente }}</td>
+                            <td>{{ item.cliente }}</td>
+                            <td>{{ item.contabilizado }}</td>
+                            <td>{{ item.ordenCompra }}</td>
+                            <td>
+                                <p-tag [value]="getTipoZonaLabel(item.tipoZonaId)"
+                                       [severity]="getTipoZonaSeverity(item.tipoZonaId)" />
+                            </td>
+                            <td>{{ item.distrito }}</td>
+                            <td>{{ item.fechaRecibo | shortDate }}</td>
+                            <td>{{ item.plataforma }}</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        }
+    </p-card>
+
+    <p-card>
+        <p-table
+            #dataTable
+            dataKey="id"
+            [value]="entities()"
+            [rows]="10"
+            [rowHover]="true"
+            [paginator]="true"
+            [showCurrentPageReport]="true"
+            [rowsPerPageOptions]="[10, 20, 30]"
+            [globalFilterFields]="['codigoSAP', 'codigoSOT']"
+            [loading]="isLoadingEntities()"
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+            [tableStyle]="{ 'min-width': '75rem' }"
+        >
+            <ng-template pTemplate="caption">
+                <div class="flex items-center justify-between">
+                    <div class="flex flex-row gap-2">
+                        <p-iconfield>
+                            <p-inputicon class="pi pi-search" />
+                            <input pInputText type="text" (input)="onGlobalFilter($event, dataTable)"
+                                   placeholder="Buscar por Código SAP o Código SOT" />
+                        </p-iconfield>
+                        <p-button icon="pi pi-filter-slash" [outlined]="true" (click)="onClearFilters(dataTable)" />
+                    </div>
+                    <div class="flex flex-row">
+                        <div class="card flex justify-center">
+                            <p-button label="Descargar Reporte" severity="success" icon="pi pi-file-excel"
+                                      [loading]="isExporting()" [disabled]="!entities().length"
+                                      (click)="exportRecuperoDetalle()" />
+                        </div>
+                    </div>
+                </div>
+            </ng-template>
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="codigoSAP" style="min-width: 15rem">
+                        <div class="flex items-center gap-2">
+                            Código SAP
+                            <p-sortIcon field="codigoSAP" />
+                        </div>
+                    </th>
+                    <th pSortableColumn="descripcion" style="min-width: 25rem">
+                        <div class="flex items-center gap-2">
+                            Descripción
+                            <p-sortIcon field="descripcion" />
+                        </div>
+                    </th>
+                    <th pSortableColumn="seriePrincipal" style="min-width: 15rem">
+                        <div class="flex items-center gap-2">
+                            Serie Principal
+                            <p-sortIcon field="seriePrincipal" />
+                        </div>
+                    </th>
+                    <th pSortableColumn="serieSecundaria" style="min-width: 15rem">
+                        <div class="flex items-center gap-2">
+                            Serie Secundaria
+                            <p-sortIcon field="serieSecundaria" />
+                        </div>
+                    </th>
+                    <th pSortableColumn="codigoSOT" style="min-width: 15rem">
+                        <div class="flex items-center gap-2">
+                            Código SOT
+                            <p-sortIcon field="codigoSOT" />
+                        </div>
+                    </th>
+                    <th pSortableColumn="codigoCliente" style="min-width: 15rem">
+                        <div class="flex items-center gap-2">
+                            Código Cliente
+                            <p-sortIcon field="codigoCliente" />
+                        </div>
+                    </th>
+                    <th pSortableColumn="cliente" style="min-width: 15rem">
+                        <div class="flex items-center gap-2">
+                            Cliente
+                            <p-sortIcon field="cliente" />
+                        </div>
+                    </th>
+                    <th pSortableColumn="contabilizado" style="min-width: 15rem">
+                        <div class="flex items-center gap-2">
+                            Contabilizado
+                            <p-sortIcon field="contabilizado" />
+                        </div>
+                    </th>
+                    <th pSortableColumn="ordenCompra" style="min-width: 15rem">
+                        <div class="flex items-center gap-2">
+                            Orden de Compra
+                            <p-sortIcon field="ordenCompra" />
+                        </div>
+                    </th>
+                    <th pSortableColumn="tipoZonaId" style="min-width: 15rem">
+                        <div class="flex items-center gap-2">
+                            Zona
+                            <p-sortIcon field="tipoZonaId" />
+                        </div>
+                    </th>
+                    <th pSortableColumn="distrito" style="min-width: 15rem">
+                        <div class="flex items-center gap-2">
+                            Distrito
+                            <p-sortIcon field="distrito" />
+                        </div>
+                    </th>
+                    <th pSortableColumn="fechaRecibo" style="min-width: 15rem">
+                        <div class="flex items-center gap-2">
+                            Fecha de Recibo
+                            <p-sortIcon field="fechaRecibo" />
+                        </div>
+                    </th>
+                    <th pSortableColumn="plataforma" style="min-width: 15rem">
+                        <div class="flex items-center gap-2">
+                            Plataforma
+                            <p-sortIcon field="plataforma" />
+                        </div>
+                    </th>
+                    <th pSortableColumn="precio" style="min-width: 15rem">
+                        <div class="flex items-center gap-2">
+                            Precio
+                            <p-sortIcon field="precio" />
+                        </div>
+                    </th>
+                    <th pSortableColumn="estadoPago" style="min-width: 15rem">
+                        <div class="flex items-center gap-2">
+                            Estado de Pago
+                            <p-sortIcon field="estadoPago" />
+                        </div>
+                    </th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-item>
+                <tr>
+                    <td>{{ item.codigoSAP }}</td>
+                    <td>{{ item.descripcion }}</td>
+                    <td>{{ item.seriePrincipal }}</td>
+                    <td>{{ item.serieSecundaria }}</td>
+                    <td>{{ item.codigoSOT }}</td>
+                    <td>{{ item.codigoCliente }}</td>
+                    <td>{{ item.cliente }}</td>
+                    <td>{{ item.contabilizado }}</td>
+                    <td>{{ item.ordenCompra }}</td>
+                    <td>
+                        <p-tag [value]="getTipoZonaLabel(item.tipoZonaId)"
+                               [severity]="getTipoZonaSeverity(item.tipoZonaId)" />
+                    </td>
+                    <td>{{ item.distrito }}</td>
+                    <td>{{ item.fechaRecibo | shortDate }}</td>
+                    <td>{{ item.plataforma }}</td>
+                    <td>{{ item.precio | formatCurrency }}</td>
+                    <td>
+                        <p-tag [value]="getEstadoPagoLabel(item.estadoPago)"
+                               [severity]="getEstadoPagoSeverity(item.estadoPago)" />
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-card>
+</div>

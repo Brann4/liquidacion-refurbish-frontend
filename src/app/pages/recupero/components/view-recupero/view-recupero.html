@@ -1,79 +1,85 @@
-<p-toolbar class="mb-6">
-    <ng-template #start>
-        <p-button label="Nuevo" icon="pi pi-plus" severity="primary" (onClick)="openCreateModal()" />
-    </ng-template>
-</p-toolbar>
-
-<p-card>
-    <p-table
-        #dataTable
-        dataKey="id"
-        [value]="recuperos()"
-        [rows]="10"
-        [rowHover]="true"
-        [paginator]="true"
-        [showCurrentPageReport]="true"
-        [rowsPerPageOptions]="[10, 20, 30]"
-        [globalFilterFields]="['contrata.razonSocial']"
-        currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"
-        [tableStyle]="{ 'min-width': '75rem' }"
-    >
-        <ng-template #caption>
-            <div class="flex items-center justify-between">
-                <h5>Administrador de Recuperos</h5>
-                <p-iconfield>
-                    <p-inputicon class="pi pi-search" />
-                    <input pInputText type="text" (input)="onGlobalFilter($event, dataTable)"
-                           placeholder="Buscar por Contrata" />
-                </p-iconfield>
-            </div>
+<div class="flex flex-col gap-6">
+    <p-toolbar>
+        <ng-template pTemplate="start">
+            <breadcrumb-header [breadcrumbs]="breadcrumbs" title="MÓDULO DE LIQUIDACIONES RECUPERO" />
         </ng-template>
-        <ng-template #header>
-            <tr>
-                <th style="width:15%">
-                    Id
-                </th>
-                <th pSortableColumn="contrata.razonSocial" style="width:20%">
-                    <div class="flex items-center gap-2">
-                        Contrata
-                        <p-sortIcon field="contrata.razonSocial" />
-                    </div>
-                </th>
-                <th pSortableColumn="fechaIngreso" style="width:25%">
-                    <div class="flex items-center gap-2">
-                        Fecha Ingreso
-                        <p-sortIcon field="fechaIngreso" />
-                    </div>
-                </th>
-                <th pSortableColumn="estado" style="width:20%">
-                    <div class="flex items-center gap-2">
-                        Estado
-                        <p-sortIcon field="estado" />
-                    </div>
-                </th>
-                <th style="width:20%"></th>
-            </tr>
+        <ng-template pTemplate="end">
+            <p-button label="Nuevo" icon="pi pi-plus" severity="primary" [raised]="true" size="large"
+                      (onClick)="openCreateModal()" />
         </ng-template>
-        <ng-template #body let-item>
-            <tr>
-                <td>{{ item.id }}</td>
-                <td>{{ item.contrata.razonSocial }}</td>
-                <td>{{ item.fechaIngreso | date:'dd/MM/yyyy' }}</td>
-                <td>
-                    <p-tag [value]="item.estado === 1 ? 'Pendiente' : 'Importado'"
-                           [severity]="item.estado === 1 ? 'warning' : 'success'" />
-                </td>
-                <td>
-                    <div class="flex items-center gap-2">
-                        <p-button icon="pi pi-pencil" [rounded]="true" [outlined]="true"
-                                  (click)="onEditRecupero(item)" />
-                        <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
-                                  (click)="onDeleteRecupero(item)" />
-                    </div>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
-</p-card>
+    </p-toolbar>
+    <p-card>
+        <p-table
+            #dataTable
+            dataKey="id"
+            [value]="recuperos()"
+            [rows]="10"
+            [rowHover]="true"
+            [paginator]="true"
+            [showCurrentPageReport]="true"
+            [rowsPerPageOptions]="[10, 20, 30]"
+            [globalFilterFields]="['contrata.razonSocial']"
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+            [tableStyle]="{ 'min-width': '75rem' }"
+        >
+            <ng-template pTemplate="caption">
+                <div class="flex items-center justify-between">
+                    <h5>Administrador de Recuperos</h5>
+                    <p-iconfield>
+                        <p-inputicon class="pi pi-search" />
+                        <input pInputText type="text" (input)="onGlobalFilter($event, dataTable)"
+                               placeholder="Buscar por Contrata" />
+                    </p-iconfield>
+                </div>
+            </ng-template>
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="min-width: 5rem">
+                        Id
+                    </th>
+                    <th pSortableColumn="contrata.razonSocial" style="min-width: 15rem">
+                        <div class="flex items-center gap-2">
+                            Contrata
+                            <p-sortIcon field="contrata.razonSocial" />
+                        </div>
+                    </th>
+                    <th pSortableColumn="fechaIngreso" style="min-width: 15rem">
+                        <div class="flex items-center gap-2">
+                            Fecha Ingreso
+                            <p-sortIcon field="fechaIngreso" />
+                        </div>
+                    </th>
+                    <th pSortableColumn="estado" style="min-width: 15rem">
+                        <div class="flex items-center gap-2">
+                            Estado
+                            <p-sortIcon field="estado" />
+                        </div>
+                    </th>
+                    <th style="min-width: 15rem"></th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-item>
+                <tr>
+                    <td>{{ item.id }}</td>
+                    <td>{{ item.contrata.razonSocial }}</td>
+                    <td>{{ item.fechaIngreso | shortDate }}</td>
+                    <td>
+                        <p-tag [value]="item.estado === 1 ? 'Pendiente' : 'Importado'"
+                               [severity]="item.estado === 1 ? 'warning' : 'success'" />
+                    </td>
+                    <td>
+                        <div class="flex items-center gap-2">
+                            <p-button icon="pi pi-eye" [rounded]="true" (click)="onViewDetail(item)" />
+                            <p-button icon="pi pi-pencil" severity="info" [rounded]="true" [outlined]="true"
+                                      (click)="onEditRecupero(item)" />
+                            <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
+                                      (click)="onDeleteRecupero(item)" />
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-card>
+</div>
 
 <app-recupero-modal />

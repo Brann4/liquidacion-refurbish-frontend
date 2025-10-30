@@ -6,6 +6,7 @@ import { UpdateLiquidacionRecuperoRequest } from '@/pages/recupero/entities/upda
 import { LiquidacionRecuperoResponse } from '@/pages/recupero/entities/liquidacion-recupero-response';
 import { RecuperoApi } from '@/pages/recupero/services/recupero.api';
 import { ToastService } from '@/layout/service/toast.service';
+import { Router } from '@angular/router';
 
 export type RecuperoState = {
     entities: LiquidacionRecuperoResponse[];
@@ -28,7 +29,7 @@ const initialState: RecuperoState = {
 export const RecuperoStore = signalStore(
     { providedIn: 'root' },
     withState<RecuperoState>(initialState),
-    withMethods((store, recuperoService = inject(RecuperoApi), toast = inject(ToastService)) => ({
+    withMethods((store, recuperoService = inject(RecuperoApi), toast = inject(ToastService), router = inject(Router)) => ({
         openModalCreate() {
             patchState(store, { isOpenCreate: true, error: null });
         },
@@ -91,8 +92,12 @@ export const RecuperoStore = signalStore(
                     if (response.status && response.value) {
                         patchState(store, { isSubmitting: false });
                         toast.success(response.msg || 'Recupero creado correctamente');
-                        this.getAll();
                         this.closeModalCreate();
+                        const newId = response.value.id;
+                        if (newId) {
+                            router.navigate(['/pages/recupero', newId]);
+                        }
+                        this.getAll();
                     } else {
                         const errorMessage = response.msg || 'Error al crear el recupero';
                         patchState(store, {

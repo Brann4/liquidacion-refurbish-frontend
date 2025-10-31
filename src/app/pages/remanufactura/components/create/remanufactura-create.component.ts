@@ -5,6 +5,7 @@ import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angu
 import { Estado } from '@/utils/Constants';
 import { DTOCreateLiquidacionRemanufactura } from '../../entities/remanufactura/DTOCreateLiquidacionRemanufactura';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FileUploadClasses } from 'primeng/fileupload';
 
 @Component({
     selector: 'app-remanufactura-create',
@@ -21,14 +22,9 @@ export class RemanufacturaCreateComponent {
     createForm = this.fb.group({
         nombreLiquidacion: new FormControl<string>('', [Validators.required, Validators.maxLength(100)]),
         fechaIngreso: new FormControl<string>('', [Validators.required]),
-        estado: new FormControl<number>(Estado.Inactivo, [Validators.required]),
+        estado: new FormControl<boolean>(false, [Validators.required]),
         usuarioId: new FormControl<number>(1)
     });
-
-    stateOptions = signal<any[]>([
-        { label: 'Activo', value: Estado.Activo },
-        { label: 'Inactivo', value: Estado.Inactivo }
-    ]);
 
     isSubmitting = signal<boolean>(false);
 
@@ -36,7 +32,7 @@ export class RemanufacturaCreateComponent {
         this.createForm.reset({
             nombreLiquidacion: '',
             fechaIngreso: null,
-            estado: Estado.Inactivo,
+            estado: false,
             usuarioId: 1
         });
     }

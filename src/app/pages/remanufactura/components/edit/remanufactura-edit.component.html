@@ -1,37 +1,28 @@
-<p-dialog
-    header="Detalles Liquidacion"
-    [modal]="true"
-    [visible]="remanufacturaStore.isOpenEdit()"
-    [breakpoints]="{ '450px': '90vw', '640px': '100vw' }"
-    (visibleChange)="handleCloseModal()">
-
+<p-dialog header="Detalles Liquidacion" [modal]="true" [visible]="remanufacturaStore.isOpenEdit()" [breakpoints]="{ '575px': '100vw' }" [style]="{ width: '500px', maxHeight: '100%' }" (visibleChange)="handleCloseModal()">
     <ng-template #content>
         <form class="flex-col pt-2 rounded-xl p-4" [formGroup]="updateForm" (ngSubmit)="handleSubmit()">
             <div class="flex flex-col gap-6">
                 <div>
                     <label class="font-bold block mb-2">Codigo de Liquidacion <span class="text-red-700">*</span></label>
-                    <input type="text" pInputText [disabled]="true" class="w-full"  formControlName="nombreLiquidacion"  />
+                    <input type="text" pInputText class="w-full" formControlName="nombreLiquidacion" />
                 </div>
-
-                <div class="flex flex-col md:flex-row gap-4">
-                    <div class="flex-1 pt-4">
-                        <div class="flex-auto">
-                            <label for="icondisplay" class="font-bold block mb-2"> Fecha de ingreso <span class="text-red-700">*</span> </label>
-                            <p-datepicker [iconDisplay]="'input'" formControlName="fechaIngreso" appendTo="body" [showIcon]="true" inputId="icondisplay" />
-                        </div>
-                        @if (isInvalid('fechaIngreso')) {
-                            <p-message severity="error" size="small" variant="simple">Fecha no valida </p-message>
-                        }
+                <div class="flex-1 pt-4">
+                    <div class="flex-auto">
+                        <label for="icondisplay" class="font-bold block mb-2"> Fecha de ingreso <span class="text-red-700">*</span> </label>
+                        <p-datepicker [iconDisplay]="'input'" formControlName="fechaIngreso" appendTo="body" [showIcon]="true" inputId="icondisplay" />
                     </div>
-                    <div class="flex-1 pt-4">
-                        <label class="font-bold block mb-2"> Estado <span class="text-red-700">*</span></label>
-                        <div class="flex flex-col gap-1">
-                            <p-select-button class="p-1" [options]="stateOptions()" formControlName="estado" [invalid]="isInvalid('value')" optionLabel="label" optionValue="value" />
-                            @if (isInvalid('estado')) {
-                                <p-message severity="error" size="small" variant="simple">Debe de seleccionar un estado</p-message>
-                            }
-                        </div>
-                    </div>
+                    @if (isInvalid('fechaIngreso')) {
+                        <p-message severity="error" size="small" variant="simple">Fecha no valida </p-message>
+                    }
+                </div>
+                <div class="flex items-center gap-4">
+                    <label class="font-bold block mb-2">Estado: <span class="text-red-700">*</span> </label>
+                    <p-toggleswitch formControlName="estado" />
+                    @if (updateForm.controls.estado.value) {
+                        <p-tag icon="pi pi-check-circle" severity="success" value="Activo" />
+                    } @else {
+                        <p-tag icon="pi pi-times-circle" severity="danger" value="Inactivo" />
+                    }
                 </div>
             </div>
         </form>

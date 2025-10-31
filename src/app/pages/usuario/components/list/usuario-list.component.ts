@@ -11,6 +11,7 @@ import { PrimeModules } from '@/utils/PrimeModule';
 import { CreateComponent } from '../create/usuario-create.component';
 import { EditComponent } from '../edit/usuario-edit.component';
 import { BreadcrumbHeader } from '@/layout/component/breadcrumb/breadcrumb.header';
+import { ConfirmationDialog } from '@/pages/service/confirmation-dialog';
 
 @Component({
     selector: 'app-list',
@@ -19,11 +20,10 @@ import { BreadcrumbHeader } from '@/layout/component/breadcrumb/breadcrumb.heade
     templateUrl: './usuario-list.component.html',
     styleUrl: './usuario-list.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [MessageService, ConfirmationService]
 })
 export class UsuarioListComponent {
     breadcrumbs = [{ label: 'Usuario' }];
-
+    confirmationDialogService = inject(ConfirmationDialog);
     usuarioDialog: boolean = false;
     usuarios = signal<DTOUsuario[]>([]);
     submitted = signal<boolean>(false);
@@ -56,10 +56,6 @@ export class UsuarioListComponent {
             this.usuarioStore.openModalEdit(usuario);
         }
     }
-    /*
-        onViewDetail(usuario: DTOUsuario) {
-            this.router.navigate([usuario.id], { relativeTo: this.route });
-        }*/
 
     hideDialog() {
         this.usuarioDialog = false;
@@ -67,26 +63,9 @@ export class UsuarioListComponent {
     }
 
     onDeleteModal(usuario: DTOUsuario) {
-        this.confirmationService.confirm({
-            message: `Estas seguro que desea eliminar a ${usuario.nombres} ${usuario.apellidos} ?`,
-            header: 'Confirmación',
-            icon: 'pi pi-exclamation-triangle',
-            acceptButtonProps: {
-                label: 'Eliminar',
-                severity: 'danger'
-            },
-            rejectButtonProps: {
-                label: 'Cancelar',
-                severity: 'secondary',
-                text: true
-            },
-            acceptIcon: 'pi pi-check',
-            rejectIcon: 'pi pi-times',
-            accept: () => {
+        this.confirmationDialogService.confirmDelete().subscribe((accepted) => {
+            if (accepted) {
                 this.usuarioStore.delete(usuario.id);
-            },
-            reject: () => {
-                console.log('ERROR');
             }
         });
     }

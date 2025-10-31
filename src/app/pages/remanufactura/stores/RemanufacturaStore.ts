@@ -20,6 +20,7 @@ export type RemanufacturaState = {
     isOpenEdit: boolean;
     entityEdit: DTOUpdateLiquidacionRemanufactura | null;
     isSubmitting: boolean;
+    isLoadingData: boolean;
     error: string | null;
 };
 
@@ -30,6 +31,7 @@ const initialState: RemanufacturaState = {
     isOpenCreate: false,
     isOpenEdit: false,
     isSubmitting: false,
+    isLoadingData: false,
     error: null
 };
 
@@ -37,9 +39,8 @@ export const RemanufacturaStore = signalStore(
     { providedIn: 'root' },
     withState<RemanufacturaState>(initialState),
     withMethods((store, remanufacturaService = inject(LiquidacionRemanufacturaService), toast = inject(ToastService), router = inject(Router), routerActivate = inject(ActivatedRoute)) => ({
-
         clear() {
-            patchState(store, { isSubmitting: false, entity: null , entities: []});
+            patchState(store, { isSubmitting: false, entity: null, entities: [] });
         },
         openModalCreate() {
             patchState(store, { isOpenCreate: true });
@@ -57,13 +58,16 @@ export const RemanufacturaStore = signalStore(
             patchState(store, { isSubmitting });
         },
 
+
+
         getLiquidaciones(status?: number) {
+            patchState(store, { isLoadingData: true });
             remanufacturaService.list(status).subscribe({
                 next: (entities) => {
-                    patchState(store, { entities });
+                    patchState(store, { entities, isLoadingData: false });
                 },
                 error: (error) => {
-                    patchState(store, { isSubmitting: false, error: error.message });
+                    patchState(store, { isLoadingData: false, error: error.message });
                 }
             });
         },

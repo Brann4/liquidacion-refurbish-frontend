@@ -13,9 +13,9 @@ import { RemanufacturaCreateComponent } from '../create/remanufactura-create.com
 import { DTOUpdateLiquidacionRemanufactura } from '../../entities/remanufactura/DTOUpdateLiquidacionRemanufactura';
 import { EditComponent } from '../edit/remanufactura-edit.component';
 import { ActivatedRoute, Router } from '@angular/router';
-import { RemanufacturaDetalleStore } from '../../stores/RemanufacturaDetalleStore';
 import { BreadcrumbHeader } from '@/layout/component/breadcrumb/breadcrumb.header';
 import { ConfirmationDialog } from '@/pages/service/confirmation-dialog';
+import { RemanufacturaDetalleStore } from '@/pages/remanufactura-detalle/stores/RemanufacturaDetalleStore';
 
 @Component({
     selector: 'remanufactura-list',

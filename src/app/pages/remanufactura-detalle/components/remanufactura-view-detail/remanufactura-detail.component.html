@@ -8,6 +8,8 @@
                     [disabled]="remanufacturaDetalleStore.entityPreview().length > 0 && !remanufacturaStore.isSubmitting()"
                     icon="pi pi-file-import"
                     severity="primary"
+                    [raised]="true"
+                    size="large"
                     (onClick)="handleToggleImport(remanufacturaStore.entity()?.estado)"
                 ></p-button>
             }
@@ -66,7 +68,6 @@
                     >
                         <ng-template pTemplate="toolbar">
                             <div class="p-fileupload-buttonbar p-2 flex justify-between items-center gap-2">
-
                                 <div class="flex gap-2">
                                     <p-button label="Eliminar" icon="pi pi-times" severity="danger" [outlined]="true" (onClick)="fileUploader.clear()" [disabled]="fileUploader.files.length === 0 || remanufacturaDetalleStore.isSubmitting()">
                                     </p-button>
@@ -162,7 +163,6 @@
                     </p-table>
                 </div>
             }
-
         } @else {
             <div class="flex flex-col items-center">
                 <i class="pi pi-exclamation-triangle text-red-800" style="font-size: 2.5rem"></i>
@@ -172,8 +172,7 @@
     </div>
 </p-card>
 
-@if(!showImportDialog() ){
-<div class="flex flex-col flex-1 h-[calc(100vh-20rem)]" >
+<div class="flex flex-col flex-1 h-[calc(100dvh-20rem)]">
     <p-card class="mt-4 flex-1 relative overflow-hidden">
         @if (this.remanufacturaDetalleStore.isLoadingDetailData()) {
             <div class="absolute inset-0 bg-black/40 flex items-center justify-center rounded-xl">
@@ -185,32 +184,52 @@
         } @else {
             <p-table
                 #dt
+                [value]="remanufacturaDetalleStore.entities()"
                 dataKey="id"
-                [value]="this.remanufacturaDetalleStore.entities()"
+                [paginator]="true"
                 [tableStyle]="{ 'min-width': '75rem' }"
                 [rows]="10"
-                [paginator]="true"
-                [globalFilterFields]="['nombreLiquidacion']"
-                [rowHover]="true"
-                dataKey="id"
-                currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"
-                [showCurrentPageReport]="true"
                 [rowsPerPageOptions]="[10, 20, 30]"
+                [showCurrentPageReport]="true"
+                [(selection)]="selectedData"
+                [rowHover]="true"
+                [scrollable]="true"
+                scrollHeight="h-[calc(100dvh-20rem)]"
+                [globalFilterFields]="['liquidacion', 'plataforma', 'codigoLiquidacion', 'codigoEntrega', 'codigoSAP', 'nombreProducto', 'serieOrigen', 'serieFinal', 'trabajoRealizado']"
+                currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"
             >
                 <ng-template #caption>
                     <div class="flex items-center justify-between">
                         <div class="flex flex-row gap-2">
                             <p-iconfield>
                                 <p-inputicon class="pi pi-search" />
-                                <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar por nombre" />
+                                <input pInputText type="text" (input)="dt.filterGlobal($any($event.target).value, 'contains')" placeholder="Buscar por nombre" />
                             </p-iconfield>
                             <p-button label="Limpiar Filtros" [outlined]="true" icon="pi pi-filter-slash" (click)="clearFilters(dt)" />
+                            <p-button severity="danger" label="Eliminar" icon="pi pi-trash"  (onClick)="deleteSelectedProducts()" [disabled]="!selectedData || !selectedData.length" />
                         </div>
 
                         <div class="flex flex-row gap-2">
                             @if (this.remanufacturaDetalleStore.entities()) {
-                                <div class="card flex justify-center">
-                                    <p-button label="Descargar Reporte" severity="success" icon="pi pi-file-excel" [disabled]="remanufacturaDetalleStore.isExporting() || remanufacturaDetalleStore.entities().length <= 0" [loading]="remanufacturaDetalleStore.isExporting()" (click)="exportDataTable()" />
+                                <div class="card flex justify-between gap-3">
+                                    <p-button
+                                        label="Gestionar Partida"
+                                        [disabled]="remanufacturaDetalleStore.entityPreview().length > 0 && !remanufacturaStore.isSubmitting()"
+                                        icon="pi pi-plus"
+                                        variant="outlined"
+                                        severity="warn"
+
+                                        (onClick)="handleOpenModalAddPartidas(remanufacturaStore.entity())"
+                                    ></p-button>
+                                    <p-button
+                                        label="Descargar Reporte"
+                                        severity="success"
+
+                                        icon="pi pi-file-excel"
+                                        [disabled]="remanufacturaDetalleStore.isExporting() || remanufacturaDetalleStore.entities().length <= 0"
+                                        [loading]="remanufacturaDetalleStore.isExporting()"
+                                        (click)="exportDataTable()"
+                                    />
                                 </div>
                             }
                         </div>
@@ -219,71 +238,77 @@
 
                 <ng-template #header>
                     <tr>
+                        <th style="width: 3rem" pFrozenColumn>
+                            <p-tableHeaderCheckbox />
+                        </th>
                         <th pSortableColumn="liquidacion" style="min-width: 10rem" pFrozenColumn>
                             Liquidacion
-                            <p-columnFilter type="text" field="liquidacion" display="menu" />
+                            <p-sortIcon field="liquidacion" />
                         </th>
                         <th pSortableColumn="plataforma" style="min-width: 10rem">
                             Plataforma
-                            <p-columnFilter type="text" field="plataforma" display="menu" />
+                            <p-sortIcon field="plataforma" />
                         </th>
                         <th pSortableColumn="codigoLiquidacion" style="min-width: 8rem">
                             Codigo
-                            <p-columnFilter type="text" field="codigoLiquidacion" display="menu" />
+                            <p-sortIcon field="codigoLiquidacion" />
                         </th>
                         <th pSortableColumn="codigoEntrega" style="min-width: 12rem">
                             Codigo Entrega
-                            <p-columnFilter type="text" field="codigoEntrega" display="menu" />
+                            <p-sortIcon field="codigoEntrega" />
                         </th>
                         <th pSortableColumn="fechaPrevista" style="min-width: 12rem">
                             Fecha Prevista
-                            <p-columnFilter type="text" field="fechaPrevista" display="menu" />
+                            <p-sortIcon field="fechaPrevista" />
                         </th>
                         <th pSortableColumn="codigoSAP" style="min-width: 10rem">
                             Codigo SAP
-                            <p-columnFilter type="text" field="codigoSAP" display="menu" />
+                            <p-sortIcon field="codigoSAP" />
                         </th>
                         <th pSortableColumn="nombreProducto" style="min-width: 16rem">
                             Producto
-                            <p-columnFilter type="text" field="nombreProducto" display="menu" />
+                            <p-sortIcon field="nombreProducto" />
                         </th>
                         <th pSortableColumn="cantidad" style="min-width: 10rem">
                             Cantidad
-                            <p-columnFilter type="text" field="cantidad" display="menu" />
+                            <p-sortIcon field="cantidad" />
                         </th>
                         <th pSortableColumn="serieOrigen" style="min-width: 12rem">
                             Serie Origen
-                            <p-columnFilter type="text" field="serieOrigen" display="menu" />
+                            <p-sortIcon field="serieOrigen" />
                         </th>
                         <th pSortableColumn="serieFinal" style="min-width: 12rem">
                             Serie Final
-                            <p-columnFilter type="text" field="serieFinal" display="menu" />
+                            <p-sortIcon field="serieFinal" />
                         </th>
                         <th pSortableColumn="trabajoRealizado" style="min-width: 14rem">
                             Trabajo realizado
-                            <p-columnFilter type="text" field="trabajoRealizado" display="menu" />
+                            <p-sortIcon field="trabajoRealizado" />
                         </th>
                         <th pSortableColumn="estado" style="min-width: 12rem">
                             Estado
-                            <p-columnFilter type="text" field="estado" display="menu" />
+                            <p-sortIcon field="estado" />
                         </th>
                     </tr>
                 </ng-template>
 
                 <ng-template #body let-detalle let-rowIndex="rowIndex">
                     <tr>
+                        <td style="width: 3rem" pFrozenColumn>
+                            <p-tableCheckbox [value]="detalle" />
+                        </td>
                         <td class="font-bold" pFrozenColumn>{{ detalle.liquidacion }}</td>
-                        <td class="">{{ detalle.plataforma }}</td>
-                        <td class="font-light">{{ detalle.codigoLiquidacion }}</td>
-                        <td class="font-light">{{ detalle.codigoEntrega }}</td>
-                        <td class="font-light">{{ detalle.fechaPrevista | shortDate }}</td>
-                        <td class="font-light">{{ detalle.codigoSAP }}</td>
-                        <td class="font-light">{{ detalle.nombreProducto }}</td>
-                        <td class="font-light" style="width: 0.5rem">{{ detalle.cantidad }}</td>
-                        <td class="font-light">{{ detalle.serieOrigen != null || detalle.serieOrigen == '' ? 'S/N' : detalle.serieOrigen }}</td>
-                        <td class="font-light">{{ detalle.serieFinal }}</td>
-                        <td class="font-light">{{ detalle.trabajoRealizado }}</td>
-                        <td class="font-light">{{ detalle.estado }}</td>
+                        <td>{{ detalle.plataforma }}</td>
+                        <td>{{ detalle.codigoLiquidacion }}</td>
+                        <td>{{ detalle.codigoEntrega }}</td>
+                        <td>{{ detalle.fechaPrevista | shortDate }}</td>
+                        <td>{{ detalle.codigoSAP }}</td>
+                        <td>{{ detalle.nombreProducto }}</td>
+                        <td style="width: 0.5rem">{{ detalle.cantidad }}</td>
+                        <td>{{ detalle.serieOrigen != null || detalle.serieOrigen == '' ? 'S/N' : detalle.serieOrigen }}</td>
+                        <td>{{ detalle.serieFinal }}</td>
+                        <td>{{ detalle.trabajoRealizado }}</td>
+                        <td>{{ detalle.estado }}</td>
                     </tr>
                 </ng-template>
 
@@ -301,5 +326,3 @@
         }
     </p-card>
 </div>
-}
-

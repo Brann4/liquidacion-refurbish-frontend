@@ -7,86 +7,96 @@
         <p-button label="Nuevo" icon="pi pi-plus" severity="primary" class="mr-2" [raised]="true" size="large" (onClick)="openCreateModal()" />
     </ng-template>
 </p-toolbar>
-
-<p-card>
-    <p-table
-        #dt
-        dataKey="id"
-        [value]="partidaStore.entities()"
-        [tableStyle]="{ 'min-width': '75rem' }"
-        [rows]="10"
-        [paginator]="true"
-        [globalFilterFields]="['codigo', 'partidaNombre', 'unidadGeneral', 'precioGeneral']"
-        [rowHover]="true"
-        currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"
-        [showCurrentPageReport]="true"
-        [rowsPerPageOptions]="[10, 20, 30]"
-    >
-        <ng-template #caption>
-            <div class="flex items-center justify-between">
-                <h5 class="m-0">Administrador de Partidas</h5>
-                <p-iconfield>
-                    <p-inputicon class="pi pi-search" />
-                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar por nombre" />
-                </p-iconfield>
+<div class="flex flex-col flex-1 h-[calc(100vh-20rem)]">
+    <p-card class="mt-4 flex-1 relative overflow-hidden">
+    @if (this.partidaStore.isLoadingData()) {
+        <div class="absolute inset-0 bg-black/40 flex items-center justify-center rounded-xl">
+            <div class="flex flex-col justify-center items-center">
+                <p-progressSpinner class="w-10 h-10" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
+                <span class="text-2xl text-shadow-white font-bold mt-2"> Cargando datos . . . </span>
             </div>
-        </ng-template>
-        <ng-template #header>
-            <tr>
-                <th pSortableColumn="codigo">
-                    Codigo
-                    <p-sortIcon field="codigo" />
-                </th>
-                <th pSortableColumn="partidaNombre" style="min-width: 8rem">
-                    Nombre de Partida
-                    <p-sortIcon field="partidaNombre" />
-                </th>
-                <th pSortableColumn="unidadGeneral" style="min-width: 10rem">
-                    Unidad General
-                    <p-sortIcon field="unidadGeneral" />
-                </th>
-                <th pSortableColumn="precioGeneral" style="min-width: 12rem">
-                    Precio General
-                    <p-sortIcon field="precioGeneral" />
-                </th>
-                <th pSortableColumn="estado" style="min-width: 12rem">
-                    Estado
-                    <p-sortIcon field="estado" />
-                </th>
-                <th style="min-width: 12rem"></th>
-            </tr>
-        </ng-template>
-        <ng-template #body let-data let-rowIndex="rowIndex">
-            <tr>
-                <td class="font-extrabold">
-                    <p-button class="mr-2 text-primary font-extrabold" (click)="onViewDetail(data)" link [label]="data.codigo" />
-                </td>
-                <td class="truncate max-w-[200px] min-w-[8rem]">{{ data.partidaNombre }}</td>
-                <td>{{ data.unidadGeneral }}</td>
+        </div>
+    } @else {
+        <p-table
+            #dt
+            dataKey="id"
+            [value]="partidaStore.entities()"
+            [tableStyle]="{ 'min-width': '75rem' }"
+            [rows]="10"
+            [paginator]="true"
+            [globalFilterFields]="['codigo', 'partidaNombre', 'unidadGeneral', 'precioGeneral']"
+            [rowHover]="true"
+            currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"
+            [showCurrentPageReport]="true"
+            [rowsPerPageOptions]="[10, 20, 30]"
+        >
+            <ng-template #caption>
+                <div class="flex items-center justify-between">
+                    <h5 class="m-0">Administrador de Partidas</h5>
+                    <p-iconfield>
+                        <p-inputicon class="pi pi-search" />
+                        <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar por nombre" />
+                    </p-iconfield>
+                </div>
+            </ng-template>
+            <ng-template #header>
+                <tr>
+                    <th pSortableColumn="codigo">
+                        Codigo
+                        <p-sortIcon field="codigo" />
+                    </th>
+                    <th pSortableColumn="partidaNombre" style="min-width: 8rem">
+                        Nombre de Partida
+                        <p-sortIcon field="partidaNombre" />
+                    </th>
+                    <th pSortableColumn="unidadGeneral" style="min-width: 10rem">
+                        Unidad General
+                        <p-sortIcon field="unidadGeneral" />
+                    </th>
+                    <th pSortableColumn="precioGeneral" style="min-width: 12rem">
+                        Precio General
+                        <p-sortIcon field="precioGeneral" />
+                    </th>
+                    <th pSortableColumn="estado" style="min-width: 12rem">
+                        Estado
+                        <p-sortIcon field="estado" />
+                    </th>
+                    <th style="min-width: 12rem"></th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-data let-rowIndex="rowIndex">
+                <tr>
+                    <td class="font-extrabold">
+                        <p-button class="mr-2 text-primary font-extrabold" (click)="onViewDetail(data)" link [label]="data.codigo" />
+                    </td>
+                    <td class="truncate max-w-[200px] min-w-[8rem]">{{ data.partidaNombre }}</td>
+                    <td>{{ data.unidadGeneral }}</td>
 
-                <td class="font-bold">{{ data.precioGeneral | formatCurrency }}</td>
-                <td>
-                    <p-tag [value]="data.estado == 1 ? 'Activo' : 'Inactivo'" [severity]="getSeverity(data.estado)" />
-                </td>
-                <td>
-                    <p-button icon="pi pi-pencil" severity="info" class="mr-2" pTooltip="Editar" tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="OnEditModal(data)" />
-                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" pTooltip="Eliminar" tooltipPosition="top" [outlined]="true" (click)="onDeleteModal(data)" />
-                </td>
-            </tr>
-        </ng-template>
+                    <td class="font-bold">{{ data.precioGeneral | formatCurrency }}</td>
+                    <td>
+                        <p-tag [value]="data.estado == 1 ? 'Activo' : 'Inactivo'" [severity]="getSeverity(data.estado)" />
+                    </td>
+                    <td>
+                        <p-button icon="pi pi-pencil" severity="info" class="mr-2" pTooltip="Editar" tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="OnEditModal(data)" />
+                        <p-button icon="pi pi-trash" severity="danger" [rounded]="true" pTooltip="Eliminar" tooltipPosition="top" [outlined]="true" (click)="onDeleteModal(data)" />
+                    </td>
+                </tr>
+            </ng-template>
 
-        <ng-template #emptymessage>
-            <tr>
-                <td colspan="6" class="text-center py-4">
-                    <div class="flex flex-col items-center gap-2">
-                        <i class="pi pi-info-circle" style="font-size: 1.5rem"></i>
-                        <span>No se encontraron datos para mostrar</span>
-                    </div>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
+            <ng-template #emptymessage>
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <div class="flex flex-col items-center gap-2">
+                            <i class="pi pi-info-circle" style="font-size: 1.5rem"></i>
+                            <span>No se encontraron datos para mostrar</span>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    }
 </p-card>
+</div>
 
 <partida-create />
 <partida-edit />

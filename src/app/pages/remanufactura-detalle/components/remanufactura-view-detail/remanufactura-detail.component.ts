@@ -2,18 +2,18 @@ import * as XLSX from 'xlsx';
 import { PrimeModules } from '@/utils/PrimeModule';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { RemanufacturaStore } from '../../stores/RemanufacturaStore';
 import { ShortDatePipe } from '@/layout/pipes/shortDate.pipe';
-import { RemanufacturaDetalleStore } from '../../stores/RemanufacturaDetalleStore';
 import { Estado } from '@/utils/Constants';
 import { Table } from 'primeng/table';
 import { Helper } from '@/utils/Helper';
 import { ToastService } from '@/layout/service/toast.service';
-import { RemanufacturaDetalleService } from '../../services/remanufactura-detalle.service';
 import { FileUpload } from 'primeng/fileupload';
-import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmationDialog } from '@/pages/service/confirmation-dialog';
-import { DTOLiquidacionRemanufacturaDetalle } from '../../entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle';
+import { RemanufacturaStore } from '@/pages/remanufactura/stores/RemanufacturaStore';
+import { DTOLiquidacionRemanufactura } from '@/pages/remanufactura/entities/remanufactura/DTOLiquidacionRemanufactura';
+import { RemanufacturaDetalleStore } from '../../stores/RemanufacturaDetalleStore';
+import { SortEvent } from 'primeng/api';
+import { DTOLiquidacionRemanufacturaDetalle } from '@/pages/remanufactura-detalle/entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle';
 
 @Component({
     selector: 'remanufactura-detail',
@@ -30,16 +30,22 @@ export class RemanufacturaDetailComponent implements OnInit {
     router = inject(Router);
     remanufacturaStore = inject(RemanufacturaStore);
     remanufacturaDetalleStore = inject(RemanufacturaDetalleStore);
-    remanufacturaDetalleService = inject(RemanufacturaDetalleService);
 
     toast = inject(ToastService);
     confirmationDialogService = inject(ConfirmationDialog);
 
     showImportDialog = signal<boolean>(false);
+    isSorted = signal<boolean | null>(null);
+    selectedData! : DTOLiquidacionRemanufacturaDetalle[] | null;
+
+    detalles = signal<DTOLiquidacionRemanufacturaDetalle[]>([]);
+    initialValue = signal<DTOLiquidacionRemanufacturaDetalle[]>([]);
+
     loadingImport = computed(() => this.remanufacturaDetalleStore.isExporting());
     statusActive = computed(() => !!this.remanufacturaStore.entity()?.estado);
 
     @ViewChild('fileUploader') fileUploader?: FileUpload;
+    @ViewChild('dt') dt!: Table;
 
     constructor() {
         effect(() => {
@@ -60,6 +66,8 @@ export class RemanufacturaDetailComponent implements OnInit {
     ngOnInit(): void {
         const id = Number(this.route.snapshot.paramMap.get('id'));
         if (id) this.remanufacturaStore.getById(id);
+        this.detalles.set(this.remanufacturaDetalleStore.entities());
+        this.initialValue.set([...this.remanufacturaDetalleStore.entities()]);
     }
 
     goBack() {
@@ -69,7 +77,7 @@ export class RemanufacturaDetailComponent implements OnInit {
     }
 
     onGlobalFilter(table: Table, event: Event) {
-        table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
+        table.filterGlobal((event.target as HTMLInputElement).value.trim(), 'contains');
     }
 
     handleToggleImport(entityStatus?: boolean) {
@@ -93,15 +101,38 @@ export class RemanufacturaDetailComponent implements OnInit {
         this.showImportDialog.set(true);
     }
 
-    private ValidateHeaders(headers: string[], expectedHeaders: string[]): string[] {
-        const missingHeaders = expectedHeaders.filter((header) => !headers.map((h) => h.toLowerCase().trim().includes(h)));
-        if (missingHeaders.length > 0) {
-            this.toast.warn(`Error: Faltan las columnas: ${missingHeaders.join(', ')}`);
-            this.remanufacturaDetalleStore.setExportingPreview(false);
-            return [];
+    customSort(event: SortEvent) {
+        if (this.isSorted() == null || this.isSorted() === undefined) {
+            this.isSorted.set(true);
+            this.sortTableData(event);
+        } else if (this.isSorted() == true) {
+            this.isSorted.set(false);
+            this.sortTableData(event);
+        } else if (this.isSorted() == false) {
+            this.isSorted.set(null);
+            this.detalles.set([...this.initialValue()]);
+            this.dt.reset();
+        }
+    }
+
+    sortTableData(event: SortEvent) {
+        if (!event.data || !event.field || !event.order) {
+            console.warn('SortEvent no contiene los datos necesarios para ordenar.');
+            return;
         }
 
-        return missingHeaders;
+        event.data.sort((data1: any, data2: any) => {
+            let value1 = data1[event.field!];
+            let value2 = data2[event.field!];
+            let result = null;
+            if (value1 == null && value2 != null) result = -1;
+            else if (value1 != null && value2 == null) result = 1;
+            else if (value1 == null && value2 == null) result = 0;
+            else if (typeof value1 === 'string' && typeof value2 === 'string') result = value1.localeCompare(value2);
+            else result = value1 < value2 ? -1 : value1 > value2 ? 1 : 0;
+
+            return event.order! * result;
+        });
     }
 
     async handleUploadFile(event: { files: File[] }): Promise<void> {
@@ -274,11 +305,25 @@ export class RemanufacturaDetailComponent implements OnInit {
         const sizeMB = sizeKB / (1024 * 1024);
         return `${sizeMB.toFixed(2)} MB`;
     }
+    deleteSelectedProducts() {
+        this.confirmationDialogService.confirmDelete().subscribe((accepted) => {
+            if( !accepted || !this.selectedData?.length) return;
 
-    /**
-     * Parsea un valor a string de forma segura.
-     * (Equivalente a ParseCellValue<string>)
-     */
+            const allSelected = this.selectedData?.length === this.remanufacturaDetalleStore.entities().length;
+
+            if (accepted) {
+                if(allSelected){
+                    this.remanufacturaDetalleStore.deleteAll( this.remanufacturaStore.entity()!.nombreLiquidacion);
+                }
+                else{
+                    const itemsIdSelected = this.selectedData.map(x => x.id);
+                    this.remanufacturaDetalleStore.deleteMany(this.remanufacturaStore.entity()!.nombreLiquidacion, itemsIdSelected);
+                }
+                this.selectedData = null;
+            }
+        });
+    }
+
     private parseString(value: any): string {
         if (value === null || value === undefined) {
             return ''; // Devuelve string vacío para nulos
@@ -328,5 +373,11 @@ export class RemanufacturaDetailComponent implements OnInit {
         }
 
         return floatValue;
+    }
+
+    handleOpenModalAddPartidas(data: DTOLiquidacionRemanufactura | null) {
+        if (!data) return;
+        const liquidacionId = data.id;
+        this.remanufacturaDetalleStore.openModalPartidasManagment();
     }
 }

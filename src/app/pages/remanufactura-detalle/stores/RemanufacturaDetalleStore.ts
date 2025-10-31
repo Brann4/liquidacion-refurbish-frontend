@@ -1,20 +1,24 @@
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
-import { DTOLiquidacionRemanufacturaDetalle } from '../entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle';
 import { inject } from '@angular/core';
 import { ToastService } from '@/layout/service/toast.service';
-import { RemanufacturaDetalleService } from '../services/remanufactura-detalle.service';
 import { ApiResponseSingle, ImportPreviewResponse } from '@/utils/ApiResponse';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, takeUntil } from 'rxjs';
-import { DTOXlsxPreview } from '../entities/remanufactura-detalle/DTOXlsxPreview';
+import { format } from 'date-fns';
+import { DTOPartida } from '@/pages/partida/entities/partida/DTOPartida';
+import { RemanufacturaDetalleService } from '../services/remanufactura-detalle.service';
+import { DTOLiquidacionRemanufacturaDetalle } from '@/pages/remanufactura-detalle/entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle';
+import { Estado } from '@/utils/Constants';
+import { Eliminar } from '@/pages/remanufactura/stores/RemanufacturaStore';
 
 export type RemanufacturaState = {
     entities: DTOLiquidacionRemanufacturaDetalle[];
     entity: DTOLiquidacionRemanufacturaDetalle | null;
+    entityPartida: DTOPartida | null;
     entityPreview: DTOLiquidacionRemanufacturaDetalle[];
-    entityXlsxPreview: DTOXlsxPreview[];
     isOpenCreate: boolean;
     isOpenEdit: boolean;
+    isOpenPartidasManagment: boolean;
     isSubmitting: boolean;
     isLoadingDetailData: boolean;
     isExporting: boolean;
@@ -24,11 +28,12 @@ export type RemanufacturaState = {
 
 const initialState: RemanufacturaState = {
     entity: null,
+    entityPartida: null,
     entityPreview: [],
-    entityXlsxPreview: [],
     entities: [],
     isOpenCreate: false,
     isOpenEdit: false,
+    isOpenPartidasManagment: false,
     isSubmitting: false,
     isLoadingDetailData: false,
     isLoadingDataPreview: false,
@@ -52,7 +57,6 @@ export const RemanufacturaDetalleStore = signalStore(
                     isExporting: false,
                     isLoadingDetailData: false,
                     entityPreview: [],
-                    entityXlsxPreview: [],
                     entity: null,
                     entities: []
                 });
@@ -70,6 +74,21 @@ export const RemanufacturaDetalleStore = signalStore(
 
             closeModalCreate() {
                 patchState(store, { isOpenCreate: false });
+            },
+
+            openModalPartidasManagment() {
+                patchState(store, { isOpenPartidasManagment: true });
+            },
+            closeModalPartidasManagment() {
+                patchState(store, { isOpenPartidasManagment: false });
+            },
+
+            setEntityPartida(data: DTOPartida) {
+                patchState(store, {});
+            },
+
+            setEntities(entities: DTOLiquidacionRemanufacturaDetalle[]) {
+                patchState(store, { entities });
             },
 
             setSubmitting(isSubmitting: boolean) {
@@ -185,32 +204,20 @@ export const RemanufacturaDetalleStore = signalStore(
                     .pipe(takeUntil(cancelExportData$))
                     .subscribe({
                         next: (response) => {
-                            const blob = response.body;
-                            if (!blob || blob.size === 0) {
-                                patchState(store, { isExporting: false });
-                                toast.warn('El archivo devuelto por el servidor está vacío.');
+                            if (!response.body || response.body.size === 0) {
+                                const errorMessage = 'Error: El archivo recibido está vacío.';
+                                patchState(store, { isExporting: false, error: errorMessage });
+                                toast.error(errorMessage);
                                 return;
                             }
 
-                            const contentDisposition = response.headers.get('content-disposition');
-                            let fileName = `Reporte_${new Date().toISOString().split('T')[0]}`;
-
-                            if (contentDisposition) {
-                                const fileNameMatch = contentDisposition.match(/filename="?(.+)"?/i);
-                                if (fileNameMatch && fileNameMatch.length > 1) {
-                                    fileName = fileNameMatch[1];
-                                }
-                            }
-
-                            const url = window.URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = fileName;
-                            a.click();
-                            window.URL.revokeObjectURL(url);
-
                             patchState(store, { isExporting: false });
-                            toast.success('Archivo descargado exitosamente');
+
+                            const defaultFileName = `Reporte-Recupero_${format(new Date(), 'yyyy-MM-dd_HHmmss')}.xlsx`;
+                            const fileName = this.getFileNameFromResponse(response) || defaultFileName;
+
+                            this.downloadFile(response.body, fileName);
+                            toast.success('Archivo exportado correctamente.');
                         },
                         error: (err: HttpErrorResponse) => {
                             // No manejamos el error si fue cancelado
@@ -225,6 +232,75 @@ export const RemanufacturaDetalleStore = signalStore(
                             toast.warn('Error al exportar el archivo');
                         }
                     });
+            },
+
+            deleteMany(liquidacion: string, ids: number[]) {
+                patchState(store, { isLoadingDetailData: true });
+
+                remanufacturaService.deleteMany(ids).subscribe({
+                    next: (response) => {
+                        if (response.status) {
+                            toast.success(response.msg);
+                            this.getDetailData(liquidacion, Estado.Todos);
+                        }
+                        patchState(store, { isLoadingDetailData: false });
+                    },
+                    error: (error) => {
+                        patchState(store, { isSubmitting: false, error: error.message });
+                        toast.error(error.error.msg);
+                    }
+                });
+            },
+
+            deleteAll(liquidacion: string) {
+                patchState(store, { isLoadingDetailData: true });
+                remanufacturaService.deleteAll(liquidacion).subscribe({
+                    next: (response) => {
+                        if (response.status && response.value == Eliminar.Correcto) {
+                            toast.success(response.msg);
+                            patchState(store, { isLoadingDetailData: false });
+                            this.getDetailData(liquidacion, Estado.Todos);
+                        }
+                    },
+                    error: (error) => {
+                        patchState(store, { isLoadingDetailData: false, error: error.message });
+                        toast.error(error.error.msg);
+                    }
+                });
+            },
+
+            getFileNameFromResponse(response: any): string | null {
+                const contentDisposition = response.headers?.get('Content-Disposition');
+
+                if (!contentDisposition) {
+                    return null;
+                }
+
+                let matches = /filename\*=UTF-8''([^;]+)/.exec(contentDisposition);
+
+                if (matches && matches[1]) {
+                    const decodedFilename = decodeURIComponent(matches[1]);
+                    return decodedFilename;
+                }
+
+                matches = /filename="?([^";]+)"?/.exec(contentDisposition);
+
+                if (matches && matches[1]) {
+                    return matches[1];
+                }
+
+                return null;
+            },
+
+            downloadFile(blob: Blob, fileName: string) {
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
             },
 
             // Métodos para cancelar peticiones específicas

@@ -1,4 +1,4 @@
-import { DTOLiquidacionRemanufacturaDetalle } from "@/pages/remanufactura/entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle";
+import { DTOLiquidacionRemanufacturaDetalle } from "@/pages/remanufactura-detalle/entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle";
 
 export interface ApiResponse<T> {
   status: boolean;

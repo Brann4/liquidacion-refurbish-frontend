@@ -3,8 +3,8 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment.development';
 import { ApiResponse, ApiResponseSingle, ImportPreviewResponse } from '@/utils/ApiResponse';
-import { DTOLiquidacionRemanufacturaDetalle } from '../entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle';
 import { BaseResponse } from '@/utils/base-response';
+import { DTOLiquidacionRemanufacturaDetalle } from '@/pages/remanufactura-detalle/entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle';
 
 @Injectable({
     providedIn: 'root'
@@ -28,5 +28,13 @@ export class RemanufacturaDetalleService {
     exportDataTable(nombreLiquidacion: string | undefined): Observable<HttpResponse<Blob>> {
         const query = `${this.apiUrl}/Exportar/${nombreLiquidacion}`;
         return this.http.get(query, { observe: 'response', responseType: 'blob' });
+    }
+
+    deleteMany(ids: number[]) {
+        return this.http.post<ApiResponseSingle<number>>(`${this.apiUrl}/EliminarMuchos`,{ids});
+    }
+
+    deleteAll(nombreLiquidacion: string) {
+        return this.http.delete<ApiResponseSingle<number>>(`${this.apiUrl}/EliminarTodo/${nombreLiquidacion}`);
     }
 }

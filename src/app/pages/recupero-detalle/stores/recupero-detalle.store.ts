@@ -10,6 +10,7 @@ import { ContrataApi } from '@/pages/contrata/services/contrata.api';
 import { Contrata } from '@/pages/contrata/entities/contrata';
 import { RecuperoApi } from '@/pages/recupero/services/recupero.api';
 import { LiquidacionRecupero } from '@/pages/recupero/entities/liquidacion-recupero';
+import { LiquidacionRecuperoExcel } from '@/pages/service/liquidacion-recupero-excel';
 import { format } from 'date-fns';
 
 export type RecuperoDetalleState = {
@@ -43,7 +44,7 @@ const initialState: RecuperoDetalleState = {
 export const RecuperoDetalleStore = signalStore(
     { providedIn: 'root' },
     withState<RecuperoDetalleState>(initialState),
-    withMethods((store, recuperoDetalleService = inject(RecuperoDetalleApi), contrataService = inject(ContrataApi), recuperoService = inject(RecuperoApi), toast = inject(ToastService)) => ({
+    withMethods((store, recuperoDetalleService = inject(RecuperoDetalleApi), contrataService = inject(ContrataApi), recuperoService = inject(RecuperoApi), excelService = inject(LiquidacionRecuperoExcel), toast = inject(ToastService)) => ({
         setLoadingEntities(isLoadingEntities: boolean) {
             patchState(store, { isLoadingEntities });
         },
@@ -190,36 +191,26 @@ export const RecuperoDetalleStore = signalStore(
             });
         },
 
-        preview(request: PreviewLiquidacionRecuperoDetalleRequest) {
+        async preview(request: PreviewLiquidacionRecuperoDetalleRequest) {
             patchState(store, { isLoadingPreview: true, error: null });
 
-            recuperoDetalleService.preview(request).subscribe({
-                next: (response) => {
-                    if (response.status && response.value) {
-                        patchState(store, {
-                            entitiesPreview: response.value,
-                            isLoadingPreview: false,
-                            error: null
-                        });
-                        toast.success(response.msg || 'Vista previa generada correctamente');
-                    } else {
-                        const errorMessage = response.msg || 'Error al generar la vista previa';
-                        patchState(store, {
-                            isLoadingPreview: false,
-                            error: errorMessage
-                        });
-                        toast.error(errorMessage);
-                    }
-                },
-                error: (error) => {
-                    const errorMessage = error.message || 'Error al generar la vista previa';
-                    patchState(store, {
-                        isLoadingPreview: false,
-                        error: errorMessage
-                    });
-                    toast.error(errorMessage);
-                }
-            });
+            try {
+                const result = await excelService.processFileAsync(request.file);
+
+                patchState(store, {
+                    entitiesPreview: result,
+                    isLoadingPreview: false,
+                    error: null
+                });
+                toast.success('Vista previa generada correctamente');
+            } catch (error: any) {
+                const errorMessage = error.message || 'Error al generar la vista previa';
+                patchState(store, {
+                    isLoadingPreview: false,
+                    error: errorMessage
+                });
+                toast.error(errorMessage);
+            }
         },
 
         create(request: CreateLiquidacionRecuperoDetalleRequest) {
@@ -296,8 +287,7 @@ export const RecuperoDetalleStore = signalStore(
             let matches = /filename\*=UTF-8''([^;]+)/.exec(contentDisposition);
 
             if (matches && matches[1]) {
-                const decodedFilename = decodeURIComponent(matches[1]);
-                return decodedFilename;
+                return decodeURIComponent(matches[1]);
             }
 
             matches = /filename="?([^";]+)"?/.exec(contentDisposition);

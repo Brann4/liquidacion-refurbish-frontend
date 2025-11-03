@@ -14,11 +14,13 @@ import { DTOLiquidacionRemanufactura } from '@/pages/remanufactura/entities/rema
 import { RemanufacturaDetalleStore } from '../../stores/RemanufacturaDetalleStore';
 import { SortEvent } from 'primeng/api';
 import { DTOLiquidacionRemanufacturaDetalle } from '@/pages/remanufactura-detalle/entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle';
+import { RemanufacturaPartidasDetailComponent } from "../partidas-detail/partidas-detail.component";
+import { PartidaStore } from '@/pages/partida/stores/PartidaStore';
 
 @Component({
     selector: 'remanufactura-detail',
     standalone: true,
-    imports: [PrimeModules, ShortDatePipe],
+    imports: [PrimeModules, ShortDatePipe, RemanufacturaPartidasDetailComponent],
     templateUrl: './remanufactura-detail.component.html',
     styleUrl: './remanufactura-detail.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -30,6 +32,7 @@ export class RemanufacturaDetailComponent implements OnInit {
     router = inject(Router);
     remanufacturaStore = inject(RemanufacturaStore);
     remanufacturaDetalleStore = inject(RemanufacturaDetalleStore);
+    partidaStore = inject(PartidaStore);
 
     toast = inject(ToastService);
     confirmationDialogService = inject(ConfirmationDialog);
@@ -331,11 +334,6 @@ export class RemanufacturaDetailComponent implements OnInit {
         return String(value).trim();
     }
 
-    /**
-     * Parsea un valor a entero de forma segura.
-     * Lanza un error si no es un número entero válido.
-     * (Equivalente a ParseCellValue<int>)
-     */
     private parseIntSafe(value: any, columnName: string): number {
         if (value === null || value === undefined || String(value).trim() === '') {
             // C# Convert.ChangeType fallaría, así que lanzamos un error
@@ -352,12 +350,6 @@ export class RemanufacturaDetailComponent implements OnInit {
 
         return numValue;
     }
-
-    /**
-     * Parsea un valor a decimal de forma segura.
-     * Lanza un error si no es un número válido.
-     * (Equivalente a ParseCellValue<decimal>)
-     */
     private parseFloatSafe(value: any, columnName: string): number {
         if (value === null || value === undefined || String(value).trim() === '') {
             // Asumimos que los decimales pueden ser 0, pero no vacíos
@@ -377,7 +369,7 @@ export class RemanufacturaDetailComponent implements OnInit {
 
     handleOpenModalAddPartidas(data: DTOLiquidacionRemanufactura | null) {
         if (!data) return;
-        const liquidacionId = data.id;
         this.remanufacturaDetalleStore.openModalPartidasManagment();
+
     }
 }

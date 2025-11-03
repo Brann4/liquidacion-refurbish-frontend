@@ -5,14 +5,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Estado } from '@/utils/Constants';
 import { Helper } from '@/utils/Helper';
-import { ShortDatePipe } from '@/layout/pipes/shortDate.pipe';
 import { PrimeModules } from '@/utils/PrimeModule';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BreadcrumbHeader } from '@/layout/component/breadcrumb/breadcrumb.header';
 import type { DTOPartida } from '../../entities/partida/DTOPartida';
+import type { DTOUpdatePartida } from '../../entities/partida/DTOUpdatePartida';
 import { PartidaStore } from '../../stores/PartidaStore';
 import { PartidaDetalleStore } from '../../stores/PartidaDetalleStore';
-import { DTOUpdatePartida } from '../../entities/partida/DTOUpdatePartida';
 import { FormatCurrencyPipe } from '@/utils/format-currency-pipe';
 import { PartidaCreateComponent } from "../create/partida-create.component";
 import { PartidaEditComponent } from "../edit/partida-edit.component";
@@ -20,7 +19,7 @@ import { PartidaEditComponent } from "../edit/partida-edit.component";
 @Component({
     selector: 'partida-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, PrimeModules, FormatCurrencyPipe /*, RemanufacturaCreateComponent, EditComponent*/, BreadcrumbHeader, PartidaCreateComponent, PartidaEditComponent],
+    imports: [CommonModule, FormsModule, PrimeModules, FormatCurrencyPipe, BreadcrumbHeader, PartidaCreateComponent, PartidaEditComponent],
     templateUrl: './partida-list.component.html',
     providers: [MessageService, ConfirmationService]
 })

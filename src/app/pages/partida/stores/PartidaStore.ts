@@ -58,6 +58,9 @@ export const PartidaStore = signalStore(
         setSubmitting(isSubmitting: boolean) {
             patchState(store, { isSubmitting });
         },
+        setEntities(entities: DTOPartida[]) {
+            patchState(store, { entities });
+        },
 
         list(status?: number) {
             patchState(store, { isLoadingData: true });

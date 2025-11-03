@@ -210,11 +210,11 @@
                         </div>
 
                         <div class="flex flex-row gap-2">
-                            @if (this.remanufacturaDetalleStore.entities()) {
+                            @if (this.remanufacturaDetalleStore.entities() && remanufacturaDetalleStore.entities().length > 0) {
                                 <div class="card flex justify-between gap-3">
                                     <p-button
                                         label="Gestionar Partida"
-                                        [disabled]="remanufacturaDetalleStore.entityPreview().length > 0 && !remanufacturaStore.isSubmitting()"
+                                        [disabled]="remanufacturaDetalleStore.entityPreview().length > 0 && !remanufacturaStore.isSubmitting() || remanufacturaDetalleStore.entities().length <= 0"
                                         icon="pi pi-plus"
                                         variant="outlined"
                                         severity="warn"
@@ -224,7 +224,6 @@
                                     <p-button
                                         label="Descargar Reporte"
                                         severity="success"
-
                                         icon="pi pi-file-excel"
                                         [disabled]="remanufacturaDetalleStore.isExporting() || remanufacturaDetalleStore.entities().length <= 0"
                                         [loading]="remanufacturaDetalleStore.isExporting()"
@@ -326,3 +325,5 @@
         }
     </p-card>
 </div>
+
+<remanufactura-partidas-detail />

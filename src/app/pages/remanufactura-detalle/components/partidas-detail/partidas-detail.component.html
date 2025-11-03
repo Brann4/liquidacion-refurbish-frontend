@@ -1,0 +1,92 @@
+<p-dialog
+    header="Agregar Partidas a la Liquidación"
+    [modal]="true"
+    [visible]="remanufacturaDetalleStore.isOpenPartidasManagment()"
+    [breakpoints]="{ '575px': '100vw' }"
+    [style]="{ width: '900px', maxHeight: '100%' }"
+    (visibleChange)="handleCloseModal()"
+>
+    <ng-template #content>
+        <p-table
+            #dt
+            [value]="partidaStore.entities()"
+            dataKey="id"
+            [paginator]="true"
+            [tableStyle]="{ 'min-width': '75rem' }"
+            [rows]="10"
+            [rowsPerPageOptions]="[10, 20, 30]"
+            [showCurrentPageReport]="true"
+            [(selection)]="selectedData"
+            [rowHover]="true"
+            [scrollable]="true"
+            scrollHeight="h-[calc(100dvh-20rem)]"
+            [globalFilterFields]="['codigo', 'partidaNombre', 'unidadGeneral', 'precioGeneral']"
+            currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"
+        >
+            <ng-template #caption>
+                <div class="flex items-center justify-between">
+                    <div class="flex flex-row gap-2">
+                        <p-iconfield>
+                            <p-inputicon class="pi pi-search" />
+                            <input pInputText type="text" (input)="dt.filterGlobal($any($event.target).value, 'contains')" placeholder="Buscar por nombre" />
+                        </p-iconfield>
+                    </div>
+                </div>
+            </ng-template>
+
+            <ng-template #header>
+                <tr>
+                    <th style="width: 3rem" pFrozenColumn>
+                        <p-tableHeaderCheckbox />
+                    </th>
+
+                    <th pSortableColumn="codigo" style="min-width: 8rem">
+                        Código
+                        <p-sortIcon field="codigo" />
+                    </th>
+                    <th pSortableColumn="partidaNombre" style="min-width: 10rem">
+                        Descripción
+                        <p-sortIcon field="partidaNombre" />
+                    </th>
+                    <th pSortableColumn="unidadGeneral" style="min-width: 8rem">
+                        Unidad
+                        <p-sortIcon field="codigoLiquidacion" />
+                    </th>
+                    <th pSortableColumn="precioGeneral" style="min-width: 12rem">
+                        Precio Unitario
+                        <p-sortIcon field="precioGeneral" />
+                    </th>
+                </tr>
+            </ng-template>
+
+            <ng-template #body let-data let-rowIndex="rowIndex">
+                <tr>
+                    <td style="width: 3rem" pFrozenColumn>
+                        <p-tableCheckbox [value]="data" />
+                    </td>
+                    <td class="font-bold">{{ data.codigo }}</td>
+                    <td>{{ data.partidaNombre }}</td>
+                    <td>{{ data.unidadGeneral }}</td>
+                    <td>{{ data.precioGeneral | formatCurrency }}</td>
+
+                </tr>
+            </ng-template>
+
+            <ng-template #emptymessage>
+                <tr>
+                    <td colspan="13" class="text-center py-4">
+                        <div class="flex flex-col items-center gap-2">
+                            <i class="pi pi-info-circle" style="font-size: 1.5rem"></i>
+                            <span>No se encontraron datos para mostrar</span>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </ng-template>
+
+    <ng-template #footer>
+        <p-button label="Cancelar" icon="pi pi-times" text (click)="handleCloseModal()" />
+        <p-button label="Agregar seleccionados ({{ selectedData?.length ?? 0 }})" (click)="handleSubmit()" [disabled]="!selectedData || !selectedData.length" />
+    </ng-template>
+</p-dialog>

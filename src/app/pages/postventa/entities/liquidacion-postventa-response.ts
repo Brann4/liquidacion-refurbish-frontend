@@ -1,6 +1,6 @@
 import { EstadoLiquidacion } from '@/utils/estado-liquidacion';
 
-export interface LiquidacionRecuperoResponse {
+export interface LiquidacionPostventaResponse {
     id: number;
     contrataId: number;
     fechaIngreso: string;

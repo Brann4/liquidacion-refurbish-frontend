@@ -8,7 +8,7 @@ import { CreateLiquidacionRecuperoDetalleRequest } from '@/pages/recupero-detall
 import { LiquidacionRecuperoDetalle } from '@/pages/recupero-detalle/entities/liquidacion-recupero-detalle';
 import { TipoZona } from '@/pages/precio-zona/entities/precio-zona';
 import { EstadoPago } from '@/pages/recupero-detalle/entities/estado-pago';
-import { EstadoLiquidacion } from '@/pages/recupero/entities/estado-liquidacion';
+import { EstadoLiquidacion } from '@/utils/estado-liquidacion';
 import { ConfirmationDialog } from '@/pages/service/confirmation-dialog';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';

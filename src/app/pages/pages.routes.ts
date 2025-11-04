@@ -6,6 +6,7 @@ export const PAGES_ROUTES: Routes = [
     { path: 'precio-zona', loadChildren: () => import('./precio-zona/precio-zona.routes').then((m) => m.PRECIO_ZONA_ROUTES) },
     { path: 'recupero', loadChildren: () => import('./recupero/recupero.routes').then((m) => m.RECUPERO_ROUTES) },
     { path: 'remanufactura', loadChildren: () => import('./remanufactura/remanufactura.routes').then((m) => m.REMANUFACTURA_ROUTES) },
+    { path: 'postventa', loadChildren: () => import('./postventa/postventa.routes').then((m) => m.POSTVENTA_ROUTES) },
     { path: 'usuario', loadChildren: () => import('./usuario/usuario.routes').then((m) => m.USUARIO_ROUTES) },
     { path: 'rol', loadChildren: () => import('./rol/rol.routes').then((m) => m.ROL_ROUTES) },
     { path: 'permiso', loadChildren: () => import('./permiso/permiso.routes').then((m) => m.PERMISO_ROUTES) },

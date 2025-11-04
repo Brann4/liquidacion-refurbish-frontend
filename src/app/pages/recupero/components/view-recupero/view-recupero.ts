@@ -10,6 +10,7 @@ import { LiquidacionRecuperoResponse } from '@/pages/recupero/entities/liquidaci
 import { mapResponseToLiquidacionRecupero } from '@/pages/recupero/mappers/recupero.mapper';
 import { BreadcrumbHeader } from '@/layout/component/breadcrumb/breadcrumb.header';
 import { ShortDatePipe } from '@/layout/pipes/shortDate.pipe';
+import { EstadoLiquidacion } from '@/utils/estado-liquidacion';
 
 @Component({
     selector: 'app-view-recupero',
@@ -24,6 +25,7 @@ export class ViewRecupero implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private confirmationDialogService = inject(ConfirmationDialog);
     protected readonly recuperos = computed(() => this.recuperoStore.entities());
+    protected readonly isLoadingEntities = computed(() => this.recuperoStore.isLoadingEntities());
     protected readonly breadcrumbs = [{ label: 'Recupero' }];
 
     ngOnInit(): void {
@@ -59,5 +61,13 @@ export class ViewRecupero implements OnInit {
         const target = event.target as HTMLInputElement | null;
         const filterValue = target?.value ?? '';
         dataTable.filterGlobal(filterValue, 'contains');
+    }
+
+    protected getEstadoLabel(estado: EstadoLiquidacion): string {
+        return estado === EstadoLiquidacion.Pendiente ? 'Pendiente' : 'Importado';
+    }
+
+    protected getEstadoSeverity(estado: EstadoLiquidacion): 'warning' | 'success' {
+        return estado === EstadoLiquidacion.Pendiente ? 'warning' : 'success';
     }
 }

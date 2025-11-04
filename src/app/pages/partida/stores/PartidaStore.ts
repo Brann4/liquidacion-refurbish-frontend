@@ -20,6 +20,7 @@ export type PartidaState = {
     isOpenEdit: boolean;
     entityEdit: DTOUpdatePartida | null;
     isSubmitting: boolean;
+    isLoadingData: boolean;
     error: string | null;
 };
 
@@ -30,16 +31,17 @@ const initialState: PartidaState = {
     isOpenCreate: false,
     isOpenEdit: false,
     isSubmitting: false,
+    isLoadingData: false,
     error: null
 };
 
 export const PartidaStore = signalStore(
     { providedIn: 'root' },
     withState<PartidaState>(initialState),
-    withMethods((store, partidaService = inject(PartidaService), toast = inject(ToastService), router = inject(Router)) => ({
-
+    withMethods((
+        store, partidaService = inject(PartidaService), toast = inject(ToastService), router = inject(Router)) => ({
         clear() {
-            patchState(store, { isSubmitting: false, entity: null , entities: []});
+            patchState(store, { isSubmitting: false, entity: null, entities: [] });
         },
         openModalCreate() {
             patchState(store, { isOpenCreate: true });
@@ -53,17 +55,23 @@ export const PartidaStore = signalStore(
         closeModalEdit() {
             patchState(store, { isOpenEdit: false, entityEdit: null });
         },
+
         setSubmitting(isSubmitting: boolean) {
             patchState(store, { isSubmitting });
         },
+        setEntities(entities: DTOPartida[]) {
+            patchState(store, { entities });
+        },
 
         list(status?: number) {
+            patchState(store, { isLoadingData: true });
+
             partidaService.list(status).subscribe({
                 next: (entities) => {
-                    patchState(store, { entities });
+                    patchState(store, { entities, isLoadingData: false });
                 },
                 error: (error) => {
-                    patchState(store, { isSubmitting: false, error: error.message });
+                    patchState(store, { isLoadingData: false, error: error.message });
                 }
             });
         },
@@ -127,7 +135,7 @@ export const PartidaStore = signalStore(
                 },
                 error: (error) => {
                     patchState(store, { isSubmitting: false, error: error.message });
-                    toast.error(error.error.msg || "Error al enviar solicitud al servidor");
+                    toast.error(error.error.msg || 'Error al enviar solicitud al servidor');
                 }
             });
         }

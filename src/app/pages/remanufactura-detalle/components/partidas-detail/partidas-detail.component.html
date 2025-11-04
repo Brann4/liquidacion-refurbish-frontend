@@ -1,0 +1,189 @@
+<p-dialog
+  header="Agregar Partidas a la Liquidación"
+  [modal]="true"
+  [visible]="partidaRemanufacturaDetalleStore.isOpenPartidasManagment()"
+  [breakpoints]="{ '575px': '100vw' }"
+  [style]="{ width: '900px', maxHeight: '100%' }"
+  (visibleChange)="handleCloseModal()"
+>
+  <ng-template #content>
+    <p-stepper [(value)]="activeStep" [linear]="true" class="basis-[50rem]">
+      <p-step-list>
+        <p-step [value]="1">Selección</p-step>
+        <p-step [value]="2">Cantidades</p-step>
+        <p-step [value]="3">Resumen</p-step>
+      </p-step-list>
+
+      <p-step-panels>
+        <p-step-panel [value]="1">
+          <ng-template #content let-activateCallback="activateCallback">
+
+            <p-iconField iconPosition="left" class="w-full mb-3">
+              <p-inputIcon class="pi pi-search" />
+              <input pInputText type="text" [(ngModel)]="filtroPartidas" placeholder="Buscar partida por nombre o código..." class="w-full" />
+            </p-iconField>
+
+            <p-accordion #partidaAccordion [multiple]="true" class="max-h-[50dvh] overflow-y-auto">
+
+              @if(partidaRemanufacturaDetalleStore.isLoading()){
+                <p-skeleton height="46px" class="mb-2"></p-skeleton>
+                <p-skeleton height="46px" class="mb-2"></p-skeleton>
+              } @else {
+                @for (partida of partidasFiltradas(); track partida.id) {
+                  <p-accordion-panel [value]="partida.id.toString()">
+
+                    <p-accordion-header [ngClass]="{
+                      'bg-surface-100 dark:bg-surface-700': isPartidaSelected(partida),
+                      'bg-transparent': !isPartidaSelected(partida)
+                    }">
+                      <div class="flex items-center justify-between w-full pr-4">
+                        <p>
+                          <span class="font-black">{{ partida.codigo }}</span> -
+                          <span class="font-medium">{{ partida.partidaNombre }}</span>
+                        </p>
+
+                        @if (getSelectedCountForPartida(partida) > 0) {
+                          <p-tag [value]="getSelectedCountForPartida(partida) + ' / ' + partida.items.length + ' Items'" severity="success"> </p-tag>
+                        } @else if (partida.items.length > 0) {
+                          <p-tag [value]="partida.items.length + ' Items'" severity="info"></p-tag>
+                        } @else if( isPartidaSelected(partida)) {
+                          <p-tag value="Partida General" severity="success"></p-tag>
+                        }@else{
+                             <p-tag value="Partida General" severity="secondary"></p-tag>
+
+                        }
+                      </div>
+                    </p-accordion-header>
+
+                    <p-accordion-content>
+                      <div class="flex flex-col gap-3">
+                        @if (partida.items.length === 0) {
+                          <div class="flex items-center">
+                            <p-checkbox
+                              [value]="partida.id"
+                              [(ngModel)]="selectionMap['partida-' + partida.id]"
+                              (onChange)="onSelectionChange($event.checked, partida, null)"
+                              [binary]="true">
+                            </p-checkbox>
+                            <label class="ml-2" [ngClass]="{'font-bold text-primary': selectionMap['partida-' + partida.id]}">
+                              Seleccionar Partida General ({{ partida.precioGeneral | formatCurrency }})
+                            </label>
+                          </div>
+                        } @else {
+                          <small class="text-surface-500">Seleccione los items requeridos:</small>
+                          @for (item of partida.items; track item.id) {
+                            <div class="flex items-center">
+                              <p-checkbox
+                                [value]="item.id"
+                                [(ngModel)]="selectionMap['item-' + item.id]"
+                                (onChange)="onSelectionChange($event.checked, partida, item)"
+                                [binary]="true">
+                              </p-checkbox>
+                              <label class="ml-2" [ngClass]="{'font-bold text-primary': selectionMap['item-' + item.id]}">
+                                {{ item.descripcion }} ({{ (item.precioItem ?? 0) | formatCurrency }})
+                              </label>
+                            </div>
+                          }
+                        }
+                      </div>
+                    </p-accordion-content>
+                  </p-accordion-panel>
+                }
+              }
+            </p-accordion>
+
+            <div class="flex pt-6 justify-end">
+              <p-button label="Siguiente ({{ selectedItems.size }})" icon="pi pi-arrow-right" iconPos="right" (click)="onNextStep(activateCallback, 2)" />
+            </div>
+          </ng-template>
+        </p-step-panel>
+
+        <p-step-panel [value]="2">
+          <ng-template #content let-activateCallback="activateCallback">
+            <p class="mb-3">Ajuste las cantidades requeridas para cada partida seleccionada.</p>
+            <p-table [value]="resumenItems()" [dataKey]="'partidaId' + '-' + 'partidaItemId'">
+              <ng-template pTemplate="header">
+                <tr>
+                  <th style="width: 50%">Descripción</th>
+                  <th>Precio Unit.</th>
+                  <th>Unidad</th>
+                  <th style="width: 5rem">Cantidad</th> <th>Total</th>
+                  <th style="width: 3rem"></th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-item let-i="rowIndex">
+                <tr>
+                  <td>{{ item.descripcion }}</td>
+                  <td>{{ item.precioUnitario | formatCurrency }}</td>
+                  <td>{{ item.unidad }}</td>
+                  <td>
+                    <p-inputNumber
+                      [(ngModel)]="item.cantidad"
+                      [min]="1" [max]="999"
+                      [showButtons]="true"
+                      buttonLayout="horizontal"
+                      decrementButtonIcon="pi pi-minus"
+                      incrementButtonIcon="pi pi-plus"
+                      (onInput)="updateTotal(i)">
+                    </p-inputNumber>
+                  </td>
+                  <td>
+                    {{ (item.precioUnitario * item.cantidad) | formatCurrency }}
+                  </td>
+                  <td>
+                    <p-button icon="pi pi-trash" severity="danger" [text]="true" (click)="removeItemFromResumen(item)"></p-button>
+                  </td>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="emptymessage">
+                <tr>
+                  <td colspan="6" class="text-center">No ha seleccionado ninguna partida. Vuelva al paso anterior.</td>
+                </tr>
+              </ng-template>
+            </p-table>
+
+            <div class="flex pt-6 justify-between">
+              <p-button label="Atrás" severity="secondary" icon="pi pi-arrow-left" (click)="onPrevStep(activateCallback, 1)" />
+              <p-button label="Ver Resumen" icon="pi pi-arrow-right" iconPos="right" (click)="onNextStep(activateCallback, 3)" />
+            </div>
+          </ng-template>
+        </p-step-panel>
+
+        <p-step-panel [value]="3">
+          <ng-template #content let-activateCallback="activateCallback">
+            <h3 class="text-lg font-semibold mb-3">Resumen de Partidas a Guardar</h3>
+            <div class="max-h-[40dvh] overflow-y-auto border border-surface-200 dark:border-surface-700 rounded-lg">
+              <ul class="list-none p-0 m-0">
+                @for (item of resumenItems(); track ($index)) {
+                  <li class="flex justify-between p-3 border-b border-surface-200 dark:border-surface-700 last:border-b-0">
+                    <span class="text-surface-600 dark:text-surface-300">{{ item.descripcion }} ({{ item.cantidad }} x {{ item.precioUnitario | formatCurrency }})</span>
+                    <span class="font-semibold text-surface-800 dark:text-surface-100">{{ (item.cantidad * item.precioUnitario) | formatCurrency }}</span>
+                  </li>
+                }
+              </ul>
+            </div>
+            <div class="flex justify-end p-3 border-t border-surface-200 dark:border-surface-700">
+              <span class="text-xl font-bold">TOTAL: {{ calcularTotalGeneral() | formatCurrency }}</span>
+            </div>
+            <div class="flex pt-6 justify-start">
+              <p-button label="Atrás" severity="secondary" icon="pi pi-arrow-left" (click)="onPrevStep(activateCallback, 2)" />
+            </div>
+          </ng-template>
+        </p-step-panel>
+
+      </p-step-panels>
+    </p-stepper>
+  </ng-template>
+
+  <ng-template #footer>
+    <p-button label="Cancelar" icon="pi pi-times" [text]="true" (click)="handleCloseModal()" />
+    @if (activeStep() === 3) {
+      <p-button
+        label="Guardar Partidas ({{ resumenItems().length }})"
+        (click)="handleSubmit()"
+        [disabled]="resumenItems().length === 0 || partidaRemanufacturaDetalleStore.isSubmitting()"
+        [loading]="partidaRemanufacturaDetalleStore.isSubmitting()">
+      </p-button>
+    }
+  </ng-template>
+</p-dialog>

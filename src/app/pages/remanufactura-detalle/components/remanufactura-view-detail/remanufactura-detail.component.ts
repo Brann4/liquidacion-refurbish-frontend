@@ -1,24 +1,27 @@
+import { PartidaRemanufacturaDetalleStore } from './../../stores/PartidaRemanufacturaDetalleStore';
 import * as XLSX from 'xlsx';
 import { PrimeModules } from '@/utils/PrimeModule';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { RemanufacturaStore } from '../../stores/RemanufacturaStore';
 import { ShortDatePipe } from '@/layout/pipes/shortDate.pipe';
-import { RemanufacturaDetalleStore } from '../../stores/RemanufacturaDetalleStore';
 import { Estado } from '@/utils/Constants';
 import { Table } from 'primeng/table';
 import { Helper } from '@/utils/Helper';
 import { ToastService } from '@/layout/service/toast.service';
-import { RemanufacturaDetalleService } from '../../services/remanufactura-detalle.service';
 import { FileUpload } from 'primeng/fileupload';
-import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmationDialog } from '@/pages/service/confirmation-dialog';
-import { DTOLiquidacionRemanufacturaDetalle } from '../../entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle';
+import { RemanufacturaStore } from '@/pages/remanufactura/stores/RemanufacturaStore';
+import { DTOLiquidacionRemanufactura } from '@/pages/remanufactura/entities/remanufactura/DTOLiquidacionRemanufactura';
+import { RemanufacturaDetalleStore } from '../../stores/RemanufacturaDetalleStore';
+import { SortEvent } from 'primeng/api';
+import { DTOLiquidacionRemanufacturaDetalle } from '@/pages/remanufactura-detalle/entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle';
+import { RemanufacturaPartidasDetailComponent } from '../partidas-detail/partidas-detail.component';
+import { PartidaStore } from '@/pages/partida/stores/PartidaStore';
 
 @Component({
     selector: 'remanufactura-detail',
     standalone: true,
-    imports: [PrimeModules, ShortDatePipe],
+    imports: [PrimeModules, ShortDatePipe, RemanufacturaPartidasDetailComponent],
     templateUrl: './remanufactura-detail.component.html',
     styleUrl: './remanufactura-detail.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -30,16 +33,24 @@ export class RemanufacturaDetailComponent implements OnInit {
     router = inject(Router);
     remanufacturaStore = inject(RemanufacturaStore);
     remanufacturaDetalleStore = inject(RemanufacturaDetalleStore);
-    remanufacturaDetalleService = inject(RemanufacturaDetalleService);
+    partidaStore = inject(PartidaStore);
+    partidaDetalleStore = inject(PartidaRemanufacturaDetalleStore);
 
     toast = inject(ToastService);
     confirmationDialogService = inject(ConfirmationDialog);
 
     showImportDialog = signal<boolean>(false);
+    isSorted = signal<boolean | null>(null);
+    selectedData!: DTOLiquidacionRemanufacturaDetalle[] | null;
+
+    detalles = signal<DTOLiquidacionRemanufacturaDetalle[]>([]);
+    initialValue = signal<DTOLiquidacionRemanufacturaDetalle[]>([]);
+
     loadingImport = computed(() => this.remanufacturaDetalleStore.isExporting());
     statusActive = computed(() => !!this.remanufacturaStore.entity()?.estado);
 
     @ViewChild('fileUploader') fileUploader?: FileUpload;
+    @ViewChild('dt') dt!: Table;
 
     constructor() {
         effect(() => {
@@ -60,6 +71,8 @@ export class RemanufacturaDetailComponent implements OnInit {
     ngOnInit(): void {
         const id = Number(this.route.snapshot.paramMap.get('id'));
         if (id) this.remanufacturaStore.getById(id);
+        this.detalles.set(this.remanufacturaDetalleStore.entities());
+        this.initialValue.set([...this.remanufacturaDetalleStore.entities()]);
     }
 
     goBack() {
@@ -69,7 +82,7 @@ export class RemanufacturaDetailComponent implements OnInit {
     }
 
     onGlobalFilter(table: Table, event: Event) {
-        table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
+        table.filterGlobal((event.target as HTMLInputElement).value.trim(), 'contains');
     }
 
     handleToggleImport(entityStatus?: boolean) {
@@ -93,15 +106,38 @@ export class RemanufacturaDetailComponent implements OnInit {
         this.showImportDialog.set(true);
     }
 
-    private ValidateHeaders(headers: string[], expectedHeaders: string[]): string[] {
-        const missingHeaders = expectedHeaders.filter((header) => !headers.map((h) => h.toLowerCase().trim().includes(h)));
-        if (missingHeaders.length > 0) {
-            this.toast.warn(`Error: Faltan las columnas: ${missingHeaders.join(', ')}`);
-            this.remanufacturaDetalleStore.setExportingPreview(false);
-            return [];
+    customSort(event: SortEvent) {
+        if (this.isSorted() == null || this.isSorted() === undefined) {
+            this.isSorted.set(true);
+            this.sortTableData(event);
+        } else if (this.isSorted() == true) {
+            this.isSorted.set(false);
+            this.sortTableData(event);
+        } else if (this.isSorted() == false) {
+            this.isSorted.set(null);
+            this.detalles.set([...this.initialValue()]);
+            this.dt.reset();
+        }
+    }
+
+    sortTableData(event: SortEvent) {
+        if (!event.data || !event.field || !event.order) {
+            console.warn('SortEvent no contiene los datos necesarios para ordenar.');
+            return;
         }
 
-        return missingHeaders;
+        event.data.sort((data1: any, data2: any) => {
+            let value1 = data1[event.field!];
+            let value2 = data2[event.field!];
+            let result = null;
+            if (value1 == null && value2 != null) result = -1;
+            else if (value1 != null && value2 == null) result = 1;
+            else if (value1 == null && value2 == null) result = 0;
+            else if (typeof value1 === 'string' && typeof value2 === 'string') result = value1.localeCompare(value2);
+            else result = value1 < value2 ? -1 : value1 > value2 ? 1 : 0;
+
+            return event.order! * result;
+        });
     }
 
     async handleUploadFile(event: { files: File[] }): Promise<void> {
@@ -141,31 +177,37 @@ export class RemanufacturaDetailComponent implements OnInit {
                     .replace(/[^\w]/g, '')
             );
 
-            var previewData = this.normalizarFilas(worksheet, normalizedHeaders);
+            var { mappedData, validationErrors } = this.normalizarFilas(worksheet, normalizedHeaders);
+            console.log(mappedData);
 
-            for (let index = 0; index < previewData.length; index++) {
-                const element = previewData[index];
+            for (let index = 0; index < mappedData.length; index++) {
+                const element = mappedData[index];
                 if (element.liquidacion !== nombreLiquidacion) {
-                    /* if(previewData.length-1 === index){
-                        this.toast.error(`La liquidación '${element.liquidacion}' en la fila ${index+2} no coincide con la esperada '${nombreLiquidacion}'.`);
-                    }else{*/
                     this.toast.error(`La liquidación '${element.liquidacion}' en la fila ${index + 2} no coincide con la esperada '${nombreLiquidacion}'.`);
-                    //}
                     this.remanufacturaDetalleStore.setExportingPreview(false);
                     return;
                 }
             }
 
-            this.remanufacturaDetalleStore.setEntityPreview(previewData);
+            if (validationErrors.length > 0) {
+                const errorsToShow = validationErrors.slice(0, 10).join('\n');
+                this.toast.error(`El archivo contiene ${validationErrors.length} errores de formato.\n${errorsToShow}`);
+                this.remanufacturaDetalleStore.setExportingPreview(false);
+                return; // Detiene el proceso
+            }
+
+            if (mappedData.length === 0) {
+                this.toast.warn('El archivo no contiene filas de datos válidas.');
+                this.remanufacturaDetalleStore.setEntityPreview([]);
+                return;
+            }
+            this.toast.success(`Se han previsualizado ${mappedData.length} registros correctamente.`);
+            this.remanufacturaDetalleStore.setEntityPreview(mappedData);
             this.remanufacturaDetalleStore.setExportingPreview(false);
         } catch (error) {
             this.toast.error('Error al procesar el archivo.');
             this.remanufacturaDetalleStore.setExportingPreview(false);
         }
-
-        const formData = new FormData();
-        formData.append('File', file, file.name);
-        formData.append('liquidacion', nombreLiquidacion);
 
         this.showImportDialog.set(false);
     }
@@ -186,7 +228,7 @@ export class RemanufacturaDetailComponent implements OnInit {
                 range: 1, // Empieza desde la segunda fila (índice 1)
                 defval: null // Para celdas vacías
             })
-            .slice(0, 15000);
+            .slice(0, 20000);
 
         const headerMap: Record<string, keyof DTOLiquidacionRemanufacturaDetalle> = {
             idliq: 'codigoLiquidacion',
@@ -215,32 +257,49 @@ export class RemanufacturaDetailComponent implements OnInit {
             reingreso: 'reingreso'
         };
 
-        const mappedData: DTOLiquidacionRemanufacturaDetalle[] = previewData.map((item) => {
+        const mappedData: DTOLiquidacionRemanufacturaDetalle[] = [];
+        const validationErrors: string[] = [];
+
+        for (let i = 0; i < previewData.length; i++) {
+            const item = previewData[i]; // E.g., { idliq: 1, qty: "5", ... }
+            const excelRowNumber = i + 2; // Fila 1 es cabecera
             const result: Partial<DTOLiquidacionRemanufacturaDetalle> = {};
 
-            for (const [oldKey, newKey] of Object.entries(headerMap)) {
-                let value = item[oldKey];
+            try {
+                // Itera sobre el mapa de claves
+                for (const [normalizedKey, dtoKey] of Object.entries(headerMap)) {
+                    const rawValue = item[normalizedKey];
 
-                if (['codigoLiquidacion', 'pedido', 'contabilizado', 'codigoSAP'].includes(newKey)) {
-                    value = String(value);
+                    // *** AQUÍ OCURRE LA VALIDACIÓN DE TIPOS ***
+                    switch (dtoKey) {
+                        case 'cantidad':
+                        case 'reingreso':
+                            // @ts-ignore
+                            result[dtoKey] = this.parseIntSafe(rawValue, normalizedKey);
+                            break;
+                        case 'costoUnitario':
+                        case 'costoTotal':
+                            // @ts-ignore
+                            result[dtoKey] = this.parseFloatSafe(rawValue, normalizedKey);
+                            break;
+                        case 'fechaPrevista':
+                            result[dtoKey] = this.parseISODate(rawValue, normalizedKey);
+                            break;
+                        default:
+                            // Todos los demás son strings (fechas, etc.)
+                            // @ts-ignore
+                            result[dtoKey] = this.parseString(rawValue);
+                    }
                 }
 
-                // Conversión de tipos (opcional pero recomendable)
-                if (newKey === 'fechaPrevista' && value) {
-                    value = new Date(value as string);
-                }
-
-                if (['cantidad', 'costoUnitario', 'costoTotal', 'reingreso'].includes(newKey)) {
-                    value = Number(value) || 0;
-                }
-                // @ts-ignore (porque los keys son dinámicos)
-                result[newKey] = value;
+                mappedData.push(result as DTOLiquidacionRemanufacturaDetalle);
+            } catch (err: any) {
+                // Captura el error de parseIntSafe/parseFloatSafe
+                validationErrors.push(`Fila ${excelRowNumber}: ${err.message}`);
             }
+        }
 
-            return result as DTOLiquidacionRemanufacturaDetalle;
-        });
-
-        return mappedData;
+        return { mappedData, validationErrors };
     }
 
     verifyStatus() {
@@ -274,23 +333,30 @@ export class RemanufacturaDetailComponent implements OnInit {
         const sizeMB = sizeKB / (1024 * 1024);
         return `${sizeMB.toFixed(2)} MB`;
     }
+    deleteSelectedProducts() {
+        this.confirmationDialogService.confirmDelete().subscribe((accepted) => {
+            if (!accepted || !this.selectedData?.length) return;
 
-    /**
-     * Parsea un valor a string de forma segura.
-     * (Equivalente a ParseCellValue<string>)
-     */
+            const allSelected = this.selectedData?.length === this.remanufacturaDetalleStore.entities().length;
+
+            if (accepted) {
+                if (allSelected) {
+                    this.remanufacturaDetalleStore.deleteAll(this.remanufacturaStore.entity()!.nombreLiquidacion);
+                } else {
+                    const itemsIdSelected = this.selectedData.map((x) => x.id);
+                    this.remanufacturaDetalleStore.deleteMany(this.remanufacturaStore.entity()!.nombreLiquidacion, itemsIdSelected);
+                }
+                this.selectedData = null;
+            }
+        });
+    }
+
     private parseString(value: any): string {
         if (value === null || value === undefined) {
             return ''; // Devuelve string vacío para nulos
         }
         return String(value).trim();
     }
-
-    /**
-     * Parsea un valor a entero de forma segura.
-     * Lanza un error si no es un número entero válido.
-     * (Equivalente a ParseCellValue<int>)
-     */
     private parseIntSafe(value: any, columnName: string): number {
         if (value === null || value === undefined || String(value).trim() === '') {
             // C# Convert.ChangeType fallaría, así que lanzamos un error
@@ -307,12 +373,6 @@ export class RemanufacturaDetailComponent implements OnInit {
 
         return numValue;
     }
-
-    /**
-     * Parsea un valor a decimal de forma segura.
-     * Lanza un error si no es un número válido.
-     * (Equivalente a ParseCellValue<decimal>)
-     */
     private parseFloatSafe(value: any, columnName: string): number {
         if (value === null || value === undefined || String(value).trim() === '') {
             // Asumimos que los decimales pueden ser 0, pero no vacíos
@@ -328,5 +388,18 @@ export class RemanufacturaDetailComponent implements OnInit {
         }
 
         return floatValue;
+    }
+
+    private parseISODate(value: any, columnName: string) {
+        if (value === null || value === undefined || String(value).trim() === '') {
+            // Asumimos que los decimales pueden ser 0, pero no vacíos
+            throw new Error(`Columna '${columnName}' no puede estar vacía.`);
+        }
+        return Helper.formatExcelDate(value);
+    }
+
+    handleOpenModalAddPartidas(idLiquidacion: number | null) {
+        if(idLiquidacion == null) return;
+        this.partidaDetalleStore.openModalManagment(idLiquidacion);
     }
 }

@@ -1,37 +1,41 @@
 import { DTOUpdatePartidaItem } from './../entities/partidaItem/DTOUpdatePartidaItem';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { environment } from 'src/environments/environment.development';
-import { ApiResponse, ApiResponseSingle, ImportPreviewResponse } from '@/utils/ApiResponse';
+import { ApiResponseSingle } from '@/utils/ApiResponse';
 import { DTOPartidaItem } from '../entities/partidaItem/DTOPartidaItem';
 import { DTOCreatePartidaItem } from '../entities/partidaItem/DTOCreatePartidaItem';
-
-const API = environment;
+import { BaseResponse } from '@/utils/base-response';
+import { DTOPartidaDetalleItem } from '@/pages/remanufactura-detalle/entities/partidas-detalle/DTOPartidaDetalleItem';
+import { DTOPartidaConItem } from '@/pages/remanufactura-detalle/entities/partidas-detalle/DTOPartidaConItem';
 
 @Injectable({
     providedIn: 'root'
 })
 export class PartidaDetalleService {
-    constructor(private http: HttpClient) {}
+    private http = inject(HttpClient);
+    private readonly apiUrl = `${environment.URL}/PartidaDetalle`;
 
-    list(id: number, estado?: number): Observable<DTOPartidaItem[]> {
-        return this.http.get<ApiResponse<DTOPartidaItem>>(`${API.URL}/PartidaDetalle/${estado}/${id}`).pipe(map((response) => response.value));
+    list(id: number, estado?: number): Observable<BaseResponse<DTOPartidaItem[]>> {
+        return this.http.get<BaseResponse<DTOPartidaItem[]>>(`${this.apiUrl}/${estado}/${id}`);
     }
 
     getById(id: number) {
-        return this.http.get<ApiResponseSingle<DTOPartidaItem>>(`${API.URL}/PartidaDetalle/Detalle/${id}`).pipe(map((response) => response));
+        return this.http.get<ApiResponseSingle<DTOPartidaItem>>(`${this.apiUrl}/Detalle/${id}`).pipe(map((response) => response));
     }
 
     create(data: DTOCreatePartidaItem) {
-        return this.http.post<ApiResponseSingle<DTOPartidaItem>>(`${API.URL}/PartidaDetalle/Crear`, data);
+        return this.http.post<ApiResponseSingle<DTOPartidaItem>>(`${this.apiUrl}/Crear`, data);
     }
 
     update(data: DTOUpdatePartidaItem) {
-        return this.http.put<ApiResponseSingle<DTOPartidaItem>>(`${API.URL}/PartidaDetalle/Editar`, data);
+        return this.http.put<ApiResponseSingle<DTOPartidaItem>>(`${this.apiUrl}/Editar`, data);
     }
 
     delete(id: number) {
-        return this.http.delete<ApiResponseSingle<boolean>>(`${API.URL}/PartidaDetalle/Eliminar/${id}`);
+        return this.http.delete<ApiResponseSingle<boolean>>(`${this.apiUrl}/Eliminar/${id}`);
     }
+
+
 }

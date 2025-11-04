@@ -3,7 +3,7 @@ export interface DTOPartidaItem {
     partidaId?: number | null;
     descripcion: string;
     precioItem: number;
-    unidadItem: number;
+    unidadItem: string;
     estado: boolean;
     usuarioCreacion: number;
     fechaCreacion: Date;

@@ -5,22 +5,22 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Estado } from '@/utils/Constants';
 import { Helper } from '@/utils/Helper';
-import { ShortDatePipe } from '@/layout/pipes/shortDate.pipe';
 import { PrimeModules } from '@/utils/PrimeModule';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BreadcrumbHeader } from '@/layout/component/breadcrumb/breadcrumb.header';
 import type { DTOPartida } from '../../entities/partida/DTOPartida';
+import type { DTOUpdatePartida } from '../../entities/partida/DTOUpdatePartida';
 import { PartidaStore } from '../../stores/PartidaStore';
 import { PartidaDetalleStore } from '../../stores/PartidaDetalleStore';
-import { DTOUpdatePartida } from '../../entities/partida/DTOUpdatePartida';
 import { FormatCurrencyPipe } from '@/utils/format-currency-pipe';
 import { PartidaCreateComponent } from "../create/partida-create.component";
 import { PartidaEditComponent } from "../edit/partida-edit.component";
+import { ConfirmationDialog } from '@/pages/service/confirmation-dialog';
 
 @Component({
     selector: 'partida-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, PrimeModules, FormatCurrencyPipe /*, RemanufacturaCreateComponent, EditComponent*/, BreadcrumbHeader, PartidaCreateComponent, PartidaEditComponent],
+    imports: [CommonModule, FormsModule, PrimeModules, FormatCurrencyPipe, BreadcrumbHeader, PartidaCreateComponent, PartidaEditComponent],
     templateUrl: './partida-list.component.html',
     providers: [MessageService, ConfirmationService]
 })
@@ -36,7 +36,7 @@ export class PartidaListComponent implements OnInit {
     partidaStore = inject(PartidaStore);
     partidaDetalleStore = inject(PartidaDetalleStore);
 
-    confirmationService = inject(ConfirmationService);
+    confirmationDialogService = inject(ConfirmationDialog);
     router = inject(Router);
     route = inject(ActivatedRoute);
 
@@ -77,26 +77,10 @@ export class PartidaListComponent implements OnInit {
     }
 
     onDeleteModal(liquidacion: DTOPartida) {
-        this.confirmationService.confirm({
-            message: `Estas seguro que desea eliminar ${liquidacion.partidaNombre} ?`,
-            header: 'Confirmación',
-            icon: 'pi pi-exclamation-triangle',
-            acceptButtonProps: {
-                label: 'Eliminar',
-                severity: 'danger'
-            },
-            rejectButtonProps: {
-                label: 'Cancelar',
-                severity: 'secondary',
-                text: true
-            },
-            acceptIcon: 'pi pi-check',
-            rejectIcon: 'pi pi-times',
-            accept: () => {
-                this.partidaStore.delete(liquidacion.id);
-            },
-            reject: () => {
-                console.log('ERROR');
+
+         this.confirmationDialogService.confirmDelete().subscribe((accepted) => {
+            if (accepted) {
+               this.partidaStore.delete(liquidacion.id);
             }
         });
     }

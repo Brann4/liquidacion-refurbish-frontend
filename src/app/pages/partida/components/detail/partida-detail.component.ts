@@ -1,7 +1,6 @@
 import { PrimeModules } from '@/utils/PrimeModule';
 import { ChangeDetectionStrategy, Component, effect, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ShortDatePipe } from '@/layout/pipes/shortDate.pipe';
 import { Table } from 'primeng/table';
 import { Helper } from '@/utils/Helper';
 import { ToastService } from '@/layout/service/toast.service';
@@ -14,8 +13,9 @@ import { FormatCurrencyPipe } from '@/utils/format-currency-pipe';
 import { DTOUpdatePartidaItem } from '../../entities/partidaItem/DTOUpdatePartidaItem';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DTOPartidaItem } from '../../entities/partidaItem/DTOPartidaItem';
+import type { DTOPartidaItem } from '../../entities/partidaItem/DTOPartidaItem';
 import { PartidaDetailCreate } from './create-detail/partida-detail-create.component';
+import { ConfirmationDialog } from '@/pages/service/confirmation-dialog';
 
 @Component({
     selector: 'partida-detail',
@@ -35,7 +35,7 @@ export class PartidaDetailComponent implements OnInit {
     partidaDetalleStore = inject(PartidaDetalleStore);
 
     toast = inject(ToastService);
-    confirmationService = inject(ConfirmationService);
+    confirmationDialogService = inject(ConfirmationDialog);
 
     showImportDialog = signal<boolean>(false);
     loadingImport = signal<boolean>(false);
@@ -90,65 +90,17 @@ export class PartidaDetailComponent implements OnInit {
         return Helper.setStatus(status);
     }
 
-    handleSubmitDetail() {
-        this.confirmationService.confirm({
-            message: `Estas seguro de guardar los datos ?`,
-            header: 'Confirmación',
-            icon: 'pi pi-question-circle',
-            acceptButtonProps: {
-                label: 'Confirmar'
-            },
-            rejectButtonProps: {
-                label: 'Cancelar',
-                severity: 'secondary',
-                text: true
-            },
-            acceptIcon: 'pi pi-check',
-            rejectIcon: 'pi pi-times',
-            accept: () => {
-                console.log('ERNVIADO');
-                /*PAYLOAD*/
-                //  const payload = {
-                //      detalles: this.partidaStore.entityPreview()
-                // };
-                //  this.partidaStore.createDetail(payload);
-            },
-            reject: () => {
-                console.log('ERROR');
-            }
-        });
-    }
-
     clearFilters(table: Table) {
         table.clear();
         table.filterGlobal('', '');
     }
 
     onDeleteModal(data: DTOPartidaItem) {
-        if (data.id || data.id != null) {
-            this.confirmationService.confirm({
-                message: `Estas seguro que desea eliminar ${data.descripcion} ?`,
-                header: 'Confirmación',
-                icon: 'pi pi-exclamation-triangle',
-                acceptButtonProps: {
-                    label: 'Eliminar',
-                    severity: 'danger'
-                },
-                rejectButtonProps: {
-                    label: 'Cancelar',
-                    severity: 'secondary',
-                    text: true
-                },
-                acceptIcon: 'pi pi-check',
-                rejectIcon: 'pi pi-times',
-                accept: () => {
-                    this.partidaDetalleStore.delete(data, this.partidaStore.entity()!.id);
-                },
-                reject: () => {
-                    console.log('ERROR');
-                }
-            });
-        }
+        this.confirmationDialogService.confirmDelete().subscribe((accepted) => {
+            if (accepted) {
+                this.partidaDetalleStore.delete(data, this.partidaStore.entity()!.id);
+            }
+        });
     }
 
     onRowEditInit(data: DTOPartidaItem) {

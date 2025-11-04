@@ -42,6 +42,7 @@
                 </div>
 
                 <p-fileupload
+                    #fileUpload
                     name="file"
                     mode="advanced"
                     chooseLabel="Seleccionar archivo"
@@ -51,10 +52,24 @@
                     invalidFileTypeMessageDetail="Solo se permiten archivos Excel (.xlsx, .xls)."
                     [maxFileSize]="10485760"
                     [showCancelButton]="false"
+                    [showUploadButton]="false"
                     [multiple]="false"
                     [customUpload]="true"
                     (uploadHandler)="onUpload($event)"
                 >
+                    <ng-template pTemplate="toolbar">
+                        <div class="flex justify-between items-center gap-2">
+                            <p-button label="Eliminar" icon="pi pi-times" severity="danger" [outlined]="true"
+                                      (onClick)="fileUpload.clear()"
+                                      [disabled]="!fileUpload.hasFiles() || this.isLoadingPreview()"
+                                      [loading]="this.isLoadingPreview()" />
+                            <p-button label="Procesar" icon="pi pi-upload" severity="info"
+                                      (onClick)="fileUpload.upload()"
+                                      [disabled]="!fileUpload.hasFiles() || this.isLoadingPreview()"
+                                      [loading]="this.isLoadingPreview()" />
+                        </div>
+                    </ng-template>
+
                     <ng-template pTemplate="empty">
                         <div class="flex flex-col items-center justify-center gap-2 p-4">
                             <i class="pi pi-upload text-4xl text-primary"></i>
@@ -153,6 +168,8 @@
             #dataTable
             dataKey="id"
             [value]="entities()"
+            [selection]="selectedItems()"
+            (selectionChange)="selectedItems.set($event)"
             [rows]="10"
             [rowHover]="true"
             [paginator]="true"
@@ -172,6 +189,8 @@
                                    placeholder="Buscar por Código SAP o Código SOT" />
                         </p-iconfield>
                         <p-button icon="pi pi-filter-slash" [outlined]="true" (click)="onClearFilters(dataTable)" />
+                        <p-button severity="danger" label="Eliminar" icon="pi pi-trash"
+                                  (onClick)="deleteSelectedItems()" />
                     </div>
                     <div class="flex flex-row">
                         <div class="card flex justify-center">
@@ -184,6 +203,9 @@
             </ng-template>
             <ng-template pTemplate="header">
                 <tr>
+                    <th style="width: 3rem" pFrozenColumn>
+                        <p-tableHeaderCheckbox />
+                    </th>
                     <th pSortableColumn="codigoSAP" style="min-width: 15rem">
                         <div class="flex items-center gap-2">
                             Código SAP
@@ -278,6 +300,9 @@
             </ng-template>
             <ng-template pTemplate="body" let-item>
                 <tr>
+                    <td>
+                        <p-tableCheckbox [value]="item" />
+                    </td>
                     <td>{{ item.codigoSAP }}</td>
                     <td>{{ item.descripcion }}</td>
                     <td>{{ item.seriePrincipal }}</td>
@@ -298,6 +323,17 @@
                     <td>
                         <p-tag [value]="getEstadoPagoLabel(item.estadoPago)"
                                [severity]="getEstadoPagoSeverity(item.estadoPago)" />
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="16" class="text-center py-4">
+                        <div class="flex flex-col items-center gap-2">
+                            <i class="pi pi-info-circle" style="font-size: 1.5rem"></i>
+                            <span>No se encontraron detalles para esta liquidación</span>
+                        </div>
                     </td>
                 </tr>
             </ng-template>

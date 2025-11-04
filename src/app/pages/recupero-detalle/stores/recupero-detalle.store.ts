@@ -4,6 +4,7 @@ import { LiquidacionRecuperoDetalle } from '@/pages/recupero-detalle/entities/li
 import { LiquidacionRecuperoDetallePreview } from '@/pages/recupero-detalle/entities/liquidacion-recupero-detalle-preview';
 import { CreateLiquidacionRecuperoDetalleRequest } from '@/pages/recupero-detalle/entities/create-liquidacion-recupero-detalle-request';
 import { PreviewLiquidacionRecuperoDetalleRequest } from '@/pages/recupero-detalle/entities/preview-liquidacion-recupero-detalle-request';
+import { DeleteLiquidacionRecuperoDetalleByIdsRequest } from '@/pages/recupero-detalle/entities/delete-liquidacion-recupero-detalle-by-ids-request';
 import { RecuperoDetalleApi } from '@/pages/recupero-detalle/services/recupero-detalle.api';
 import { ToastService } from '@/layout/service/toast.service';
 import { ContrataApi } from '@/pages/contrata/services/contrata.api';
@@ -24,6 +25,7 @@ export type RecuperoDetalleState = {
     isLoadingContrata: boolean;
     isLoadingRecupero: boolean;
     isExporting: boolean;
+    isDeleting: boolean;
     error: string | null;
 };
 
@@ -38,6 +40,7 @@ const initialState: RecuperoDetalleState = {
     isLoadingContrata: false,
     isLoadingRecupero: false,
     isExporting: false,
+    isDeleting: false,
     error: null
 };
 
@@ -97,8 +100,13 @@ export const RecuperoDetalleStore = signalStore(
                 isLoadingContrata: false,
                 isLoadingRecupero: false,
                 isExporting: false,
+                isDeleting: false,
                 error: null
             });
+        },
+
+        setDeleting(isDeleting: boolean) {
+            patchState(store, { isDeleting });
         },
 
         getContrataById(contrataId: number) {
@@ -270,6 +278,69 @@ export const RecuperoDetalleStore = signalStore(
                     const errorMessage = error.message || 'Error al exportar el archivo';
                     patchState(store, {
                         isExporting: false,
+                        error: errorMessage
+                    });
+                    toast.error(errorMessage);
+                }
+            });
+        },
+
+        deleteByLiquidacionRecuperoId(liquidacionRecuperoId: number) {
+            patchState(store, { isDeleting: true, error: null });
+
+            recuperoDetalleService.deleteByLiquidacionRecuperoId(liquidacionRecuperoId).subscribe({
+                next: (response) => {
+                    if (response.status && response.value) {
+                        patchState(store, {
+                            isDeleting: false,
+                            entities: []
+                        });
+                        toast.success(response.msg || 'Detalles del recupero eliminados correctamente');
+                    } else {
+                        const errorMessage = response.msg || 'Error al eliminar los detalles del recupero';
+                        patchState(store, {
+                            isDeleting: false,
+                            error: errorMessage
+                        });
+                        toast.error(errorMessage);
+                    }
+                },
+                error: (error) => {
+                    const errorMessage = error.message || 'Error al eliminar los detalles del recupero';
+                    patchState(store, {
+                        isDeleting: false,
+                        error: errorMessage
+                    });
+                    toast.error(errorMessage);
+                }
+            });
+        },
+
+        deleteByIds(request: DeleteLiquidacionRecuperoDetalleByIdsRequest) {
+            patchState(store, { isDeleting: true, error: null });
+
+            recuperoDetalleService.deleteByIds(request).subscribe({
+                next: (response) => {
+                    if (response.status && response.value) {
+                        patchState(store, { isDeleting: false });
+                        toast.success(response.msg || 'Detalles del recupero eliminados correctamente');
+                        const liquidacionRecuperoId = store.liquidacionRecupero()?.id;
+                        if (liquidacionRecuperoId) {
+                            this.getByRecupero(liquidacionRecuperoId);
+                        }
+                    } else {
+                        const errorMessage = response.msg || 'Error al eliminar los detalles del recupero';
+                        patchState(store, {
+                            isDeleting: false,
+                            error: errorMessage
+                        });
+                        toast.error(errorMessage);
+                    }
+                },
+                error: (error) => {
+                    const errorMessage = error.message || 'Error al eliminar los detalles del recupero';
+                    patchState(store, {
+                        isDeleting: false,
                         error: errorMessage
                     });
                     toast.error(errorMessage);

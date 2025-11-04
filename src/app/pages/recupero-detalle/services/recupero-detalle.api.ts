@@ -3,6 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { catchError, Observable } from 'rxjs';
 import { CreateLiquidacionRecuperoDetalleRequest } from '@/pages/recupero-detalle/entities/create-liquidacion-recupero-detalle-request';
 import { PreviewLiquidacionRecuperoDetalleRequest } from '@/pages/recupero-detalle/entities/preview-liquidacion-recupero-detalle-request';
+import { DeleteLiquidacionRecuperoDetalleByIdsRequest } from '@/pages/recupero-detalle/entities/delete-liquidacion-recupero-detalle-by-ids-request';
 import { LiquidacionRecuperoDetallePreview } from '@/pages/recupero-detalle/entities/liquidacion-recupero-detalle-preview';
 import { LiquidacionRecuperoDetalle } from '@/pages/recupero-detalle/entities/liquidacion-recupero-detalle';
 import { environment } from '../../../../environments/environment';
@@ -34,5 +35,13 @@ export class RecuperoDetalleApi {
 
     export(liquidacionRecuperoId: number): Observable<HttpResponse<Blob>> {
         return this.http.get(`${this.apiUrl}/export/${liquidacionRecuperoId}`, { observe: 'response', responseType: 'blob' }).pipe(catchError(handleHttpError));
+    }
+
+    deleteByLiquidacionRecuperoId(liquidacionRecuperoId: number): Observable<BaseResponse<boolean>> {
+        return this.http.delete<BaseResponse<boolean>>(`${this.apiUrl}/liquidacion/${liquidacionRecuperoId}`).pipe(catchError(handleHttpError));
+    }
+
+    deleteByIds(request: DeleteLiquidacionRecuperoDetalleByIdsRequest): Observable<BaseResponse<boolean>> {
+        return this.http.delete<BaseResponse<boolean>>(`${this.apiUrl}/ids`, { body: request }).pipe(catchError(handleHttpError));
     }
 }

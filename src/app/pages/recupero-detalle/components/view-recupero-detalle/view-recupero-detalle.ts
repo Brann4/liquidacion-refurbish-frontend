@@ -5,6 +5,7 @@ import { Table } from 'primeng/table';
 import { RecuperoDetalleStore } from '@/pages/recupero-detalle/stores/recupero-detalle.store';
 import { PreviewLiquidacionRecuperoDetalleRequest } from '@/pages/recupero-detalle/entities/preview-liquidacion-recupero-detalle-request';
 import { CreateLiquidacionRecuperoDetalleRequest } from '@/pages/recupero-detalle/entities/create-liquidacion-recupero-detalle-request';
+import { LiquidacionRecuperoDetalle } from '@/pages/recupero-detalle/entities/liquidacion-recupero-detalle';
 import { TipoZona } from '@/pages/precio-zona/entities/precio-zona';
 import { EstadoPago } from '@/pages/recupero-detalle/entities/estado-pago';
 import { EstadoLiquidacion } from '@/pages/recupero/entities/estado-liquidacion';
@@ -28,6 +29,7 @@ export class ViewRecuperoDetalle implements OnInit {
 
     protected readonly showUploadSection = signal(false);
     protected readonly liquidacionRecuperoId = signal<number | null>(null);
+    protected readonly selectedItems = signal<LiquidacionRecuperoDetalle[]>([]);
 
     protected readonly entities = computed(() => this.recuperoDetalleStore.entities());
     protected readonly entitiesPreview = computed(() => this.recuperoDetalleStore.entitiesPreview());
@@ -190,5 +192,30 @@ export class ViewRecuperoDetalle implements OnInit {
         } catch (error) {
             return 'Fecha inválida';
         }
+    }
+
+    protected deleteSelectedItems() {
+        this.confirmationDialogService.confirmDelete().subscribe((confirmed) => {
+            if (confirmed) {
+                const selectedItems = this.selectedItems();
+                const allItems = this.entities();
+                const liquidacionRecuperoId = this.liquidacionRecuperoId();
+
+                if (!liquidacionRecuperoId) {
+                    return;
+                }
+
+                if (selectedItems.length === allItems.length) {
+                    this.recuperoDetalleStore.deleteByLiquidacionRecuperoId(liquidacionRecuperoId);
+                } else {
+                    const deleteRequest = {
+                        liquidacionRecuperoDetalleIds: selectedItems.map((item) => item.id)
+                    };
+                    this.recuperoDetalleStore.deleteByIds(deleteRequest);
+                }
+
+                this.selectedItems.set([]);
+            }
+        });
     }
 }

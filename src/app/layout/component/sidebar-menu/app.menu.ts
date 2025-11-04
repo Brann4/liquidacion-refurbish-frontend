@@ -1,9 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { AppMenuitem } from '../sidebar-menu-item/app.menuitem';
-import { RemanufacturaStore } from '@/pages/remanufactura/stores/RemanufacturaStore';
 
 @Component({
     selector: 'app-menu',
@@ -11,9 +10,8 @@ import { RemanufacturaStore } from '@/pages/remanufactura/stores/RemanufacturaSt
     imports: [CommonModule, AppMenuitem, RouterModule],
     templateUrl: './app.menu.html'
 })
-export class AppMenu {
+export class AppMenu implements OnInit {
     model: MenuItem[] = [];
-    remanufacturaStore = inject(RemanufacturaStore);
 
     ngOnInit() {
         this.model = [
@@ -35,6 +33,11 @@ export class AppMenu {
                         label: 'Recupero',
                         icon: 'pi pi-fw pi-box',
                         routerLink: ['/pages/recupero']
+                    },
+                    {
+                        label: 'Postventa',
+                        icon: 'pi pi-fw pi-box',
+                        routerLink: ['/pages/postventa']
                     }
                 ]
             },
@@ -59,7 +62,7 @@ export class AppMenu {
                         icon: 'pi pi-fw pi-box',
                         routerLink: ['pages/precio-zona']
                     },
-                                        {
+                    {
                         label: 'Partidas',
                         icon: 'pi pi-fw pi-box',
                         routerLink: ['pages/partida']

@@ -1,7 +1,7 @@
 <div class="flex flex-col gap-6">
     <p-toolbar>
         <ng-template pTemplate="start">
-            <breadcrumb-header [breadcrumbs]="breadcrumbs" title="MÓDULO DE LIQUIDACIONES RECUPERO" />
+            <breadcrumb-header [breadcrumbs]="breadcrumbs" title="MÓDULO DE LIQUIDACIONES POSTVENTA" />
         </ng-template>
         <ng-template pTemplate="end">
             <p-button label="Nuevo" icon="pi pi-plus" severity="primary" [raised]="true" size="large"
@@ -12,7 +12,7 @@
         <p-table
             #dataTable
             dataKey="id"
-            [value]="recuperos()"
+            [value]="postventas()"
             [rows]="10"
             [rowHover]="true"
             [paginator]="true"
@@ -25,7 +25,7 @@
         >
             <ng-template pTemplate="caption">
                 <div class="flex items-center justify-between">
-                    <h5>Administrador de Recuperos</h5>
+                    <h5>Administrador de Postventas</h5>
                     <p-iconfield>
                         <p-inputicon class="pi pi-search" />
                         <input pInputText type="text" (input)="onGlobalFilter($event, dataTable)"
@@ -71,9 +71,9 @@
                         <div class="flex items-center gap-2">
                             <p-button icon="pi pi-eye" [rounded]="true" (click)="onViewDetail(item)" />
                             <p-button icon="pi pi-pencil" severity="info" [rounded]="true" [outlined]="true"
-                                      (click)="onEditRecupero(item)" />
+                                      (click)="onEditPostventa(item)" />
                             <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
-                                      (click)="onDeleteRecupero(item)" />
+                                      (click)="onDeletePostventa(item)" />
                         </div>
                     </td>
                 </tr>
@@ -82,4 +82,4 @@
     </p-card>
 </div>
 
-<app-recupero-modal />
+<app-postventa-modal />

@@ -1,16 +1,16 @@
 import { inject } from '@angular/core';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
-import { LiquidacionRecupero } from '@/pages/recupero/entities/liquidacion-recupero';
-import { CreateLiquidacionRecuperoRequest } from '@/pages/recupero/entities/create-liquidacion-recupero-request';
-import { UpdateLiquidacionRecuperoRequest } from '@/pages/recupero/entities/update-liquidacion-recupero-request';
-import { LiquidacionRecuperoResponse } from '@/pages/recupero/entities/liquidacion-recupero-response';
-import { RecuperoApi } from '@/pages/recupero/services/recupero.api';
+import { LiquidacionPostventa } from '@/pages/postventa/entities/liquidacion-postventa';
+import { CreateLiquidacionPostventaRequest } from '@/pages/postventa/entities/create-liquidacion-postventa-request';
+import { UpdateLiquidacionPostventaRequest } from '@/pages/postventa/entities/update-liquidacion-postventa-request';
+import { LiquidacionPostventaResponse } from '@/pages/postventa/entities/liquidacion-postventa-response';
+import { PostventaApi } from '@/pages/postventa/services/postventa.api';
 import { ToastService } from '@/layout/service/toast.service';
 import { Router } from '@angular/router';
 
-export type RecuperoState = {
-    entities: LiquidacionRecuperoResponse[];
-    entity: LiquidacionRecupero | null;
+export type PostventaState = {
+    entities: LiquidacionPostventaResponse[];
+    entity: LiquidacionPostventa | null;
     isOpenCreate: boolean;
     isOpenEdit: boolean;
     isSubmitting: boolean;
@@ -18,7 +18,7 @@ export type RecuperoState = {
     error: string | null;
 };
 
-const initialState: RecuperoState = {
+const initialState: PostventaState = {
     entities: [],
     entity: null,
     isOpenCreate: false,
@@ -28,15 +28,15 @@ const initialState: RecuperoState = {
     error: null
 };
 
-export const RecuperoStore = signalStore(
+export const PostventaStore = signalStore(
     { providedIn: 'root' },
-    withState<RecuperoState>(initialState),
-    withMethods((store, recuperoService = inject(RecuperoApi), toast = inject(ToastService), router = inject(Router)) => ({
+    withState<PostventaState>(initialState),
+    withMethods((store, postventaService = inject(PostventaApi), toast = inject(ToastService), router = inject(Router)) => ({
         openModalCreate() {
             patchState(store, { isOpenCreate: true, error: null });
         },
 
-        openModalEdit(entity: LiquidacionRecupero) {
+        openModalEdit(entity: LiquidacionPostventa) {
             patchState(store, { entity, isOpenEdit: true, error: null });
         },
 
@@ -59,7 +59,7 @@ export const RecuperoStore = signalStore(
         getAll() {
             patchState(store, { isLoadingEntities: true, error: null });
 
-            recuperoService.getAll().subscribe({
+            postventaService.getAll().subscribe({
                 next: (response) => {
                     if (response.status && response.value) {
                         patchState(store, {
@@ -68,7 +68,7 @@ export const RecuperoStore = signalStore(
                             error: null
                         });
                     } else {
-                        const errorMessage = response.msg || 'Error al cargar los recuperos';
+                        const errorMessage = response.msg || 'Error al cargar las postventas';
                         patchState(store, {
                             isLoadingEntities: false,
                             error: errorMessage
@@ -79,29 +79,29 @@ export const RecuperoStore = signalStore(
                 error: (error) => {
                     patchState(store, {
                         isLoadingEntities: false,
-                        error: error.message || 'Error al cargar los recuperos'
+                        error: error.message || 'Error al cargar las postventas'
                     });
-                    toast.error('Error al cargar los recuperos');
+                    toast.error('Error al cargar las postventas');
                 }
             });
         },
 
-        create(request: CreateLiquidacionRecuperoRequest) {
+        create(request: CreateLiquidacionPostventaRequest) {
             patchState(store, { isSubmitting: true, error: null });
 
-            recuperoService.create(request).subscribe({
+            postventaService.create(request).subscribe({
                 next: (response) => {
                     if (response.status && response.value) {
                         patchState(store, { isSubmitting: false });
-                        toast.success(response.msg || 'Recupero creado correctamente');
+                        toast.success(response.msg || 'Postventa creada correctamente');
                         this.closeModalCreate();
                         const newId = response.value.id;
-                        if (newId) {
-                            router.navigate(['/pages/recupero', newId]);
-                        }
+                        // if (newId) {
+                        //     router.navigate(['/pages/postventa', newId]);
+                        // }
                         this.getAll();
                     } else {
-                        const errorMessage = response.msg || 'Error al crear el recupero';
+                        const errorMessage = response.msg || 'Error al crear la postventa';
                         patchState(store, {
                             isSubmitting: false,
                             error: errorMessage
@@ -110,7 +110,7 @@ export const RecuperoStore = signalStore(
                     }
                 },
                 error: (error) => {
-                    const errorMessage = error.message || 'Error al crear el recupero';
+                    const errorMessage = error.message || 'Error al crear la postventa';
                     patchState(store, {
                         isSubmitting: false,
                         error: errorMessage
@@ -120,18 +120,18 @@ export const RecuperoStore = signalStore(
             });
         },
 
-        update(id: number, request: UpdateLiquidacionRecuperoRequest) {
+        update(id: number, request: UpdateLiquidacionPostventaRequest) {
             patchState(store, { isSubmitting: true, error: null });
 
-            recuperoService.update(id, request).subscribe({
+            postventaService.update(id, request).subscribe({
                 next: (response) => {
                     if (response.status && response.value) {
                         patchState(store, { isSubmitting: false });
-                        toast.success(response.msg || 'Recupero actualizado correctamente');
+                        toast.success(response.msg || 'Postventa actualizada correctamente');
                         this.getAll();
                         this.closeModalEdit();
                     } else {
-                        const errorMessage = response.msg || 'Error al actualizar el recupero';
+                        const errorMessage = response.msg || 'Error al actualizar la postventa';
                         patchState(store, {
                             isSubmitting: false,
                             error: errorMessage
@@ -140,7 +140,7 @@ export const RecuperoStore = signalStore(
                     }
                 },
                 error: (error) => {
-                    const errorMessage = error.message || 'Error al actualizar el recupero';
+                    const errorMessage = error.message || 'Error al actualizar la postventa';
                     patchState(store, {
                         isSubmitting: false,
                         error: errorMessage
@@ -153,14 +153,14 @@ export const RecuperoStore = signalStore(
         delete(id: number) {
             patchState(store, { isSubmitting: true, error: null });
 
-            recuperoService.delete(id).subscribe({
+            postventaService.delete(id).subscribe({
                 next: (response) => {
                     if (response.status) {
                         patchState(store, { isSubmitting: false });
-                        toast.success(response.msg || 'Recupero eliminado correctamente');
+                        toast.success(response.msg || 'Postventa eliminada correctamente');
                         this.getAll();
                     } else {
-                        const errorMessage = response.msg || 'Error al eliminar el recupero';
+                        const errorMessage = response.msg || 'Error al eliminar la postventa';
                         patchState(store, {
                             isSubmitting: false,
                             error: errorMessage
@@ -169,7 +169,7 @@ export const RecuperoStore = signalStore(
                     }
                 },
                 error: (error) => {
-                    const errorMessage = error.message || 'Error al eliminar el recupero';
+                    const errorMessage = error.message || 'Error al eliminar la postventa';
                     patchState(store, {
                         isSubmitting: false,
                         error: errorMessage

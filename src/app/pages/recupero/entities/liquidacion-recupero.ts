@@ -1,4 +1,4 @@
-import { EstadoLiquidacion } from '@/pages/recupero/entities/estado-liquidacion';
+import { EstadoLiquidacion } from '@/utils/estado-liquidacion';
 
 export interface LiquidacionRecupero {
     id: number;

@@ -1,0 +1,55 @@
+<p-dialog
+    [modal]="true"
+    [visible]="visible()"
+    [breakpoints]="{ '650px': '90vw' }"
+    [style]="{ 'width': '30vw', 'min-width': '450px' }"
+    (visibleChange)="onDialogVisibilityChange($event)"
+    [header]="formTitle()"
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="false">
+
+    <ng-template pTemplate="content">
+        <form [formGroup]="postventaForm" (ngSubmit)="onSubmitForm()" class="flex flex-col gap-4 p-4">
+            <div class="flex flex-col gap-2">
+                <label for="contrataId" class="text-sm font-medium">Contrata</label>
+                <p-select
+                    inputId="contrataId"
+                    formControlName="contrataId"
+                    [options]="contratas()"
+                    optionLabel="razonSocial"
+                    optionValue="id"
+                    placeholder="Seleccionar contrata"
+                    appendTo="body"
+                    [invalid]="isInvalid(controls.contrataId)"
+                    class="w-full"
+                />
+                @if (isInvalid(controls.contrataId)) {
+                    <app-form-control-error [control]="controls.contrataId" controlName="Contrata" />
+                }
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label for="fechaIngreso" class="text-sm font-medium">Fecha de Ingreso</label>
+                <p-datePicker
+                    inputId="fechaIngreso"
+                    formControlName="fechaIngreso"
+                    placeholder="Seleccionar fecha"
+                    appendTo="body"
+                    [showIcon]="true"
+                    [invalid]="isInvalid(controls.fechaIngreso)"
+                    dateFormat="dd/mm/yy"
+                />
+                @if (isInvalid(controls.fechaIngreso)) {
+                    <app-form-control-error [control]="controls.fechaIngreso" controlName="Fecha de Ingreso" />
+                }
+            </div>
+        </form>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Cancelar" icon="pi pi-times" text (click)="onCancelForm()" />
+        <p-button label="Guardar" icon="pi pi-check" (click)="onSubmitForm()" [loading]="isLoading()"
+                  [disabled]="isLoading()" />
+    </ng-template>
+</p-dialog>

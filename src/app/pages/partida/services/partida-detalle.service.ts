@@ -7,8 +7,8 @@ import { ApiResponseSingle } from '@/utils/ApiResponse';
 import { DTOPartidaItem } from '../entities/partidaItem/DTOPartidaItem';
 import { DTOCreatePartidaItem } from '../entities/partidaItem/DTOCreatePartidaItem';
 import { BaseResponse } from '@/utils/base-response';
-
-const API = environment;
+import { DTOPartidaDetalleItem } from '@/pages/remanufactura-detalle/entities/partidas-detalle/DTOPartidaDetalleItem';
+import { DTOPartidaConItem } from '@/pages/remanufactura-detalle/entities/partidas-detalle/DTOPartidaConItem';
 
 @Injectable({
     providedIn: 'root'
@@ -36,4 +36,6 @@ export class PartidaDetalleService {
     delete(id: number) {
         return this.http.delete<ApiResponseSingle<boolean>>(`${this.apiUrl}/Eliminar/${id}`);
     }
+
+
 }

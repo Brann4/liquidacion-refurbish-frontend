@@ -219,7 +219,7 @@
                                         variant="outlined"
                                         severity="warn"
 
-                                        (onClick)="handleOpenModalAddPartidas(remanufacturaStore.entity())"
+                                        (onClick)="handleOpenModalAddPartidas(remanufacturaStore.entity()!.id)"
                                     ></p-button>
                                     <p-button
                                         label="Descargar Reporte"
@@ -326,4 +326,4 @@
     </p-card>
 </div>
 
-<remanufactura-partidas-detail />
+<remanufactura-partidas-detail/>

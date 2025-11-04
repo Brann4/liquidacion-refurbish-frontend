@@ -18,7 +18,6 @@ export type RemanufacturaState = {
     entityPreview: DTOLiquidacionRemanufacturaDetalle[];
     isOpenCreate: boolean;
     isOpenEdit: boolean;
-    isOpenPartidasManagment: boolean;
     isSubmitting: boolean;
     isLoadingDetailData: boolean;
     isExporting: boolean;
@@ -33,7 +32,6 @@ const initialState: RemanufacturaState = {
     entities: [],
     isOpenCreate: false,
     isOpenEdit: false,
-    isOpenPartidasManagment: false,
     isSubmitting: false,
     isLoadingDetailData: false,
     isLoadingDataPreview: false,
@@ -58,7 +56,6 @@ export const RemanufacturaDetalleStore = signalStore(
                     isLoadingDetailData: false,
                     entityPreview: [],
                     entity: null,
-                    entities: []
                 });
             },
 
@@ -74,13 +71,6 @@ export const RemanufacturaDetalleStore = signalStore(
 
             closeModalCreate() {
                 patchState(store, { isOpenCreate: false });
-            },
-
-            openModalPartidasManagment() {
-                patchState(store, { isOpenPartidasManagment: true });
-            },
-            closeModalPartidasManagment() {
-                patchState(store, { isOpenPartidasManagment: false });
             },
 
             setEntityPartida(data: DTOPartida) {

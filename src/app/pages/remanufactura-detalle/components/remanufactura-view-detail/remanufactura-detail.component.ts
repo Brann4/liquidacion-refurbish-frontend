@@ -1,3 +1,4 @@
+import { PartidaRemanufacturaDetalleStore } from './../../stores/PartidaRemanufacturaDetalleStore';
 import * as XLSX from 'xlsx';
 import { PrimeModules } from '@/utils/PrimeModule';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, OnInit, signal, ViewChild } from '@angular/core';
@@ -14,7 +15,7 @@ import { DTOLiquidacionRemanufactura } from '@/pages/remanufactura/entities/rema
 import { RemanufacturaDetalleStore } from '../../stores/RemanufacturaDetalleStore';
 import { SortEvent } from 'primeng/api';
 import { DTOLiquidacionRemanufacturaDetalle } from '@/pages/remanufactura-detalle/entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle';
-import { RemanufacturaPartidasDetailComponent } from "../partidas-detail/partidas-detail.component";
+import { RemanufacturaPartidasDetailComponent } from '../partidas-detail/partidas-detail.component';
 import { PartidaStore } from '@/pages/partida/stores/PartidaStore';
 
 @Component({
@@ -33,13 +34,14 @@ export class RemanufacturaDetailComponent implements OnInit {
     remanufacturaStore = inject(RemanufacturaStore);
     remanufacturaDetalleStore = inject(RemanufacturaDetalleStore);
     partidaStore = inject(PartidaStore);
+    partidaDetalleStore = inject(PartidaRemanufacturaDetalleStore);
 
     toast = inject(ToastService);
     confirmationDialogService = inject(ConfirmationDialog);
 
     showImportDialog = signal<boolean>(false);
     isSorted = signal<boolean | null>(null);
-    selectedData! : DTOLiquidacionRemanufacturaDetalle[] | null;
+    selectedData!: DTOLiquidacionRemanufacturaDetalle[] | null;
 
     detalles = signal<DTOLiquidacionRemanufacturaDetalle[]>([]);
     initialValue = signal<DTOLiquidacionRemanufacturaDetalle[]>([]);
@@ -175,31 +177,37 @@ export class RemanufacturaDetailComponent implements OnInit {
                     .replace(/[^\w]/g, '')
             );
 
-            var previewData = this.normalizarFilas(worksheet, normalizedHeaders);
+            var { mappedData, validationErrors } = this.normalizarFilas(worksheet, normalizedHeaders);
+            console.log(mappedData);
 
-            for (let index = 0; index < previewData.length; index++) {
-                const element = previewData[index];
+            for (let index = 0; index < mappedData.length; index++) {
+                const element = mappedData[index];
                 if (element.liquidacion !== nombreLiquidacion) {
-                    /* if(previewData.length-1 === index){
-                        this.toast.error(`La liquidación '${element.liquidacion}' en la fila ${index+2} no coincide con la esperada '${nombreLiquidacion}'.`);
-                    }else{*/
                     this.toast.error(`La liquidación '${element.liquidacion}' en la fila ${index + 2} no coincide con la esperada '${nombreLiquidacion}'.`);
-                    //}
                     this.remanufacturaDetalleStore.setExportingPreview(false);
                     return;
                 }
             }
 
-            this.remanufacturaDetalleStore.setEntityPreview(previewData);
+            if (validationErrors.length > 0) {
+                const errorsToShow = validationErrors.slice(0, 10).join('\n');
+                this.toast.error(`El archivo contiene ${validationErrors.length} errores de formato.\n${errorsToShow}`);
+                this.remanufacturaDetalleStore.setExportingPreview(false);
+                return; // Detiene el proceso
+            }
+
+            if (mappedData.length === 0) {
+                this.toast.warn('El archivo no contiene filas de datos válidas.');
+                this.remanufacturaDetalleStore.setEntityPreview([]);
+                return;
+            }
+            this.toast.success(`Se han previsualizado ${mappedData.length} registros correctamente.`);
+            this.remanufacturaDetalleStore.setEntityPreview(mappedData);
             this.remanufacturaDetalleStore.setExportingPreview(false);
         } catch (error) {
             this.toast.error('Error al procesar el archivo.');
             this.remanufacturaDetalleStore.setExportingPreview(false);
         }
-
-        const formData = new FormData();
-        formData.append('File', file, file.name);
-        formData.append('liquidacion', nombreLiquidacion);
 
         this.showImportDialog.set(false);
     }
@@ -220,7 +228,7 @@ export class RemanufacturaDetailComponent implements OnInit {
                 range: 1, // Empieza desde la segunda fila (índice 1)
                 defval: null // Para celdas vacías
             })
-            .slice(0, 15000);
+            .slice(0, 20000);
 
         const headerMap: Record<string, keyof DTOLiquidacionRemanufacturaDetalle> = {
             idliq: 'codigoLiquidacion',
@@ -249,32 +257,49 @@ export class RemanufacturaDetailComponent implements OnInit {
             reingreso: 'reingreso'
         };
 
-        const mappedData: DTOLiquidacionRemanufacturaDetalle[] = previewData.map((item) => {
+        const mappedData: DTOLiquidacionRemanufacturaDetalle[] = [];
+        const validationErrors: string[] = [];
+
+        for (let i = 0; i < previewData.length; i++) {
+            const item = previewData[i]; // E.g., { idliq: 1, qty: "5", ... }
+            const excelRowNumber = i + 2; // Fila 1 es cabecera
             const result: Partial<DTOLiquidacionRemanufacturaDetalle> = {};
 
-            for (const [oldKey, newKey] of Object.entries(headerMap)) {
-                let value = item[oldKey];
+            try {
+                // Itera sobre el mapa de claves
+                for (const [normalizedKey, dtoKey] of Object.entries(headerMap)) {
+                    const rawValue = item[normalizedKey];
 
-                if (['codigoLiquidacion', 'pedido', 'contabilizado', 'codigoSAP'].includes(newKey)) {
-                    value = String(value);
+                    // *** AQUÍ OCURRE LA VALIDACIÓN DE TIPOS ***
+                    switch (dtoKey) {
+                        case 'cantidad':
+                        case 'reingreso':
+                            // @ts-ignore
+                            result[dtoKey] = this.parseIntSafe(rawValue, normalizedKey);
+                            break;
+                        case 'costoUnitario':
+                        case 'costoTotal':
+                            // @ts-ignore
+                            result[dtoKey] = this.parseFloatSafe(rawValue, normalizedKey);
+                            break;
+                        case 'fechaPrevista':
+                            result[dtoKey] = this.parseISODate(rawValue, normalizedKey);
+                            break;
+                        default:
+                            // Todos los demás son strings (fechas, etc.)
+                            // @ts-ignore
+                            result[dtoKey] = this.parseString(rawValue);
+                    }
                 }
 
-                // Conversión de tipos (opcional pero recomendable)
-                if (newKey === 'fechaPrevista' && value) {
-                    value = new Date(value as string);
-                }
-
-                if (['cantidad', 'costoUnitario', 'costoTotal', 'reingreso'].includes(newKey)) {
-                    value = Number(value) || 0;
-                }
-                // @ts-ignore (porque los keys son dinámicos)
-                result[newKey] = value;
+                mappedData.push(result as DTOLiquidacionRemanufacturaDetalle);
+            } catch (err: any) {
+                // Captura el error de parseIntSafe/parseFloatSafe
+                validationErrors.push(`Fila ${excelRowNumber}: ${err.message}`);
             }
+        }
 
-            return result as DTOLiquidacionRemanufacturaDetalle;
-        });
-
-        return mappedData;
+        return { mappedData, validationErrors };
     }
 
     verifyStatus() {
@@ -310,16 +335,15 @@ export class RemanufacturaDetailComponent implements OnInit {
     }
     deleteSelectedProducts() {
         this.confirmationDialogService.confirmDelete().subscribe((accepted) => {
-            if( !accepted || !this.selectedData?.length) return;
+            if (!accepted || !this.selectedData?.length) return;
 
             const allSelected = this.selectedData?.length === this.remanufacturaDetalleStore.entities().length;
 
             if (accepted) {
-                if(allSelected){
-                    this.remanufacturaDetalleStore.deleteAll( this.remanufacturaStore.entity()!.nombreLiquidacion);
-                }
-                else{
-                    const itemsIdSelected = this.selectedData.map(x => x.id);
+                if (allSelected) {
+                    this.remanufacturaDetalleStore.deleteAll(this.remanufacturaStore.entity()!.nombreLiquidacion);
+                } else {
+                    const itemsIdSelected = this.selectedData.map((x) => x.id);
                     this.remanufacturaDetalleStore.deleteMany(this.remanufacturaStore.entity()!.nombreLiquidacion, itemsIdSelected);
                 }
                 this.selectedData = null;
@@ -333,7 +357,6 @@ export class RemanufacturaDetailComponent implements OnInit {
         }
         return String(value).trim();
     }
-
     private parseIntSafe(value: any, columnName: string): number {
         if (value === null || value === undefined || String(value).trim() === '') {
             // C# Convert.ChangeType fallaría, así que lanzamos un error
@@ -367,9 +390,16 @@ export class RemanufacturaDetailComponent implements OnInit {
         return floatValue;
     }
 
-    handleOpenModalAddPartidas(data: DTOLiquidacionRemanufactura | null) {
-        if (!data) return;
-        this.remanufacturaDetalleStore.openModalPartidasManagment();
+    private parseISODate(value: any, columnName: string) {
+        if (value === null || value === undefined || String(value).trim() === '') {
+            // Asumimos que los decimales pueden ser 0, pero no vacíos
+            throw new Error(`Columna '${columnName}' no puede estar vacía.`);
+        }
+        return Helper.formatExcelDate(value);
+    }
 
+    handleOpenModalAddPartidas(idLiquidacion: number | null) {
+        if(idLiquidacion == null) return;
+        this.partidaDetalleStore.openModalManagment(idLiquidacion);
     }
 }

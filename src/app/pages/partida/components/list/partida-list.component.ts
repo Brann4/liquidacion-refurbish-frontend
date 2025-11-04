@@ -15,6 +15,7 @@ import { PartidaDetalleStore } from '../../stores/PartidaDetalleStore';
 import { FormatCurrencyPipe } from '@/utils/format-currency-pipe';
 import { PartidaCreateComponent } from "../create/partida-create.component";
 import { PartidaEditComponent } from "../edit/partida-edit.component";
+import { ConfirmationDialog } from '@/pages/service/confirmation-dialog';
 
 @Component({
     selector: 'partida-list',
@@ -35,7 +36,7 @@ export class PartidaListComponent implements OnInit {
     partidaStore = inject(PartidaStore);
     partidaDetalleStore = inject(PartidaDetalleStore);
 
-    confirmationService = inject(ConfirmationService);
+    confirmationDialogService = inject(ConfirmationDialog);
     router = inject(Router);
     route = inject(ActivatedRoute);
 
@@ -76,26 +77,10 @@ export class PartidaListComponent implements OnInit {
     }
 
     onDeleteModal(liquidacion: DTOPartida) {
-        this.confirmationService.confirm({
-            message: `Estas seguro que desea eliminar ${liquidacion.partidaNombre} ?`,
-            header: 'Confirmación',
-            icon: 'pi pi-exclamation-triangle',
-            acceptButtonProps: {
-                label: 'Eliminar',
-                severity: 'danger'
-            },
-            rejectButtonProps: {
-                label: 'Cancelar',
-                severity: 'secondary',
-                text: true
-            },
-            acceptIcon: 'pi pi-check',
-            rejectIcon: 'pi pi-times',
-            accept: () => {
-                this.partidaStore.delete(liquidacion.id);
-            },
-            reject: () => {
-                console.log('ERROR');
+
+         this.confirmationDialogService.confirmDelete().subscribe((accepted) => {
+            if (accepted) {
+               this.partidaStore.delete(liquidacion.id);
             }
         });
     }

@@ -38,7 +38,8 @@ const initialState: PartidaState = {
 export const PartidaStore = signalStore(
     { providedIn: 'root' },
     withState<PartidaState>(initialState),
-    withMethods((store, partidaService = inject(PartidaService), toast = inject(ToastService), router = inject(Router)) => ({
+    withMethods((
+        store, partidaService = inject(PartidaService), toast = inject(ToastService), router = inject(Router)) => ({
         clear() {
             patchState(store, { isSubmitting: false, entity: null, entities: [] });
         },

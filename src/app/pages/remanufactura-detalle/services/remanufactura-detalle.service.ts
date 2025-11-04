@@ -37,4 +37,6 @@ export class RemanufacturaDetalleService {
     deleteAll(nombreLiquidacion: string) {
         return this.http.delete<ApiResponseSingle<number>>(`${this.apiUrl}/EliminarTodo/${nombreLiquidacion}`);
     }
+
+
 }

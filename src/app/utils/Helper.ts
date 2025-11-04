@@ -24,4 +24,12 @@ export class Helper {
             day: '2-digit'
         });
     }
+
+    static  formatExcelDate(serial: number): Date {
+        const excelEpoch = new Date(1900, 0, 1); // 1 de enero de 1900
+        const utcDays = Math.floor(serial) - 2;  // restamos 2 por el bug de Excel y el offset inicial
+        const msPerDay = 24 * 60 * 60 * 1000;
+        return new Date(excelEpoch.getTime() + utcDays * msPerDay);
+        }
 }
+

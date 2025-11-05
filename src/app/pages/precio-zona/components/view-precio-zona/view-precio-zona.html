@@ -1,30 +1,33 @@
 <div class="flex flex-col gap-6">
     <p-toolbar>
-        <ng-template #start>
-            <div class="flex flex-col gap-4">
-                <div class="flex gap-4 items-end">
-                    <div class="min-w-[250px]">
-                        <p-select
-                            [options]="contratas()"
-                            [(ngModel)]="selectedContrata"
-                            (onChange)="onContrataChange($event.value)"
-                            optionLabel="razonSocial"
-                            placeholder="Selecciona una contrata"
-                            class="w-full"
-                            [filter]="true"
-                            filterBy="razonSocial,ruc"
-                            [showClear]="true"
-                        />
-                    </div>
-                    <p-button
-                        label="Nuevo Precio"
-                        icon="pi pi-plus"
-                        severity="primary"
-                        (onClick)="openCreateModal()"
-                        [disabled]="!selectedContrata()"
-                        [title]="!selectedContrata() ? 'Selecciona una contrata primero' : 'Crear nuevo precio de zona'"
+        <ng-template pTemplate="start">
+            <breadcrumb-header [breadcrumbs]="breadcrumbs" title="MÓDULO DE PRECIOS POR ZONA" />
+        </ng-template>
+        <ng-template pTemplate="end">
+            <div class="flex gap-4 items-center">
+                <div class="min-w-[250px]">
+                    <p-select
+                        [options]="contratas()"
+                        [(ngModel)]="selectedContrata"
+                        (onChange)="onContrataChange($event.value)"
+                        optionLabel="razonSocial"
+                        placeholder="Selecciona una contrata"
+                        class="w-full"
+                        [filter]="true"
+                        filterBy="razonSocial,ruc"
+                        [showClear]="true"
                     />
                 </div>
+                <p-button
+                    label="Nuevo Precio"
+                    icon="pi pi-plus"
+                    severity="primary"
+                    [raised]="true"
+                    size="large"
+                    (onClick)="openCreateModal()"
+                    [disabled]="!selectedContrata()"
+                    [title]="!selectedContrata() ? 'Selecciona una contrata primero' : 'Crear nuevo precio de zona'"
+                />
             </div>
         </ng-template>
     </p-toolbar>
@@ -39,16 +42,16 @@
                 [paginator]="true"
                 [showCurrentPageReport]="true"
                 [rowsPerPageOptions]="[10, 20, 30]"
+                [loading]="isLoadingEntities()"
                 currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"
                 [tableStyle]="{ 'min-width': '75rem' }"
-                [loading]="isLoading()"
             >
-                <ng-template #caption>
+                <ng-template pTemplate="caption">
                     <div class="flex items-center justify-between">
                         <h5>Precios de Zona - {{ selectedContrata()?.razonSocial }}</h5>
                     </div>
                 </ng-template>
-                <ng-template #header>
+                <ng-template pTemplate="header">
                     <tr>
                         <th>
                             Id
@@ -70,7 +73,7 @@
                         </th>
                     </tr>
                 </ng-template>
-                <ng-template #body let-item>
+                <ng-template pTemplate="body" let-item>
                     <tr>
                         <td>{{ item.id }}</td>
                         <td>
@@ -82,7 +85,7 @@
                         </td>
                         <td>
                             <div class="flex items-center gap-2">
-                                <p-button icon="pi pi-pencil" [rounded]="true" [outlined]="true"
+                                <p-button icon="pi pi-pencil" severity="info" [rounded]="true" [outlined]="true"
                                           (click)="onEditPrecioZona(item)" title="Editar precio de zona" />
                                 <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
                                           (click)="onDeletePrecioZona(item)" title="Eliminar precio de zona" />
@@ -90,7 +93,7 @@
                         </td>
                     </tr>
                 </ng-template>
-                <ng-template #emptymessage>
+                <ng-template pTemplate="emptymessage">
                     <tr>
                         <td colspan="5" class="text-center py-4">
                             <div class="flex flex-col items-center gap-2">

@@ -12,6 +12,7 @@ export type ContrataState = {
     isOpenCreate: boolean;
     isOpenEdit: boolean;
     isSubmitting: boolean;
+    isLoadingEntities: boolean;
     error: string | null;
 };
 
@@ -21,6 +22,7 @@ const initialState: ContrataState = {
     isOpenCreate: false,
     isOpenEdit: false,
     isSubmitting: false,
+    isLoadingEntities: false,
     error: null
 };
 
@@ -53,20 +55,20 @@ export const ContrataStore = signalStore(
         },
 
         getAll() {
-            patchState(store, { isSubmitting: true, error: null });
+            patchState(store, { isLoadingEntities: true, error: null });
 
             contrataService.getAll().subscribe({
                 next: (response) => {
                     if (response.status && response.value) {
                         patchState(store, {
                             entities: response.value,
-                            isSubmitting: false,
+                            isLoadingEntities: false,
                             error: null
                         });
                     } else {
                         const errorMessage = response.msg || 'Error al cargar las contratas';
                         patchState(store, {
-                            isSubmitting: false,
+                            isLoadingEntities: false,
                             error: errorMessage
                         });
                         toast.error(errorMessage);
@@ -74,7 +76,7 @@ export const ContrataStore = signalStore(
                 },
                 error: (error) => {
                     patchState(store, {
-                        isSubmitting: false,
+                        isLoadingEntities: false,
                         error: error.message || 'Error al cargar las contratas'
                     });
                     toast.error('Error al cargar las contratas');

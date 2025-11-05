@@ -6,10 +6,11 @@ import { ProductoDescontinuadoModal } from '@/pages/producto-descontinuado/compo
 import { PrimeModules } from '@/utils/PrimeModule';
 import { ShortDatePipe } from '@/layout/pipes/shortDate.pipe';
 import { ConfirmationDialog } from '@/pages/service/confirmation-dialog';
+import { BreadcrumbHeader } from '@/layout/component/breadcrumb/breadcrumb.header';
 
 @Component({
     selector: 'app-view-producto-descontinuado',
-    imports: [PrimeModules, ProductoDescontinuadoModal, ShortDatePipe],
+    imports: [PrimeModules, ProductoDescontinuadoModal, ShortDatePipe, BreadcrumbHeader],
     templateUrl: './view-producto-descontinuado.html',
     styles: ``
 })
@@ -17,6 +18,8 @@ export class ViewProductoDescontinuado implements OnInit {
     private readonly discontinuedProductStore = inject(ProductoDescontinuadoStore);
     private confirmationDialogService = inject(ConfirmationDialog);
     protected readonly discontinuedProducts = computed(() => this.discontinuedProductStore.entities());
+    protected readonly isLoadingEntities = computed(() => this.discontinuedProductStore.isLoadingEntities());
+    protected readonly breadcrumbs = [{ label: 'Producto Descontinuado' }];
 
     ngOnInit(): void {
         this.loadDiscontinuedProducts();

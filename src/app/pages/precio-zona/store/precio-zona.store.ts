@@ -13,6 +13,7 @@ export type PrecioZonaState = {
     isOpenCreate: boolean;
     isOpenEdit: boolean;
     isSubmitting: boolean;
+    isLoadingEntities: boolean;
     error: string | null;
 };
 
@@ -23,6 +24,7 @@ const initialState: PrecioZonaState = {
     isOpenCreate: false,
     isOpenEdit: false,
     isSubmitting: false,
+    isLoadingEntities: false,
     error: null
 };
 
@@ -59,20 +61,20 @@ export const PrecioZonaStore = signalStore(
         },
 
         getByContrata(contrataId: number) {
-            patchState(store, { isSubmitting: true, error: null, currentContrataId: contrataId });
+            patchState(store, { isLoadingEntities: true, error: null, currentContrataId: contrataId });
 
             precioZonaService.getByContrata(contrataId).subscribe({
                 next: (response) => {
                     if (response.status && response.value) {
                         patchState(store, {
                             entities: response.value,
-                            isSubmitting: false,
+                            isLoadingEntities: false,
                             error: null
                         });
                     } else {
                         const errorMessage = response.msg || 'Error al cargar los precios de zona';
                         patchState(store, {
-                            isSubmitting: false,
+                            isLoadingEntities: false,
                             error: errorMessage
                         });
                         toast.error(errorMessage);
@@ -80,7 +82,7 @@ export const PrecioZonaStore = signalStore(
                 },
                 error: (error) => {
                     patchState(store, {
-                        isSubmitting: false,
+                        isLoadingEntities: false,
                         error: error.message || 'Error al cargar los precios de zona'
                     });
                     toast.error('Error al cargar los precios de zona');

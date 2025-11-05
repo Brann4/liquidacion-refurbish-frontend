@@ -9,7 +9,7 @@
     [draggable]="false"
     [resizable]="false">
 
-    <ng-template #content>
+    <ng-template pTemplate="content">
         <form [formGroup]="recuperoForm" (ngSubmit)="onSubmitForm()" class="flex flex-col gap-4 p-4">
             <div class="flex flex-col gap-2">
                 <label for="contrataId" class="text-sm font-medium">Contrata</label>
@@ -47,7 +47,7 @@
         </form>
     </ng-template>
 
-    <ng-template #footer>
+    <ng-template pTemplate="footer">
         <p-button label="Cancelar" icon="pi pi-times" text (click)="onCancelForm()" />
         <p-button label="Guardar" icon="pi pi-check" (click)="onSubmitForm()" [loading]="isLoading()"
                   [disabled]="isLoading()" />

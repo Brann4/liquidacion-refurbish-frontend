@@ -9,10 +9,11 @@ import { PrimeModules } from '@/utils/PrimeModule';
 import { ConfirmationDialog } from '@/pages/service/confirmation-dialog';
 import { ToastService } from '@/layout/service/toast.service';
 import { FormatCurrencyPipe } from '@/utils/format-currency-pipe';
+import { BreadcrumbHeader } from '@/layout/component/breadcrumb/breadcrumb.header';
 
 @Component({
     selector: 'app-view-precio-zona',
-    imports: [PrimeModules, PrecioZonaModal, FormsModule, FormatCurrencyPipe],
+    imports: [PrimeModules, PrecioZonaModal, FormsModule, FormatCurrencyPipe, BreadcrumbHeader],
     templateUrl: './view-precio-zona.html',
     styles: ``
 })
@@ -24,10 +25,10 @@ export class ViewPrecioZona implements OnInit {
 
     protected readonly preciosZona = computed(() => this.precioZonaStore.entities());
     protected readonly contratas = computed(() => this.contrataStore.entities());
-    protected readonly isLoading = computed(() => this.precioZonaStore.isSubmitting());
+    protected readonly isLoadingEntities = computed(() => this.precioZonaStore.isLoadingEntities());
+    protected readonly breadcrumbs = [{ label: 'Precio Zona' }];
 
     protected readonly selectedContrata = signal<Contrata | null>(null);
-    protected readonly selectedContrataId = computed(() => this.selectedContrata()?.id || null);
 
     ngOnInit(): void {
         this.loadContratas();

@@ -5,10 +5,11 @@ import { Contrata } from '@/pages/contrata/entities/contrata';
 import { ContrataModal } from '@/pages/contrata/components/contrata-modal/contrata-modal';
 import { PrimeModules } from '@/utils/PrimeModule';
 import { ConfirmationDialog } from '@/pages/service/confirmation-dialog';
+import { BreadcrumbHeader } from '@/layout/component/breadcrumb/breadcrumb.header';
 
 @Component({
     selector: 'app-view-contrata',
-    imports: [PrimeModules, ContrataModal],
+    imports: [PrimeModules, ContrataModal, BreadcrumbHeader],
     templateUrl: './view-contrata.html',
     styles: ``
 })
@@ -16,6 +17,8 @@ export class ViewContrata implements OnInit {
     private readonly contrataStore = inject(ContrataStore);
     private confirmationDialogService = inject(ConfirmationDialog);
     protected readonly contratas = computed(() => this.contrataStore.entities());
+    protected readonly isLoadingEntities = computed(() => this.contrataStore.isLoadingEntities());
+    protected readonly breadcrumbs = [{ label: 'Contrata' }];
 
     ngOnInit(): void {
         this.loadContratas();

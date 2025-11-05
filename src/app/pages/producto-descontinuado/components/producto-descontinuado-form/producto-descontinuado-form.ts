@@ -26,7 +26,7 @@ export class ProductoDescontinuadoForm {
 
     protected readonly discontinuedProductForm: FormGroup<ProductoDescontinuadoFormType> = this.formBuilder.nonNullable.group({
         codigoSAP: this.formBuilder.nonNullable.control('', [Validators.required, Validators.maxLength(50)]),
-        nombreProducto: this.formBuilder.nonNullable.control('', [Validators.required, Validators.maxLength(200)]),
+        nombreProducto: this.formBuilder.nonNullable.control('', [Validators.required, Validators.maxLength(250)]),
         fechaDescontinuado: this.formBuilder.nonNullable.control(null as Date | null, [Validators.required]),
         estado: this.formBuilder.nonNullable.control(true, [Validators.required])
     });

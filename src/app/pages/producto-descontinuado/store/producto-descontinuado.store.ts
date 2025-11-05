@@ -12,6 +12,7 @@ export type ProductoDescontinuadoState = {
     isOpenCreate: boolean;
     isOpenEdit: boolean;
     isSubmitting: boolean;
+    isLoadingEntities: boolean;
     error: string | null;
 };
 
@@ -21,6 +22,7 @@ const initialState: ProductoDescontinuadoState = {
     isOpenCreate: false,
     isOpenEdit: false,
     isSubmitting: false,
+    isLoadingEntities: false,
     error: null
 };
 
@@ -53,20 +55,20 @@ export const ProductoDescontinuadoStore = signalStore(
         },
 
         getAll() {
-            patchState(store, { isSubmitting: true, error: null });
+            patchState(store, { isLoadingEntities: true, error: null });
 
             productoDescontinuadoService.getAll().subscribe({
                 next: (response) => {
                     if (response.status && response.value) {
                         patchState(store, {
                             entities: response.value,
-                            isSubmitting: false,
+                            isLoadingEntities: false,
                             error: null
                         });
                     } else {
                         const errorMessage = response.msg || 'Error al cargar los productos descontinuados';
                         patchState(store, {
-                            isSubmitting: false,
+                            isLoadingEntities: false,
                             error: errorMessage
                         });
                         toast.error(errorMessage);
@@ -74,7 +76,7 @@ export const ProductoDescontinuadoStore = signalStore(
                 },
                 error: (error) => {
                     patchState(store, {
-                        isSubmitting: false,
+                        isLoadingEntities: false,
                         error: error.message || 'Error al cargar los productos descontinuados'
                     });
                     toast.error('Error al cargar los productos descontinuados');

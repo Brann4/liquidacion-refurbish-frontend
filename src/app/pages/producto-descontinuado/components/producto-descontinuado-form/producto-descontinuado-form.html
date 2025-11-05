@@ -2,84 +2,78 @@
     [modal]="true"
     [visible]="visible()"
     [breakpoints]="{ '650px': '90vw' }"
+    [style]="{ 'width': '25vw', 'min-width': '400px' }"
     (visibleChange)="onDialogVisibilityChange($event)"
     [header]="formTitle()"
     [closable]="true"
     [draggable]="false"
     [resizable]="false">
 
-    <form [formGroup]="discontinuedProductForm" (ngSubmit)="onSubmitForm()" class="flex flex-col gap-4 p-4">
-        <div class="flex flex-col gap-2">
-            <label for="codigoSAP" class="text-sm font-medium">Código SAP</label>
-            <input
-                pInputText
-                id="codigoSAP"
-                formControlName="codigoSAP"
-                placeholder="Ej: SAP001234"
-                maxlength="50"
-                [invalid]="isInvalid(controls.codigoSAP)"
-            />
-            @if (isInvalid(controls.codigoSAP)) {
-                <app-form-control-error [control]="controls.codigoSAP" controlName="Código SAP" />
-            }
-        </div>
-
-        <div class="flex flex-col gap-2">
-            <label for="nombreProducto" class="text-sm font-medium">Nombre del Producto</label>
-            <input
-                pInputText
-                id="nombreProducto"
-                formControlName="nombreProducto"
-                placeholder="Ej: Laptop Dell Inspiron 15"
-                maxlength="200"
-                [invalid]="isInvalid(controls.nombreProducto)"
-            />
-            @if (isInvalid(controls.nombreProducto)) {
-                <app-form-control-error [control]="controls.nombreProducto" controlName="Nombre del producto" />
-            }
-        </div>
-
-        <div class="flex flex-col gap-2">
-            <label for="fechaDescontinuado" class="text-sm font-medium">Fecha de Descontinuación</label>
-            <p-datepicker
-                formControlName="fechaDescontinuado"
-                inputId="fechaDescontinuado"
-                placeholder="Selecciona una fecha"
-                appendTo="body"
-                dateFormat="dd/mm/yy"
-                [invalid]="isInvalid(controls.fechaDescontinuado)"
-                class="w-full"></p-datepicker>
-            @if (isInvalid(controls.fechaDescontinuado)) {
-                <app-form-control-error [control]="controls.fechaDescontinuado"
-                                        controlName="Fecha de descontinuación" />
-            }
-        </div>
-
-        @if (isEditMode()) {
-            <div class="flex items-center gap-4">
-                <p-toggleswitch formControlName="estado" />
-                <label class="text-sm font-medium">Estado:</label>
-                @if (discontinuedProductForm.controls.estado.value) {
-                    <p-tag icon="pi pi-check-circle" severity="success" value="Activo" />
-                } @else {
-                    <p-tag icon="pi pi-times-circle" severity="danger" value="Inactivo" />
+    <ng-template pTemplate="content">
+        <form [formGroup]="discontinuedProductForm" (ngSubmit)="onSubmitForm()" class="flex flex-col gap-4 p-4">
+            <div class="flex flex-col gap-2">
+                <label for="codigoSAP" class="text-sm font-medium">Código SAP</label>
+                <input
+                    pInputText
+                    id="codigoSAP"
+                    formControlName="codigoSAP"
+                    placeholder="Ej: SAP001234"
+                    maxlength="50"
+                    [invalid]="isInvalid(controls.codigoSAP)"
+                />
+                @if (isInvalid(controls.codigoSAP)) {
+                    <app-form-control-error [control]="controls.codigoSAP" controlName="Código SAP" />
                 }
             </div>
-        }
 
-        <div class="flex justify-end gap-2 mt-4">
-            <p-button
-                type="button"
-                label="Cancelar"
-                severity="secondary"
-                (onClick)="onCancelForm()"
-            />
-            <p-button
-                type="submit"
-                label="Guardar"
-                [loading]="isLoading()"
-                [disabled]="isLoading()"
-            />
-        </div>
-    </form>
+            <div class="flex flex-col gap-2">
+                <label for="nombreProducto" class="text-sm font-medium">Nombre del Producto</label>
+                <input
+                    pInputText
+                    id="nombreProducto"
+                    formControlName="nombreProducto"
+                    placeholder="Ej: Laptop Dell Inspiron 15"
+                    maxlength="200"
+                    [invalid]="isInvalid(controls.nombreProducto)"
+                />
+                @if (isInvalid(controls.nombreProducto)) {
+                    <app-form-control-error [control]="controls.nombreProducto" controlName="Nombre del producto" />
+                }
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label for="fechaDescontinuado" class="text-sm font-medium">Fecha de Descontinuación</label>
+                <p-datepicker
+                    formControlName="fechaDescontinuado"
+                    inputId="fechaDescontinuado"
+                    placeholder="Selecciona una fecha"
+                    appendTo="body"
+                    dateFormat="dd/mm/yy"
+                    [invalid]="isInvalid(controls.fechaDescontinuado)"
+                    class="w-full"></p-datepicker>
+                @if (isInvalid(controls.fechaDescontinuado)) {
+                    <app-form-control-error [control]="controls.fechaDescontinuado"
+                                            controlName="Fecha de descontinuación" />
+                }
+            </div>
+
+            @if (isEditMode()) {
+                <div class="flex items-center gap-4">
+                    <p-toggleswitch formControlName="estado" />
+                    <label class="text-sm font-medium">Estado:</label>
+                    @if (discontinuedProductForm.controls.estado.value) {
+                        <p-tag icon="pi pi-check-circle" severity="success" value="Activo" />
+                    } @else {
+                        <p-tag icon="pi pi-times-circle" severity="danger" value="Inactivo" />
+                    }
+                </div>
+            }
+        </form>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Cancelar" icon="pi pi-times" text (click)="onCancelForm()" />
+        <p-button label="Guardar" icon="pi pi-check" (click)="onSubmitForm()" [loading]="isLoading()"
+                  [disabled]="isLoading()" />
+    </ng-template>
 </p-dialog>

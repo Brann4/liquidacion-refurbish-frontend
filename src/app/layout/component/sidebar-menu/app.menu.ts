@@ -49,7 +49,7 @@ export class AppMenu implements OnInit {
                 items: [
                     {
                         label: 'Producto Descontinuado',
-                        icon: 'pi pi-fw pi-user',
+                        icon: 'pi pi-fw pi-box',
                         routerLink: ['/pages/producto-descontinuado']
                     },
                     {

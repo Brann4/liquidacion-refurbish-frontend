@@ -7,7 +7,7 @@
         <p-button label="Nuevo" icon="pi pi-plus" severity="primary" class="mr-2" [raised]="true" size="large" (onClick)="openCreateModal()" />
     </ng-template>
 </p-toolbar>
-<div class="flex flex-col flex-1 h-[calc(100vh-20rem)]">
+<div class="flex flex-col flex-1 h-[calc(100vh-10rem)]">
     <p-card class="mt-4 flex-1 relative overflow-hidden">
         @if (this.remanufacturaStore.isLoadingData()) {
             <div class="absolute inset-0 bg-black/40 flex items-center justify-center rounded-xl">

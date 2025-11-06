@@ -57,7 +57,7 @@ export const PartidaRemanufacturaDetalleStore = signalStore(
             },
 
             closeModalPartidasManagment() {
-                cancelSubscriptions$.next();
+
                 patchState(store, { isOpenPartidasManagment: false });
             },
 

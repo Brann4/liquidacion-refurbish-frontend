@@ -21,7 +21,7 @@ export class PostventaApi {
     }
 
     getById(id: number): Observable<BaseResponse<LiquidacionPostventa>> {
-        return this.http.get<BaseResponse<LiquidacionPostventa>>(`${this.apiUrl}/${id}`).pipe(catchError(handleHttpError));
+        return this.http.get<BaseResponse<LiquidacionPostventa>>(`${this.apiUrl}/${id}`);
     }
 
     create(request: CreateLiquidacionPostventaRequest): Observable<BaseResponse<LiquidacionPostventa>> {

@@ -51,6 +51,9 @@ export const PostventaStore = signalStore(
         setSubmitting(isSubmitting: boolean) {
             patchState(store, { isSubmitting });
         },
+        setEntity(entity: LiquidacionPostventa) {
+            patchState(store, { entity });
+        },
 
         clearError() {
             patchState(store, { error: null });
@@ -82,6 +85,19 @@ export const PostventaStore = signalStore(
                         error: error.message || 'Error al cargar las postventas'
                     });
                     toast.error('Error al cargar las postventas');
+                }
+            });
+        },
+
+        getById(id: number) {
+            patchState(store, { isSubmitting: true });
+
+            postventaService.getById(id).subscribe({
+                next: (response) => {
+                    patchState(store, { entity: response.value, isSubmitting: false });
+                },
+                error: (error) => {
+                    patchState(store, { isSubmitting: false, error: error.message, entity: null });
                 }
             });
         },

@@ -39,6 +39,8 @@ export class ViewPostventa implements OnInit {
     }
 
     protected onViewDetail(item: LiquidacionPostventaResponse) {
+        //PASO 1
+        this.postventaStore.setEntity(item);
         this.router.navigate([item.id], { relativeTo: this.route });
     }
 

@@ -170,13 +170,16 @@
             [value]="entities()"
             [selection]="selectedItems()"
             (selectionChange)="selectedItems.set($event)"
-            [rows]="10"
+            [rows]="pageSize()"
             [rowHover]="true"
             [paginator]="true"
             [showCurrentPageReport]="true"
             [rowsPerPageOptions]="[10, 20, 30]"
             [globalFilterFields]="['codigoSAP', 'codigoSOT']"
             [loading]="isLoadingEntities()"
+            [totalRecords]="totalRecords()"
+            [lazy]="true"
+            (onLazyLoad)="onPageChange($event)"
             currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
             [tableStyle]="{ 'min-width': '75rem' }"
         >
@@ -190,6 +193,7 @@
                         </p-iconfield>
                         <p-button icon="pi pi-filter-slash" [outlined]="true" (click)="onClearFilters(dataTable)" />
                         <p-button severity="danger" label="Eliminar" icon="pi pi-trash"
+                                  [disabled]="!selectedItems().length"
                                   (onClick)="deleteSelectedItems()" />
                     </div>
                     <div class="flex flex-row">

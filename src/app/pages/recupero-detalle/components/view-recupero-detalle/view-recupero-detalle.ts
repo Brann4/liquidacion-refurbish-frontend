@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PrimeModules } from '@/utils/PrimeModule';
-import { Table } from 'primeng/table';
+import { Table, TableLazyLoadEvent } from 'primeng/table';
 import { RecuperoDetalleStore } from '@/pages/recupero-detalle/stores/recupero-detalle.store';
 import { PreviewLiquidacionRecuperoDetalleRequest } from '@/pages/recupero-detalle/entities/preview-liquidacion-recupero-detalle-request';
 import { CreateLiquidacionRecuperoDetalleRequest } from '@/pages/recupero-detalle/entities/create-liquidacion-recupero-detalle-request';
@@ -30,11 +30,15 @@ export class ViewRecuperoDetalle implements OnInit {
     protected readonly showUploadSection = signal(false);
     protected readonly liquidacionRecuperoId = signal<number | null>(null);
     protected readonly selectedItems = signal<LiquidacionRecuperoDetalle[]>([]);
+    protected readonly currentPage = signal(1);
+    protected readonly pageSize = signal(10);
 
     protected readonly entities = computed(() => this.recuperoDetalleStore.entities());
     protected readonly entitiesPreview = computed(() => this.recuperoDetalleStore.entitiesPreview());
     protected readonly contrata = computed(() => this.recuperoDetalleStore.contrata());
     protected readonly liquidacionRecupero = computed(() => this.recuperoDetalleStore.liquidacionRecupero());
+    protected readonly pagination = computed(() => this.recuperoDetalleStore.pagination());
+    protected readonly totalRecords = computed(() => this.pagination()?.totalItems || 0);
     protected readonly isLoadingEntities = computed(() => this.recuperoDetalleStore.isLoadingEntities());
     protected readonly isLoadingPreview = computed(() => this.recuperoDetalleStore.isLoadingPreview());
     protected readonly isLoadingCreate = computed(() => this.recuperoDetalleStore.isLoadingCreate());
@@ -55,7 +59,6 @@ export class ViewRecuperoDetalle implements OnInit {
             const liquidacionRecuperoId = parseInt(id, 10);
             this.liquidacionRecuperoId.set(liquidacionRecuperoId);
             this.loadRecuperoById(liquidacionRecuperoId);
-            this.loadEntitiesByRecupero(liquidacionRecuperoId);
         }
     }
 
@@ -63,8 +66,8 @@ export class ViewRecuperoDetalle implements OnInit {
         this.recuperoDetalleStore.getRecuperoById(id);
     }
 
-    protected loadEntitiesByRecupero(liquidacionRecuperoId: number): void {
-        this.recuperoDetalleStore.getByRecupero(liquidacionRecuperoId);
+    protected loadEntitiesByRecupero(liquidacionRecuperoId: number, page: number = 1, pageSize: number = 10): void {
+        this.recuperoDetalleStore.getByRecupero(liquidacionRecuperoId, page, pageSize);
     }
 
     protected loadContrata(contrataId: number): void {
@@ -217,5 +220,15 @@ export class ViewRecuperoDetalle implements OnInit {
                 this.selectedItems.set([]);
             }
         });
+    }
+
+    protected onPageChange(event: TableLazyLoadEvent): void {
+        const liquidacionRecuperoId = this.liquidacionRecuperoId();
+        if (liquidacionRecuperoId && event.first !== undefined && event.rows !== null && event.rows !== undefined) {
+            const currentPage = Math.floor(event.first / event.rows) + 1;
+            this.currentPage.set(currentPage);
+            this.pageSize.set(event.rows);
+            this.loadEntitiesByRecupero(liquidacionRecuperoId, this.currentPage(), this.pageSize());
+        }
     }
 }

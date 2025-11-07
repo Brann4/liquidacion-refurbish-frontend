@@ -13,12 +13,14 @@ import { RecuperoApi } from '@/pages/recupero/services/recupero.api';
 import { LiquidacionRecupero } from '@/pages/recupero/entities/liquidacion-recupero';
 import { LiquidacionRecuperoExcel } from '@/pages/service/liquidacion-recupero-excel';
 import { format } from 'date-fns';
+import { PaginationInfo } from '@/utils/paginated-data';
 
 export type RecuperoDetalleState = {
     entities: LiquidacionRecuperoDetalle[];
     entitiesPreview: LiquidacionRecuperoDetallePreview[];
     contrata: Contrata | null;
     liquidacionRecupero: LiquidacionRecupero | null;
+    pagination: PaginationInfo | null;
     isLoadingEntities: boolean;
     isLoadingPreview: boolean;
     isLoadingCreate: boolean;
@@ -34,6 +36,7 @@ const initialState: RecuperoDetalleState = {
     entitiesPreview: [],
     contrata: null,
     liquidacionRecupero: null,
+    pagination: null,
     isLoadingEntities: false,
     isLoadingPreview: false,
     isLoadingCreate: false,
@@ -94,6 +97,7 @@ export const RecuperoDetalleStore = signalStore(
                 entitiesPreview: [],
                 contrata: null,
                 liquidacionRecupero: null,
+                pagination: null,
                 isLoadingEntities: false,
                 isLoadingPreview: false,
                 isLoadingCreate: false,
@@ -169,14 +173,15 @@ export const RecuperoDetalleStore = signalStore(
             });
         },
 
-        getByRecupero(liquidacionRecuperoId: number) {
+        getByRecupero(liquidacionRecuperoId: number, page: number = 1, pageSize: number = 10) {
             patchState(store, { isLoadingEntities: true, error: null });
 
-            recuperoDetalleService.getByRecupero(liquidacionRecuperoId).subscribe({
+            recuperoDetalleService.getByRecupero(liquidacionRecuperoId, page, pageSize).subscribe({
                 next: (response) => {
                     if (response.status && response.value) {
                         patchState(store, {
-                            entities: response.value,
+                            entities: response.value.items,
+                            pagination: response.value.pagination,
                             isLoadingEntities: false,
                             error: null
                         });
@@ -232,7 +237,7 @@ export const RecuperoDetalleStore = signalStore(
                             entitiesPreview: []
                         });
                         toast.success(response.msg || 'Detalle del recupero creado correctamente');
-                        this.getByRecupero(request.liquidacionRecuperoId);
+                        this.getByRecupero(request.liquidacionRecuperoId, 1, 10);
                         this.getRecuperoById(request.liquidacionRecuperoId);
                     } else {
                         const errorMessage = response.msg || 'Error al crear el detalle del recupero';
@@ -326,7 +331,7 @@ export const RecuperoDetalleStore = signalStore(
                         toast.success(response.msg || 'Detalles del recupero eliminados correctamente');
                         const liquidacionRecuperoId = store.liquidacionRecupero()?.id;
                         if (liquidacionRecuperoId) {
-                            this.getByRecupero(liquidacionRecuperoId);
+                            this.getByRecupero(liquidacionRecuperoId, 1, 10);
                         }
                     } else {
                         const errorMessage = response.msg || 'Error al eliminar los detalles del recupero';

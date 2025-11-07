@@ -9,6 +9,7 @@ import { LiquidacionRecuperoDetalle } from '@/pages/recupero-detalle/entities/li
 import { environment } from '../../../../environments/environment';
 import { BaseResponse } from '@/utils/base-response';
 import { handleHttpError } from '@/utils/http-error.util';
+import { PaginatedData } from '@/utils/paginated-data';
 
 const API_FILE_KEY = 'file';
 
@@ -19,8 +20,9 @@ export class RecuperoDetalleApi {
     private http = inject(HttpClient);
     private readonly apiUrl = `${environment.URL}/LiquidacionRecuperoDetalle`;
 
-    getByRecupero(liquidacionRecuperoId: number): Observable<BaseResponse<LiquidacionRecuperoDetalle[]>> {
-        return this.http.get<BaseResponse<LiquidacionRecuperoDetalle[]>>(`${this.apiUrl}/liquidacion/${liquidacionRecuperoId}`).pipe(catchError(handleHttpError));
+    getByRecupero(liquidacionRecuperoId: number, page: number = 1, pageSize: number = 10): Observable<BaseResponse<PaginatedData<LiquidacionRecuperoDetalle>>> {
+        const params = `?page=${page}&pageSize=${pageSize}`;
+        return this.http.get<BaseResponse<PaginatedData<LiquidacionRecuperoDetalle>>>(`${this.apiUrl}/liquidacion/${liquidacionRecuperoId}${params}`).pipe(catchError(handleHttpError));
     }
 
     create(request: CreateLiquidacionRecuperoDetalleRequest): Observable<BaseResponse<boolean>> {

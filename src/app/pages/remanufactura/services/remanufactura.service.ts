@@ -38,7 +38,7 @@ export class LiquidacionRemanufacturaService {
     return this.http.put<{ message: string }>(`${API.URL}/LiquidacionRemanufactura/Editar`, data);
   }
 
-  delete(id: number, nombre: string) {
-    return this.http.delete<ApiResponseSingle<number>>(`${API.URL}/LiquidacionRemanufactura/Eliminar/${id}/${nombre}`);
+  delete(idLiquidacion: number) {
+    return this.http.delete<ApiResponseSingle<number>>(`${API.URL}/LiquidacionRemanufactura/Eliminar/${idLiquidacion}`);
   }
 }

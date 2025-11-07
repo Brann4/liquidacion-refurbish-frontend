@@ -17,6 +17,8 @@ import { SortEvent } from 'primeng/api';
 import { DTOLiquidacionRemanufacturaDetalle } from '@/pages/remanufactura-detalle/entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle';
 import { RemanufacturaPartidasDetailComponent } from '../partidas-detail/partidas-detail.component';
 import { PartidaStore } from '@/pages/partida/stores/PartidaStore';
+import { enIE } from 'date-fns/locale';
+import { DTOCreateRemanufacturaDetalle } from '../../entities/remanufactura-detalle/DTOCreateRemanufacturaDetalle';
 
 @Component({
     selector: 'remanufactura-detail',
@@ -46,6 +48,8 @@ export class RemanufacturaDetailComponent implements OnInit {
     detalles = signal<DTOLiquidacionRemanufacturaDetalle[]>([]);
     initialValue = signal<DTOLiquidacionRemanufacturaDetalle[]>([]);
 
+    protected readonly liquidacionRemanufacturaId = signal<number | null>(null);
+
     loadingImport = computed(() => this.remanufacturaDetalleStore.isExporting());
     statusActive = computed(() => !!this.remanufacturaStore.entity()?.estado);
 
@@ -56,10 +60,7 @@ export class RemanufacturaDetailComponent implements OnInit {
         effect(() => {
             const entity = this.remanufacturaStore.entity();
             if (entity) {
-                if (entity?.nombreLiquidacion) {
-                    this.remanufacturaDetalleStore.getDetailData(entity.nombreLiquidacion, Estado.Activo);
-                }
-
+                this.loadDetailData(entity);
                 if (!this.remanufacturaDetalleStore.isSubmitting() && this.fileUploader?.hasFiles()) {
                     this.fileUploader.clear();
                 }
@@ -70,9 +71,16 @@ export class RemanufacturaDetailComponent implements OnInit {
 
     ngOnInit(): void {
         const id = Number(this.route.snapshot.paramMap.get('id'));
-        if (id) this.remanufacturaStore.getById(id);
-        this.detalles.set(this.remanufacturaDetalleStore.entities());
-        this.initialValue.set([...this.remanufacturaDetalleStore.entities()]);
+        if (id) {
+            this.remanufacturaStore.getById(id);
+            this.liquidacionRemanufacturaId.set(id);
+            this.detalles.set(this.remanufacturaDetalleStore.entities());
+            this.initialValue.set([...this.remanufacturaDetalleStore.entities()]);
+        }
+    }
+
+    private loadDetailData(entity: DTOLiquidacionRemanufactura) {
+        this.remanufacturaDetalleStore.getDetailData(entity.id, Estado.Activo);
     }
 
     goBack() {
@@ -178,7 +186,6 @@ export class RemanufacturaDetailComponent implements OnInit {
             );
 
             var { mappedData, validationErrors } = this.normalizarFilas(worksheet, normalizedHeaders);
-            console.log(mappedData);
 
             for (let index = 0; index < mappedData.length; index++) {
                 const element = mappedData[index];
@@ -309,18 +316,50 @@ export class RemanufacturaDetailComponent implements OnInit {
     handleSubmitDetail() {
         this.confirmationDialogService.confirmSave().subscribe((accepted) => {
             if (accepted) {
-                const payload = {
-                    detalles: this.remanufacturaDetalleStore.entityPreview()
-                };
-                this.remanufacturaDetalleStore.createDetail(payload);
+                const idLiquidacion = this.liquidacionRemanufacturaId();
+                const entitiesPreview = this.remanufacturaDetalleStore.entitiesPreview();
+
+                if (idLiquidacion && entitiesPreview.length > 0) {
+                    const request: DTOCreateRemanufacturaDetalle = {
+                        liquidacionRemanufacturaId: idLiquidacion,
+                        detalles: entitiesPreview.map((item) => ({
+                            codigoLiquidacion: item.codigoLiquidacion,
+                            plataforma: item.plataforma,
+                            liquidacion: item.liquidacion,
+                            codigoEntrega: item.codigoEntrega,
+                            fechaPrevista: item.fechaPrevista,
+                            codigoSAP: item.codigoSAP,
+                            nombreProducto: item.nombreProducto,
+                            cantidad: item.cantidad,
+                            unidadMedida: item.unidadMedida,
+                            serieOrigen: item.serieOrigen,
+                            serieFinal: item.serieFinal,
+                            trabajoRealizado: item.trabajoRealizado,
+                            estado: item.estado,
+                            componentes: item.componentes,
+                            costoUnitario: item.costoUnitario,
+                            costoTotal: item.costoTotal,
+                            motivoEntrega: item.motivoEntrega,
+                            guiaIngreso: item.guiaIngreso,
+                            guiaSalida: item.guiaSalida,
+                            estadoSAP: item.estadoSAP,
+                            ordenDeCompra: item.ordenDeCompra,
+                            contabilizado: item.contabilizado,
+                            pedido: item.pedido,
+                            reingreso: item.reingreso
+                        }))
+                    };
+
+                    this.remanufacturaDetalleStore.create(request);
+                }
             }
         });
     }
 
-    exportDataTable() {
-        const nombre = this.remanufacturaStore.entity()?.nombreLiquidacion;
-        if (!nombre) return this.toast.warn('No hay una liquidación seleccionada.');
-        this.remanufacturaDetalleStore.exportDataTable(nombre);
+    export() {
+        const idLiquidacion = this.liquidacionRemanufacturaId();
+        if (!idLiquidacion) return this.toast.warn('No hay una liquidación seleccionada.');
+        this.remanufacturaDetalleStore.exportDataTable(idLiquidacion);
     }
 
     clearFilters(table: Table) {
@@ -335,16 +374,18 @@ export class RemanufacturaDetailComponent implements OnInit {
     }
     deleteSelectedProducts() {
         this.confirmationDialogService.confirmDelete().subscribe((accepted) => {
+            const idLiquidacion = this.liquidacionRemanufacturaId();
+
             if (!accepted || !this.selectedData?.length) return;
 
             const allSelected = this.selectedData?.length === this.remanufacturaDetalleStore.entities().length;
 
             if (accepted) {
                 if (allSelected) {
-                    this.remanufacturaDetalleStore.deleteAll(this.remanufacturaStore.entity()!.nombreLiquidacion);
+                    this.remanufacturaDetalleStore.deleteAll(idLiquidacion!);
                 } else {
                     const itemsIdSelected = this.selectedData.map((x) => x.id);
-                    this.remanufacturaDetalleStore.deleteMany(this.remanufacturaStore.entity()!.nombreLiquidacion, itemsIdSelected);
+                    this.remanufacturaDetalleStore.deleteMany(idLiquidacion!, itemsIdSelected);
                 }
                 this.selectedData = null;
             }
@@ -399,7 +440,7 @@ export class RemanufacturaDetailComponent implements OnInit {
     }
 
     handleOpenModalAddPartidas(idLiquidacion: number | null) {
-        if(idLiquidacion == null) return;
+        if (idLiquidacion == null) return;
         this.partidaDetalleStore.openModalManagment(idLiquidacion);
     }
 }

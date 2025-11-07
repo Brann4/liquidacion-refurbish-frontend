@@ -58,16 +58,20 @@ export const RemanufacturaStore = signalStore(
             patchState(store, { isSubmitting });
         },
 
-
+        setLoadingData (isLoadingData: boolean){
+            patchState(store, { isLoadingData});
+        },
 
         getLiquidaciones(status?: number) {
-            patchState(store, { isLoadingData: true });
+            this.setLoadingData(true);
             remanufacturaService.list(status).subscribe({
                 next: (entities) => {
-                    patchState(store, { entities, isLoadingData: false });
+                    patchState(store, { entities});
+                     this.setLoadingData(false);
                 },
                 error: (error) => {
-                    patchState(store, { isLoadingData: false, error: error.message });
+                    patchState(store, { error: error.message });
+                     this.setLoadingData(false);
                 }
             });
         },
@@ -123,8 +127,8 @@ export const RemanufacturaStore = signalStore(
             });
         },
 
-        delete(id: number, nombre: string) {
-            remanufacturaService.delete(id, nombre).subscribe({
+        delete(idLiquidacion: number) {
+            remanufacturaService.delete(idLiquidacion).subscribe({
                 next: (response) => {
                     if (response.value == Eliminar.Correcto) {
                         toast.success(response.msg || 'Eliminado correctamente');

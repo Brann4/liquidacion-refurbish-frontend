@@ -5,6 +5,7 @@ import { environment } from 'src/environments/environment.development';
 import { ApiResponse, ApiResponseSingle, ImportPreviewResponse } from '@/utils/ApiResponse';
 import { BaseResponse } from '@/utils/base-response';
 import { DTOLiquidacionRemanufacturaDetalle } from '@/pages/remanufactura-detalle/entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle';
+import { DTOCreateRemanufacturaDetalle } from '../entities/remanufactura-detalle/DTOCreateRemanufacturaDetalle';
 
 @Injectable({
     providedIn: 'root'
@@ -13,20 +14,20 @@ export class RemanufacturaDetalleService {
     private http = inject(HttpClient);
     private readonly apiUrl = `${environment.URL}/LiquidacionRemanufacturaDetalle`;
 
-    list(nombre: string, estado?: number): Observable<BaseResponse<DTOLiquidacionRemanufacturaDetalle[]>> {
-        return this.http.get<BaseResponse<DTOLiquidacionRemanufacturaDetalle[]>>(`${this.apiUrl}/${estado}/${nombre}`);
+    list(idLiquidacion: number, estado?: number): Observable<BaseResponse<DTOLiquidacionRemanufacturaDetalle[]>> {
+        return this.http.get<BaseResponse<DTOLiquidacionRemanufacturaDetalle[]>>(`${this.apiUrl}/${estado}/${idLiquidacion}`);
     }
 
     previewData(data: FormData) {
         return this.http.post<ApiResponseSingle<ImportPreviewResponse>>(`${this.apiUrl}/Importacion/VistaPrevia`, data);
     }
 
-    createDetail(data: DTOLiquidacionRemanufacturaDetalle) {
-        return this.http.post<ApiResponse<ImportPreviewResponse>>(`${this.apiUrl}/Importacion/Guardar`, data);
+    create(data: DTOCreateRemanufacturaDetalle) {
+        return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/Importacion/Guardar`, data);
     }
 
-    exportDataTable(nombreLiquidacion: string | undefined): Observable<HttpResponse<Blob>> {
-        const query = `${this.apiUrl}/Exportar/${nombreLiquidacion}`;
+    export(idLiquidacion: number): Observable<HttpResponse<Blob>> {
+        const query = `${this.apiUrl}/Exportar/${idLiquidacion}`;
         return this.http.get(query, { observe: 'response', responseType: 'blob' });
     }
 
@@ -34,8 +35,8 @@ export class RemanufacturaDetalleService {
         return this.http.post<ApiResponseSingle<number>>(`${this.apiUrl}/EliminarMuchos`,{ids});
     }
 
-    deleteAll(nombreLiquidacion: string) {
-        return this.http.delete<ApiResponseSingle<number>>(`${this.apiUrl}/EliminarTodo/${nombreLiquidacion}`);
+    deleteAll(idLiquidacion: number) {
+        return this.http.delete<ApiResponseSingle<number>>(`${this.apiUrl}/EliminarTodo/${idLiquidacion}`);
     }
 
 

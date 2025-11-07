@@ -10,12 +10,13 @@ import { RemanufacturaDetalleService } from '../services/remanufactura-detalle.s
 import { DTOLiquidacionRemanufacturaDetalle } from '@/pages/remanufactura-detalle/entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle';
 import { Estado } from '@/utils/Constants';
 import { Eliminar } from '@/pages/remanufactura/stores/RemanufacturaStore';
+import { DTOCreateRemanufacturaDetalle } from '../entities/remanufactura-detalle/DTOCreateRemanufacturaDetalle';
 
-export type RemanufacturaState = {
+export type RemanufacturaDetalleState = {
     entities: DTOLiquidacionRemanufacturaDetalle[];
     entity: DTOLiquidacionRemanufacturaDetalle | null;
     entityPartida: DTOPartida | null;
-    entityPreview: DTOLiquidacionRemanufacturaDetalle[];
+    entitiesPreview: DTOLiquidacionRemanufacturaDetalle[];
     isOpenCreate: boolean;
     isOpenEdit: boolean;
     isSubmitting: boolean;
@@ -25,10 +26,10 @@ export type RemanufacturaState = {
     error: string | null;
 };
 
-const initialState: RemanufacturaState = {
+const initialState: RemanufacturaDetalleState = {
     entity: null,
     entityPartida: null,
-    entityPreview: [],
+    entitiesPreview: [],
     entities: [],
     isOpenCreate: false,
     isOpenEdit: false,
@@ -41,7 +42,7 @@ const initialState: RemanufacturaState = {
 
 export const RemanufacturaDetalleStore = signalStore(
     { providedIn: 'root' },
-    withState<RemanufacturaState>(initialState),
+    withState<RemanufacturaDetalleState>(initialState),
     withMethods((store, remanufacturaService = inject(RemanufacturaDetalleService), toast = inject(ToastService)) => {
         // Declarar los Subjects dentro del withMethods
         const cancelDetailData$ = new Subject<void>();
@@ -54,7 +55,7 @@ export const RemanufacturaDetalleStore = signalStore(
                     isSubmitting: false,
                     isExporting: false,
                     isLoadingDetailData: false,
-                    entityPreview: [],
+                    entitiesPreview: [],
                     entity: null,
                 });
             },
@@ -90,17 +91,17 @@ export const RemanufacturaDetalleStore = signalStore(
             },
 
             setEntityPreview(entity: any) {
-                patchState(store, { entityPreview: entity });
+                patchState(store, { entitiesPreview: entity });
             },
 
-            getDetailData(nombre: string, status?: number) {
+            getDetailData(idLiquidacion: number, status?: number) {
                 // Cancelar petición anterior
                 cancelDetailData$.next();
 
                 patchState(store, { isLoadingDetailData: true, error: null });
 
                 remanufacturaService
-                    .list(nombre, status)
+                    .list(idLiquidacion, status)
                     .pipe(takeUntil(cancelDetailData$))
                     .subscribe({
                         next: (response) => {
@@ -139,7 +140,7 @@ export const RemanufacturaDetalleStore = signalStore(
                         } else {
                             patchState(store, {
                                 isSubmitting: false,
-                                entityPreview: response.value.detalles
+                                entitiesPreview: response.value.detalles
                             });
                             toast.success(response.msg || 'Archivo procesado. Detalles cargados.');
                             this.closeModalCreate();
@@ -156,13 +157,13 @@ export const RemanufacturaDetalleStore = signalStore(
                 });
             },
 
-            createDetail(data: any) {
+            create(data: DTOCreateRemanufacturaDetalle) {
                 cancelCreateDetail$.next();
 
                 patchState(store, { isSubmitting: true, error: null });
 
                 remanufacturaService
-                    .createDetail(data)
+                    .create(data)
                     .pipe(takeUntil(cancelCreateDetail$))
                     .subscribe({
                         next: (response) => {
@@ -170,6 +171,7 @@ export const RemanufacturaDetalleStore = signalStore(
                                 patchState(store, { isSubmitting: false });
                                 toast.info(response.msg);
                                 this.clear();
+
                             }
                         },
                         error: (error: HttpErrorResponse) => {
@@ -183,14 +185,14 @@ export const RemanufacturaDetalleStore = signalStore(
                     });
             },
 
-            exportDataTable(nombreLiquidacion: string) {
+            exportDataTable(idLiquidacion: number) {
                 // Cancelar petición anterior
                 cancelExportData$.next();
 
                 patchState(store, { isExporting: true, error: null });
 
                 remanufacturaService
-                    .exportDataTable(nombreLiquidacion)
+                    .export(idLiquidacion)
                     .pipe(takeUntil(cancelExportData$))
                     .subscribe({
                         next: (response) => {
@@ -200,8 +202,8 @@ export const RemanufacturaDetalleStore = signalStore(
                                 toast.error(errorMessage);
                                 return;
                             }
-
                             patchState(store, { isExporting: false });
+
 
                             const defaultFileName = `Reporte-Recupero_${format(new Date(), 'yyyy-MM-dd_HHmmss')}.xlsx`;
                             const fileName = this.getFileNameFromResponse(response) || defaultFileName;
@@ -224,14 +226,14 @@ export const RemanufacturaDetalleStore = signalStore(
                     });
             },
 
-            deleteMany(liquidacion: string, ids: number[]) {
+            deleteMany(idLiquidacion: number, ids: number[]) {
                 patchState(store, { isLoadingDetailData: true });
 
                 remanufacturaService.deleteMany(ids).subscribe({
                     next: (response) => {
                         if (response.status) {
                             toast.success(response.msg);
-                            this.getDetailData(liquidacion, Estado.Todos);
+                            this.getDetailData(idLiquidacion, Estado.Todos);
                         }
                         patchState(store, { isLoadingDetailData: false });
                     },
@@ -242,14 +244,14 @@ export const RemanufacturaDetalleStore = signalStore(
                 });
             },
 
-            deleteAll(liquidacion: string) {
+            deleteAll(idLiquidacion: number) {
                 patchState(store, { isLoadingDetailData: true });
-                remanufacturaService.deleteAll(liquidacion).subscribe({
+                remanufacturaService.deleteAll(idLiquidacion).subscribe({
                     next: (response) => {
                         if (response.status && response.value == Eliminar.Correcto) {
                             toast.success(response.msg);
                             patchState(store, { isLoadingDetailData: false });
-                            this.getDetailData(liquidacion, Estado.Todos);
+                            this.getDetailData(idLiquidacion, Estado.Todos);
                         }
                     },
                     error: (error) => {

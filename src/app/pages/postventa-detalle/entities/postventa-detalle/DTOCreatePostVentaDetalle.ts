@@ -4,13 +4,13 @@ export interface DTOCreatePostVentaDetalle {
 }
 
 export interface LiquidacionPostVentaDetallePreviewRequest {
-    fechaCarga: Date;
+    fechaCarga: Date | string | null;
     tipoLiquidacion: string;
     codigoSAP: string;
     contratista: string;
     departamento: string;
     codigoSOT: string;
-    fechaInstalacion: Date;
+    fechaInstalacion: Date | string | null;
     codigoActividad: string;
     actividadDescripcion: string;
     cantidad: number;

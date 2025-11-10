@@ -70,7 +70,7 @@
                             </label>
                           </div>
                         } @else {
-                          <small class="text-surface-500">Seleccione los items requeridos:</small>
+                          <small class="text-surface-500">Seleccione los items requeridos:</small>s
                           @for (item of partida.items; track item.id) {
                             <div class="flex items-center">
                               <p-checkbox
@@ -80,7 +80,7 @@
                                 [binary]="true">
                               </p-checkbox>
                               <label class="ml-2" [ngClass]="{'font-bold text-primary': selectionMap['item-' + item.id]}">
-                                {{ item.descripcion }} ({{ (item.precioItem == 0 ? partida.precioGeneral : item.precioItem) | formatCurrency }})
+                                {{ item.descripcion }} ({{ item.precioItem | formatCurrency }})
                               </label>
                             </div>
                           }

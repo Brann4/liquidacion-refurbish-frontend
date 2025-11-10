@@ -33,6 +33,8 @@ export class PostVentaDetailComponent implements OnInit {
 
     protected readonly liquidacionPostventaId = signal<number | null>(null);
 
+    detalles = signal<DTOLiquidacionPostVentaDetalle[]>([]);
+
     toast = inject(ToastService);
     confirmationDialogService = inject(ConfirmationDialog);
 
@@ -48,6 +50,7 @@ export class PostVentaDetailComponent implements OnInit {
             const entity = this.postventaStore.entity();
             if (entity) {
                 this.loadContrata(entity.contrataId);
+                this.postventaDetalleStore.getDetailData(entity.id);
 
                 if (!this.postventaDetalleStore.isSubmitting() && this.fileUploader?.hasFiles()) {
                     this.fileUploader.clear();
@@ -101,11 +104,10 @@ export class PostVentaDetailComponent implements OnInit {
 
     async handleUploadFile(event: { files: File[] }): Promise<void> {
         const file = event.files[0];
-        const idLiquidacion = this.liquidacionPostventaId();
         const fechaLiquidacionPostventa = this.postventaStore.entity()!.fechaIngreso;
         const contratistaLiquidacion = this.postventaDetalleStore.contrata()!.razonSocial;
 
-        if (!file || !idLiquidacion || !fechaLiquidacionPostventa || !contratistaLiquidacion) {
+        if (!file || !fechaLiquidacionPostventa || !contratistaLiquidacion) {
             this.toast.error('Falta el archivo o no se ha cargado la liquidación.');
             return;
         }
@@ -151,11 +153,11 @@ export class PostVentaDetailComponent implements OnInit {
                     return;
                 }
 
-                 if (contratistaLiquidacion.trim().toLowerCase() != element.contratista.trim().toLowerCase()) {
+                /* if (contratistaLiquidacion.trim().toLowerCase() != element.contratista.trim().toLowerCase()) {
                     this.toast.error(`El contratista '${element.contratista}' en la fila ${index + 2} no coincide con el contratista de esta liquidación.`);
                     this.postventaDetalleStore.setExportingPreview(false);
                     return;
-                }
+                }*/
             }
 
             if (validationErrors.length > 0) {
@@ -274,10 +276,10 @@ export class PostVentaDetailComponent implements OnInit {
                 const idLiquidacion = this.liquidacionPostventaId();
                 const entitiesPreview = this.postventaDetalleStore.entitiesPreview();
 
-                if(idLiquidacion && entitiesPreview.length > 0){
+                if (idLiquidacion && entitiesPreview.length > 0) {
                     const request: DTOCreatePostVentaDetalle = {
                         liquidacionPostventaId: idLiquidacion,
-                        detalles: entitiesPreview.map( (item) => ({
+                        detalles: entitiesPreview.map((item) => ({
                             fechaCarga: item.fechaCarga,
                             tipoLiquidacion: item.tipoLiquidacion,
                             codigoSAP: item.codigoSAP,
@@ -295,8 +297,9 @@ export class PostVentaDetailComponent implements OnInit {
                             ordenCompra: item.ordenCompra,
                             mesPago: item.mesPago
                         }))
-                    }
-                     this.postventaDetalleStore.create(request);
+                    };
+
+                    this.postventaDetalleStore.create(request);
                 }
             }
         });
@@ -305,7 +308,7 @@ export class PostVentaDetailComponent implements OnInit {
     exportDataTable() {
         const nombre = this.postventaStore.entity()?.id;
         if (!nombre) return this.toast.warn('No hay una liquidación seleccionada.');
-        //this.postventaDetalleStore.exportDataTable(nombre);
+        this.postventaDetalleStore.export(nombre);
     }
 
     clearFilters(table: Table) {

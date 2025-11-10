@@ -5,7 +5,7 @@
             @if (remanufacturaStore.entity()?.estado) {
                 <p-button
                     label="Importar Liquidaciones"
-                    [disabled]="remanufacturaDetalleStore.entityPreview().length > 0 && !remanufacturaStore.isSubmitting()"
+                    [disabled]="remanufacturaDetalleStore.entitiesPreview().length > 0 && !remanufacturaStore.isSubmitting()"
                     icon="pi pi-file-import"
                     severity="primary"
                     [raised]="true"
@@ -15,11 +15,7 @@
             }
         </div>
 
-        @if (!remanufacturaStore.entity() && remanufacturaStore.isSubmitting()) {
-            <div class="flex justify-center items-center">
-                <p-progressSpinner class="w-10 h-10" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
-            </div>
-        } @else if (remanufacturaStore.entity()) {
+        @if (remanufacturaStore.entity()  ) {
             <p-toolbar class="my-6 flex items-center">
                 <ng-template #start class="flex justify-center">
                     <h2>
@@ -105,7 +101,7 @@
                 </div>
             }
 
-            @if (remanufacturaDetalleStore.entityPreview().length > 0 && !remanufacturaStore.isSubmitting()) {
+            @if (remanufacturaDetalleStore.entitiesPreview().length > 0 && !remanufacturaStore.isSubmitting()) {
                 <div class="mt-6 border-1 border-dashed border-primary p-4 rounded-lg">
                     <div class="flex justify-between items-center">
                         <h3 class="text-xl font-semibold">Previsualización de Datos</h3>
@@ -116,11 +112,11 @@
                     </div>
 
                     <p-table
-                        [value]="remanufacturaDetalleStore.entityPreview()"
+                        [value]="remanufacturaDetalleStore.entitiesPreview()"
                         [paginator]="true"
                         [rows]="10"
                         [rowsPerPageOptions]="[10, 25, 50, 100]"
-                        [totalRecords]="remanufacturaDetalleStore.entityPreview().length"
+                        [totalRecords]="remanufacturaDetalleStore.entitiesPreview().length"
                         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} filas"
                         [showCurrentPageReport]="true"
                         class="p-datatable-striped"
@@ -186,8 +182,6 @@
                 [(selection)]="selectedData"
                 [rowHover]="true"
                 [scrollable]="true"
-
-                [loading]="this.remanufacturaDetalleStore.isLoadingDetailData()"
                 scrollHeight="h-[calc(100dvh-20rem)]"
                 [globalFilterFields]="['liquidacion', 'plataforma', 'codigoLiquidacion', 'codigoEntrega', 'codigoSAP', 'nombreProducto', 'serieOrigen', 'serieFinal', 'trabajoRealizado']"
                 currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"
@@ -208,7 +202,7 @@
                                 <div class="card flex justify-between gap-3">
                                     <p-button
                                         label="Gestionar Partida"
-                                        [disabled]="remanufacturaDetalleStore.entityPreview().length > 0 && !remanufacturaStore.isSubmitting() || remanufacturaDetalleStore.entities().length <= 0"
+                                        [disabled]="remanufacturaDetalleStore.entitiesPreview().length > 0 && !remanufacturaStore.isSubmitting() || remanufacturaDetalleStore.entities().length <= 0"
                                         icon="pi pi-plus"
                                         variant="outlined"
                                         severity="warn"
@@ -221,7 +215,7 @@
                                         icon="pi pi-file-excel"
                                         [disabled]="remanufacturaDetalleStore.isExporting() || remanufacturaDetalleStore.entities().length <= 0"
                                         [loading]="remanufacturaDetalleStore.isExporting()"
-                                        (click)="exportDataTable()"
+                                        (click)="export()"
                                     />
                                 </div>
                             }

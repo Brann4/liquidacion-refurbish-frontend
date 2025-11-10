@@ -9,6 +9,8 @@ import type { DTOLiquidacionPostVentaDetalle } from '../entities/postventa-detal
 import { ContrataApi } from '@/pages/contrata/services/contrata.api';
 import { Contrata } from '@/pages/contrata/entities/contrata';
 import { DTOCreatePostVentaDetalle } from '../entities/postventa-detalle/DTOCreatePostVentaDetalle';
+import { HttpErrorResponse } from '@angular/common/http';
+import { format } from 'date-fns';
 
 export type PostVentaDetalleState = {
     entities: DTOLiquidacionPostVentaDetalle[];
@@ -20,7 +22,7 @@ export type PostVentaDetalleState = {
     isSubmitting: boolean;
     isLoadingDetailData: boolean;
     isLoadingContrata: boolean;
-    isLoadingCreate:boolean;
+    isLoadingCreate: boolean;
     isExporting: boolean;
     isLoadingDataPreview: boolean;
     error: string | null;
@@ -95,6 +97,39 @@ export const PostVentaDetalleStore = signalStore(
                 patchState(store, { entitiesPreview: entity });
             },
 
+            getDetailData(idLiquidacion: number) {
+                // Cancelar petición anterior
+                cancelDetailData$.next();
+
+                patchState(store, { isLoadingDetailData: true, error: null });
+
+                postVentaDetalleService
+                    .list(idLiquidacion)
+                    .pipe(takeUntil(cancelDetailData$))
+                    .subscribe({
+                        next: (response) => {
+                            if (response) {
+                                patchState(store, {
+                                    entities: response.value!,
+                                    isLoadingDetailData: false
+                                });
+                            }
+                        },
+                        error: (error: HttpErrorResponse) => {
+                            // No manejamos el error si fue cancelado
+                            if (error.status === 0) {
+                                // Request cancelado, no hacer nada
+                                return;
+                            }
+                            patchState(store, {
+                                isLoadingDetailData: false,
+                                error: error.message
+                            });
+                            toast.warn(`Error al obtener datos: ${error.message}`);
+                        }
+                    });
+            },
+
             create(request: DTOCreatePostVentaDetalle) {
                 patchState(store, { isLoadingCreate: true, error: null });
 
@@ -103,7 +138,7 @@ export const PostVentaDetalleStore = signalStore(
                         if (response.status && response.value) {
                             patchState(store, {
                                 isLoadingCreate: false,
-                                entitiesPreview: []
+                                entitiesPreview: response.value
                             });
                             toast.success(response.msg || 'Detalle del postventa creado correctamente');
                         } else {
@@ -155,7 +190,36 @@ export const PostVentaDetalleStore = signalStore(
                     }
                 });
             },
+            export(liquidacionPostventaId: number) {
+                patchState(store, { isExporting: true, error: null });
 
+                postVentaDetalleService.export(liquidacionPostventaId).subscribe({
+                    next: (response) => {
+                        if (!response.body || response.body.size === 0) {
+                            const errorMessage = 'Error: El archivo recibido está vacío.';
+                            patchState(store, { isExporting: false, error: errorMessage });
+                            toast.error(errorMessage);
+                            return;
+                        }
+
+                        patchState(store, { isExporting: false });
+
+                        const defaultFileName = `Reporte-Recupero_${format(new Date(), 'yyyy-MM-dd_HHmmss')}.xlsx`;
+                        const fileName = this.getFileNameFromResponse(response) || defaultFileName;
+
+                        this.downloadFile(response.body, fileName);
+                        toast.success('Archivo exportado correctamente.');
+                    },
+                    error: (error) => {
+                        const errorMessage = error.message || 'Error al exportar el archivo';
+                        patchState(store, {
+                            isExporting: false,
+                            error: errorMessage
+                        });
+                        toast.error(errorMessage);
+                    }
+                });
+            },
             deleteMany(idLiquidacion: number, ids: number[]) {
                 patchState(store, { isLoadingDetailData: true });
 

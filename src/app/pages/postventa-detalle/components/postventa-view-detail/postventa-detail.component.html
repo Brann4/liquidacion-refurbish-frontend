@@ -1,6 +1,5 @@
 <p-card>
     <div class="px-4">
-
         <div class="flex justify-between">
             <p-button label="Volver" icon="pi pi-arrow-left" severity="secondary" (onClick)="goBack()"></p-button>
             @if (postventaStore.entity()?.estado == 1) {
@@ -43,7 +42,6 @@
 
             @if (showImportDialog()) {
                 <div class="border-1 border-dashed border-primary p-4 rounded-lg mt-4">
-
                     <div class="flex justify-center mb-4">
                         <div class="bounce animation-iteration-infinite animation-duration-2000">
                             <a (click)="downloadExcelTemplate()" class="text-primary hover:underline cursor-pointer flex items-center gap-2 p-2">
@@ -70,8 +68,7 @@
                         <ng-template pTemplate="toolbar">
                             <div class="p-fileupload-buttonbar p-2 flex justify-between items-center gap-2">
                                 <div class="flex gap-2">
-                                    <p-button label="Eliminar" icon="pi pi-times" severity="danger" [outlined]="true" (onClick)="fileUploader.clear()" [disabled]="fileUploader.files.length === 0 || postventaDetalleStore.isSubmitting()">
-                                    </p-button>
+                                    <p-button label="Eliminar" icon="pi pi-times" severity="danger" [outlined]="true" (onClick)="fileUploader.clear()" [disabled]="fileUploader.files.length === 0 || postventaDetalleStore.isSubmitting()"> </p-button>
 
                                     <p-button
                                         label="Procesar"
@@ -154,16 +151,16 @@
                                 <td>{{ detalle.contratista }}</td>
                                 <td>{{ detalle.departamento }}</td>
                                 <td>{{ detalle.codigoSOT }}</td>
-                                <td>{{ detalle.fechaInstalacion | shortDate}}</td>
+                                <td>{{ detalle.fechaInstalacion | shortDate }}</td>
                                 <td>{{ detalle.codigoActividad }}</td>
                                 <td>{{ detalle.actividadDescripcion }}</td>
                                 <td>{{ detalle.cantidad }}</td>
                                 <td>{{ detalle.costo | formatCurrency }}</td>
                                 <td>{{ detalle.total | formatCurrency }}</td>
-                                <td>{{ detalle.tipoTrabajo  }}</td>
-                                <td>{{ detalle.servicio  }}</td>
-                                <td>{{ detalle.ordenCompra  }}</td>
-                                <td>{{ detalle.mesPago  }}</td>
+                                <td>{{ detalle.tipoTrabajo }}</td>
+                                <td>{{ detalle.servicio }}</td>
+                                <td>{{ detalle.ordenCompra }}</td>
+                                <td>{{ detalle.mesPago }}</td>
                             </tr>
                         </ng-template>
 
@@ -189,143 +186,174 @@
     </div>
 </p-card>
 
-<div class="flex flex-col flex-1 h-[calc(100dvh-20rem)]">
+<div class="flex flex-col flex-1 h-full">
     <p-card class="mt-4 flex-1 relative overflow-hidden">
-
-            <p-table
-                #dt
-                [value]="postventaDetalleStore.entities()"
-                dataKey="id"
-                [paginator]="true"
-                [tableStyle]="{ 'min-width': '75rem' }"
-                [rows]="10"
-                [rowsPerPageOptions]="[10, 20, 30]"
-                [showCurrentPageReport]="true"
-                [(selection)]="selectedData"
-                [rowHover]="true"
-                [scrollable]="true"
-                [loading]="this.postventaDetalleStore.isLoadingDetailData()"
-                scrollHeight="h-[calc(100dvh-20rem)]"
-                [globalFilterFields]="['liquidacion', 'plataforma', 'codigoLiquidacion', 'codigoEntrega', 'codigoSAP', 'nombreProducto', 'serieOrigen', 'serieFinal', 'trabajoRealizado']"
-                currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"
-            >
-                <ng-template #caption>
-                    <div class="flex items-center justify-between">
-                        <div class="flex flex-row gap-2">
-                            <p-iconfield>
-                                <p-inputicon class="pi pi-search" />
-                                <input pInputText type="text" (input)="dt.filterGlobal($any($event.target).value, 'contains')" placeholder="Buscar por nombre" />
-                            </p-iconfield>
-                            <p-button label="Limpiar Filtros" [outlined]="true" icon="pi pi-filter-slash" (click)="clearFilters(dt)" />
-                            <p-button severity="danger" label="Eliminar" icon="pi pi-trash"  (onClick)="deleteSelectedProducts()" [disabled]="!selectedData || !selectedData.length" />
-                        </div>
-
-                        <div class="flex flex-row gap-2">
-                            @if (this.postventaDetalleStore.entities() && postventaDetalleStore.entities().length > 0) {
-                                <div class="card flex justify-between gap-3">
-
-                                    <p-button
-                                        label="Descargar Reporte"
-                                        severity="success"
-                                        icon="pi pi-file-excel"
-                                        [disabled]="postventaDetalleStore.isExporting() || postventaDetalleStore.entities().length <= 0"
-                                        [loading]="postventaDetalleStore.isExporting()"
-                                        (click)="exportDataTable()"
-                                    />
-                                </div>
-                            }
-                        </div>
+        <p-table
+            #dt
+            [value]="postventaDetalleStore.entities()"
+            dataKey="id"
+            [paginator]="true"
+            [tableStyle]="{ 'min-width': '75rem' }"
+            [rows]="10"
+            [rowsPerPageOptions]="[10, 20, 30]"
+            [showCurrentPageReport]="true"
+            [(selection)]="selectedData"
+            [rowHover]="true"
+            [scrollable]="true"
+            [loading]="this.postventaDetalleStore.isLoadingDetailData()"
+            scrollHeight="h-[calc(100dvh-20rem)]"
+            [globalFilterFields]="['liquidacion', 'plataforma', 'codigoLiquidacion', 'codigoEntrega', 'codigoSAP', 'nombreProducto', 'serieOrigen', 'serieFinal', 'trabajoRealizado']"
+            currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"
+        >
+            <ng-template #caption>
+                <div class="flex items-center justify-between">
+                    <div class="flex flex-row gap-2">
+                        <p-iconfield>
+                            <p-inputicon class="pi pi-search" />
+                            <input pInputText type="text" (input)="dt.filterGlobal($any($event.target).value, 'contains')" placeholder="Buscar por nombre" />
+                        </p-iconfield>
+                        <p-button label="Limpiar Filtros" [outlined]="true" icon="pi pi-filter-slash" (click)="clearFilters(dt)" />
+                        <p-button severity="danger" label="Eliminar" icon="pi pi-trash" (onClick)="deleteSelectedProducts()" [disabled]="!selectedData || !selectedData.length" />
                     </div>
-                </ng-template>
 
-                <ng-template #header>
-                    <tr>
-                        <th style="width: 3rem" pFrozenColumn>
-                            <p-tableHeaderCheckbox />
-                        </th>
-                        <th pSortableColumn="liquidacion" style="min-width: 10rem" pFrozenColumn>
-                            Liquidacion
-                            <p-sortIcon field="liquidacion" />
-                        </th>
-                        <th pSortableColumn="plataforma" style="min-width: 10rem">
-                            Plataforma
-                            <p-sortIcon field="plataforma" />
-                        </th>
-                        <th pSortableColumn="codigoLiquidacion" style="min-width: 8rem">
-                            Codigo
-                            <p-sortIcon field="codigoLiquidacion" />
-                        </th>
-                        <th pSortableColumn="codigoEntrega" style="min-width: 12rem">
-                            Codigo Entrega
-                            <p-sortIcon field="codigoEntrega" />
-                        </th>
-                        <th pSortableColumn="fechaPrevista" style="min-width: 12rem">
-                            Fecha Prevista
-                            <p-sortIcon field="fechaPrevista" />
-                        </th>
-                        <th pSortableColumn="codigoSAP" style="min-width: 10rem">
-                            Codigo SAP
-                            <p-sortIcon field="codigoSAP" />
-                        </th>
-                        <th pSortableColumn="nombreProducto" style="min-width: 16rem">
-                            Producto
-                            <p-sortIcon field="nombreProducto" />
-                        </th>
-                        <th pSortableColumn="cantidad" style="min-width: 10rem">
-                            Cantidad
-                            <p-sortIcon field="cantidad" />
-                        </th>
-                        <th pSortableColumn="serieOrigen" style="min-width: 12rem">
-                            Serie Origen
-                            <p-sortIcon field="serieOrigen" />
-                        </th>
-                        <th pSortableColumn="serieFinal" style="min-width: 12rem">
-                            Serie Final
-                            <p-sortIcon field="serieFinal" />
-                        </th>
-                        <th pSortableColumn="trabajoRealizado" style="min-width: 14rem">
-                            Trabajo realizado
-                            <p-sortIcon field="trabajoRealizado" />
-                        </th>
-                        <th pSortableColumn="estado" style="min-width: 12rem">
-                            Estado
-                            <p-sortIcon field="estado" />
-                        </th>
-                    </tr>
-                </ng-template>
-
-                <ng-template #body let-detalle let-rowIndex="rowIndex">
-                    <tr>
-                        <td style="width: 3rem" pFrozenColumn>
-                            <p-tableCheckbox [value]="detalle" />
-                        </td>
-                        <td class="font-bold" pFrozenColumn>{{ detalle.liquidacion }}</td>
-                        <td>{{ detalle.plataforma }}</td>
-                        <td>{{ detalle.codigoLiquidacion }}</td>
-                        <td>{{ detalle.codigoEntrega }}</td>
-                        <td>{{ detalle.fechaPrevista | shortDate }}</td>
-                        <td>{{ detalle.codigoSAP }}</td>
-                        <td>{{ detalle.nombreProducto }}</td>
-                        <td style="width: 0.5rem">{{ detalle.cantidad }}</td>
-                        <td>{{ detalle.serieOrigen != null || detalle.serieOrigen == '' ? 'S/N' : detalle.serieOrigen }}</td>
-                        <td>{{ detalle.serieFinal }}</td>
-                        <td>{{ detalle.trabajoRealizado }}</td>
-                        <td>{{ detalle.estado }}</td>
-                    </tr>
-                </ng-template>
-
-                <ng-template #emptymessage>
-                    <tr>
-                        <td colspan="13" class="text-center py-4">
-                            <div class="flex flex-col items-center gap-2">
-                                <i class="pi pi-info-circle" style="font-size: 1.5rem"></i>
-                                <span>No se encontraron datos para mostrar</span>
+                    <div class="flex flex-row gap-2">
+                        @if (this.postventaDetalleStore.entities() && postventaDetalleStore.entities().length > 0) {
+                            <div class="card flex justify-between gap-3">
+                                <p-button
+                                    label="Descargar Reporte"
+                                    severity="success"
+                                    icon="pi pi-file-excel"
+                                    [disabled]="postventaDetalleStore.isExporting() || postventaDetalleStore.entities().length <= 0"
+                                    [loading]="postventaDetalleStore.isExporting()"
+                                    (click)="exportDataTable()"
+                                />
                             </div>
-                        </td>
-                    </tr>
-                </ng-template>
-            </p-table>
+                        }
+                    </div>
+                </div>
+            </ng-template>
 
+            <ng-template #header>
+                <tr>
+                    <th style="width: 3rem" pFrozenColumn>
+                        <p-tableHeaderCheckbox />
+                    </th>
+                    <th pSortableColumn="fechaCarga" style="min-width: 8rem">
+                        Fecha Carga
+                        <p-sortIcon field="fechaCarga" />
+                    </th>
+
+                    <th pSortableColumn="tipoLiquidacion" style="min-width: 8rem">
+                        Tipo Liquidación
+                        <p-sortIcon field="tipoLiquidacion" />
+                    </th>
+
+                    <th pSortableColumn="codigoSAP" style="min-width: 8rem">
+                        Cod. SAP
+                        <p-sortIcon field="codigoSAP" />
+                    </th>
+
+                    <th pSortableColumn="contratista" style="min-width: 8rem">
+                        Contratista
+                        <p-sortIcon field="contratista" />
+                    </th>
+
+                    <th pSortableColumn="departamento" style="min-width: 8rem">
+                        Departamento
+                        <p-sortIcon field="departamento" />
+                    </th>
+
+                    <th pSortableColumn="codigoSOT" style="min-width: 8rem">
+                        SOT
+                        <p-sortIcon field="codigoSOT" />
+                    </th>
+
+                    <th pSortableColumn="fechaInstalacion" style="min-width: 8rem">
+                        Fecha Instalación
+                        <p-sortIcon field="fechaInstalacion" />
+                    </th>
+
+                    <th pSortableColumn="codigoActividad" style="min-width: 8rem">
+                        Código Actividad
+                        <p-sortIcon field="codigoActividad" />
+                    </th>
+
+                    <th pSortableColumn="actividadDescripcion" style="min-width: 40rem">
+                        Descripción Actividad
+                        <p-sortIcon field="actividadDescripcion" />
+                    </th>
+
+                    <th pSortableColumn="cantidad" style="min-width: 8rem">
+                        Cantidad
+                        <p-sortIcon field="cantidad" />
+                    </th>
+
+                    <th pSortableColumn="costo" style="min-width: 8rem">
+                        Costo
+                        <p-sortIcon field="costo" />
+                    </th>
+
+                    <th pSortableColumn="total" style="min-width: 8rem">
+                        Total
+                        <p-sortIcon field="total" />
+                    </th>
+
+                    <th pSortableColumn="tipoTrabajo" style="min-width: 8rem">
+                        Tipo de Trabajo
+                        <p-sortIcon field="tipoTrabajo" />
+                    </th>
+
+                    <th pSortableColumn="servicio" style="min-width: 12rem">
+                        Servicio
+                        <p-sortIcon field="servicio" />
+                    </th>
+
+                    <th pSortableColumn="ordenCompra" style="min-width: 12rem">
+                        Orden de Compra
+                        <p-sortIcon field="ordenCompra" />
+                    </th>
+
+                    <th pSortableColumn="mesPago" style="min-width: 8rem">
+                        Mes de Pago
+                        <p-sortIcon field="mesPago" />
+                    </th>
+                </tr>
+            </ng-template>
+
+            <ng-template #body let-detalle let-rowIndex="rowIndex">
+                <tr>
+                    <td style="width: 3rem" pFrozenColumn>
+                        <p-tableCheckbox [value]="detalle" />
+                    </td>
+                    <td>{{ detalle.fechaCarga | shortDate }}</td>
+                    <td>{{ detalle.tipoLiquidacion }}</td>
+                    <td>{{ detalle.codigoSAP }}</td>
+                    <td>{{ detalle.contratista }}</td>
+                    <td>{{ detalle.departamento }}</td>
+                    <td>{{ detalle.codigoSOT }}</td>
+                    <td>{{ detalle.fechaInstalacion | shortDate }}</td>
+                    <td>{{ detalle.codigoActividad }}</td>
+                    <td>{{ detalle.actividadDescripcion }}</td>
+                    <td>{{ detalle.cantidad }}</td>
+                    <td>{{ detalle.costo | formatCurrency }}</td>
+                    <td>{{ detalle.total | formatCurrency }}</td>
+                    <td>{{ detalle.tipoTrabajo }}</td>
+                    <td>{{ detalle.servicio }}</td>
+                    <td>{{ detalle.ordenCompra }}</td>
+                    <td>{{ detalle.mesPago }}</td>
+                </tr>
+            </ng-template>
+
+            <ng-template #emptymessage>
+                <tr>
+                    <td colspan="13" class="text-center py-4">
+                        <div class="flex flex-col items-center gap-2">
+                            <i class="pi pi-info-circle" style="font-size: 1.5rem"></i>
+                            <span>No se encontraron datos para mostrar</span>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
     </p-card>
 </div>
-

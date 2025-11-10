@@ -77,7 +77,7 @@ export class RemanufacturaListComponent implements OnInit {
     onDeleteModal(liquidacion: DTOLiquidacionRemanufactura) {
         this.confirmationDialogService.confirmDelete().subscribe((accepted) => {
             if (accepted) {
-                this.remanufacturaStore.delete(liquidacion.id, liquidacion.nombreLiquidacion);
+                this.remanufacturaStore.delete(liquidacion.id);
             }
         });
     }

@@ -28,4 +28,4 @@ import { RippleModule } from 'primeng/ripple';
             </div>
         </div>`
 })
-export class Error {}
+export class ErrorPage {}

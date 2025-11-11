@@ -1,24 +1,32 @@
 import { TokenService } from '@/layout/service/token.service';
 import { DTOUsuario } from '@/pages/usuario/entities/DTOUsuario';
 import { UsuarioService } from '@/pages/usuario/services/usuario.service';
-import { inject } from '@angular/core';
+import { inject, signal } from '@angular/core';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
+import { AuthService } from '../service/auth.service';
+import { Rol } from '@/utils/Constants';
+import { Router } from '@angular/router';
+import { ToastService } from '@/layout/service/toast.service';
 
 export type AuthState = {
     userAuthenticated: DTOUsuario | null;
     isAuthenticated: boolean;
+    isSubmitting : boolean;
 };
 
 const initialState: AuthState = {
     userAuthenticated: null,
-    isAuthenticated: false
+    isAuthenticated: false,
+    isSubmitting: false
 };
 
 export const AuthStore = signalStore(
     { providedIn: 'root' },
     withState<AuthState>(initialState),
-    withMethods((store, tokenService = inject(TokenService), usuarioService = inject(UsuarioService)) => ({
+    withMethods((store, tokenService = inject(TokenService), usuarioService = inject(UsuarioService), toast = inject(ToastService), authService = inject(AuthService), router = inject(Router)) => ({
+        
+    
         isLoggedIn() {
             const token = this.getJWT();
             if (!token || token === '{}') {
@@ -188,6 +196,48 @@ export const AuthStore = signalStore(
 
         updateIsAuthenticated(isAuthenticated: boolean) {
             patchState(store, { isAuthenticated });
+        },
+
+        logout() {
+            this.clearAuthData();
+            this.updateIsAuthenticated(this.isLoggedIn())
+            router.navigate(['/'], { replaceUrl: true })
+        },
+        login(data: any){
+            patchState(store,{ isSubmitting: true})
+            authService.login(data).subscribe({
+                next: async(response)  => {
+                    const success = await this.handleLoginResponse(response);
+                    if(!response.status){
+                        this.clearAuthData()
+                        patchState(store,{ isSubmitting: false})
+                        toast.warn(response.msg);
+                        router.navigate(['/']);
+                    }
+                },
+                error: () => {
+                    patchState(store,{isSubmitting: false})
+                }
+            });
+        },
+
+        tryAutoLogin(): boolean {
+            const token = this.getJWT();
+            const userRolId = this.getUserRoleId();
+            const state = signal<boolean>(false);
+
+            if (userRolId && Rol[userRolId] !== undefined) {
+                if (token && token !== '{}' && !this.isTokenExpired()) {
+                    router.navigate(['dashboard']);
+                    state.set(true);
+                }
+            }
+            else {
+                router.navigate(['/']);
+                state.set(false);
+            }
+            return state();
+
         }
     }))
 );

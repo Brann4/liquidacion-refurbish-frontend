@@ -91,14 +91,14 @@
 
                     <label for="passwordHash" class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2">Contraseña</label>
                     <p-password id="passwordHash" formControlName="passwordHash" placeholder="Contraseña" [toggleMask]="true" class="mb-4" [fluid]="true" [feedback]="false"></p-password>
-                    <!--
+               <!--
                     <div class="flex items-center justify-between mt-2 mb-8 gap-8">
                         <div class="flex items-center">
                             <p-checkbox formControlName="rememberMe" id="rememberme1" binary class="mr-2"></p-checkbox>
                             <label for="rememberme1">Recordar credenciales</label>
                         </div>
-                        <span class="font-medium no-underline ml-2 text-right cursor-pointer text-primary"> Forgot password? </span>
-                    </div>-->
+                        <span class="font-medium no-underline ml-2 text-right cursor-pointer text-primary"> Olvidaste tu contraseña? </span>
+                    </div> -->
                     <div class="pt-4">
                         <p-button type="submit" [label]="isSubmitting() ? 'Verificando...' : 'Iniciar sesión'" [disabled]="isSubmitting()" styleClass="w-full" (onSubmit)="onSubmit()"> </p-button>
                     </div>

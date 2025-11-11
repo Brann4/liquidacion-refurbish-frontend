@@ -4,6 +4,13 @@ export enum Estado {
     Todos = -1
 }
 
+export enum Rol{
+    SuperAdmin = 1,
+    Administrador = 2,
+    JefeOperario = 3,
+    Supervisor = 4
+}
+
 export const unidadesMedida = [
     { label: 'MOVIMIENTO', value: 'Mov' },
     { label: 'PERSONA', value: 'Persona' },

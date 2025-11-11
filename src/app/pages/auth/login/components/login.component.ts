@@ -1,9 +1,10 @@
 import { TokenService } from '@/layout/service/token.service';
 import { PrimeModules } from '@/utils/PrimeModule';
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthStore } from '../stores/AuthStore';
+import { ToastService } from '@/layout/service/toast.service';
 
 @Component({
     selector: 'app-login',
@@ -11,9 +12,10 @@ import { AuthStore } from '../stores/AuthStore';
     imports: [PrimeModules, ReactiveFormsModule, FormsModule],
     templateUrl: './login.component.html'
 })
-export class Login {
+export class Login implements OnInit {
     tokenStorage = inject(TokenService)
-    authService = inject(AuthStore);
+    authStore = inject(AuthStore);
+    toast = inject(ToastService);
 
     frmLogin: FormGroup;
     fb = inject(FormBuilder);
@@ -32,7 +34,23 @@ export class Login {
         });
     }
 
+    ngOnInit(): void {
+        this.authStore.tryAutoLogin();
+    }
+
     onSubmit() {
+        this.frmLogin.markAllAsTouched();
+
+        if (this.frmLogin.invalid) {
+            this.toast.error('Debe ingresas usuario y contraseña');
+            return;
+        }
+
+        if (this.frmLogin.valid) {
+            this.frmLogin.get('nombreUsuario')?.setValue(this.frmLogin.get('nombreUsuario')?.value.trim());
+            
+        }
+
         this.router.navigate(['dashboard']);
     }
 }

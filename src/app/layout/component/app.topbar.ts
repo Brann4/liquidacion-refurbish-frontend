@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { StyleClassModule } from 'primeng/styleclass';
 import { LayoutService } from '../service/layout.service';
 import { ToastService } from '../service/toast.service';
+import { AuthStore } from '@/pages/auth/login/stores/AuthStore';
 
 @Component({
     selector: 'app-topbar',
@@ -123,6 +124,7 @@ export class AppTopbar {
     items!: MenuItem[];
     router = inject(Router);
     toast = inject(ToastService)
+    authStore = inject(AuthStore);
 
     constructor(public layoutService: LayoutService) {}
 
@@ -132,6 +134,6 @@ export class AppTopbar {
 
     handleLogout() {
         this.toast.info('Se ha cerrado sesion correctamente');
-        this.router.navigate(['/']);
+        this.authStore.logout();
     }
 }

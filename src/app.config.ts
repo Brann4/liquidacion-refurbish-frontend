@@ -1,5 +1,5 @@
 import { ToastModule } from 'primeng/toast';
-import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, importProvidersFrom } from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling } from '@angular/router';
@@ -9,6 +9,7 @@ import { MyPreset } from './themes';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { configureDateFnsLocale } from '@/utils/locale.config';
 import { all } from 'primelocale';
+import { authInterceptor } from '@/layout/interceptors/auth.interceptor';
 
 configureDateFnsLocale();
 
@@ -27,7 +28,7 @@ export const appConfig: ApplicationConfig = {
         MessageService,
         ConfirmationService,
         provideRouter(appRoutes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }), withEnabledBlockingInitialNavigation()),
-        provideHttpClient(withFetch()),
+        provideHttpClient(withInterceptors([authInterceptor]), withFetch()),
         provideAnimationsAsync()
     ]
 };

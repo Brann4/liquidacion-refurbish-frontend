@@ -286,6 +286,7 @@ export class ViewRecuperoDetalle implements OnInit, OnDestroy {
                 }
 
                 this.recuperoDetalleStore.deleteByLiquidacionRecuperoId(liquidacionRecuperoId);
+                this.selectedItems.set([]);
                 this.dataTable().reset();
             }
         });

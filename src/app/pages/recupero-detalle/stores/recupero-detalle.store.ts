@@ -1,5 +1,7 @@
 import { inject } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import { format } from 'date-fns';
 import { LiquidacionRecuperoDetalle } from '@/pages/recupero-detalle/entities/liquidacion-recupero-detalle';
 import { LiquidacionRecuperoDetallePreview } from '@/pages/recupero-detalle/entities/liquidacion-recupero-detalle-preview';
 import { CreateLiquidacionRecuperoDetalleRequest } from '@/pages/recupero-detalle/entities/create-liquidacion-recupero-detalle-request';
@@ -12,7 +14,6 @@ import { Contrata } from '@/pages/contrata/entities/contrata';
 import { RecuperoApi } from '@/pages/recupero/services/recupero.api';
 import { LiquidacionRecupero } from '@/pages/recupero/entities/liquidacion-recupero';
 import { LiquidacionRecuperoExcel } from '@/pages/service/liquidacion-recupero-excel';
-import { format } from 'date-fns';
 import { PaginationInfo } from '@/utils/paginated-data';
 
 export type RecuperoDetalleState = {
@@ -21,6 +22,9 @@ export type RecuperoDetalleState = {
     contrata: Contrata | null;
     liquidacionRecupero: LiquidacionRecupero | null;
     pagination: PaginationInfo | null;
+    currentPage: number;
+    pageSize: number;
+    searchFilter: string;
     isLoadingEntities: boolean;
     isLoadingPreview: boolean;
     isLoadingCreate: boolean;
@@ -37,6 +41,9 @@ const initialState: RecuperoDetalleState = {
     contrata: null,
     liquidacionRecupero: null,
     pagination: null,
+    currentPage: 1,
+    pageSize: 10,
+    searchFilter: '',
     isLoadingEntities: false,
     isLoadingPreview: false,
     isLoadingCreate: false,
@@ -98,6 +105,9 @@ export const RecuperoDetalleStore = signalStore(
                 contrata: null,
                 liquidacionRecupero: null,
                 pagination: null,
+                currentPage: 1,
+                pageSize: 10,
+                searchFilter: '',
                 isLoadingEntities: false,
                 isLoadingPreview: false,
                 isLoadingCreate: false,
@@ -111,6 +121,23 @@ export const RecuperoDetalleStore = signalStore(
 
         setDeleting(isDeleting: boolean) {
             patchState(store, { isDeleting });
+        },
+
+        setCurrentPage(currentPage: number) {
+            patchState(store, { currentPage });
+        },
+
+        setPageSize(pageSize: number) {
+            patchState(store, { pageSize });
+        },
+
+        setSearchFilter(searchFilter: string) {
+            const normalizedFilter = searchFilter.trim();
+            patchState(store, { searchFilter: normalizedFilter });
+        },
+
+        loadCurrentData(liquidacionRecuperoId: number) {
+            this.getByRecupero(liquidacionRecuperoId, store.currentPage(), store.pageSize(), store.searchFilter() || undefined);
         },
 
         getContrataById(contrataId: number) {
@@ -173,10 +200,10 @@ export const RecuperoDetalleStore = signalStore(
             });
         },
 
-        getByRecupero(liquidacionRecuperoId: number, page: number = 1, pageSize: number = 10) {
+        getByRecupero(liquidacionRecuperoId: number, page: number = 1, pageSize: number = 10, searchFilter?: string) {
             patchState(store, { isLoadingEntities: true, error: null });
 
-            recuperoDetalleService.getByRecupero(liquidacionRecuperoId, page, pageSize).subscribe({
+            recuperoDetalleService.getByRecupero(liquidacionRecuperoId, page, pageSize, searchFilter).subscribe({
                 next: (response) => {
                     if (response.status && response.value) {
                         patchState(store, {
@@ -237,7 +264,7 @@ export const RecuperoDetalleStore = signalStore(
                             entitiesPreview: []
                         });
                         toast.success(response.msg || 'Detalle del recupero creado correctamente');
-                        this.getByRecupero(request.liquidacionRecuperoId, 1, 10);
+                        this.loadCurrentData(request.liquidacionRecuperoId);
                         this.getRecuperoById(request.liquidacionRecuperoId);
                     } else {
                         const errorMessage = response.msg || 'Error al crear el detalle del recupero';
@@ -298,7 +325,8 @@ export const RecuperoDetalleStore = signalStore(
                     if (response.status && response.value) {
                         patchState(store, {
                             isDeleting: false,
-                            entities: []
+                            entities: [],
+                            pagination: null
                         });
                         toast.success(response.msg || 'Detalles del recupero eliminados correctamente');
                     } else {
@@ -331,7 +359,7 @@ export const RecuperoDetalleStore = signalStore(
                         toast.success(response.msg || 'Detalles del recupero eliminados correctamente');
                         const liquidacionRecuperoId = store.liquidacionRecupero()?.id;
                         if (liquidacionRecuperoId) {
-                            this.getByRecupero(liquidacionRecuperoId, 1, 10);
+                            this.loadCurrentData(liquidacionRecuperoId);
                         }
                     } else {
                         const errorMessage = response.msg || 'Error al eliminar los detalles del recupero';
@@ -353,8 +381,8 @@ export const RecuperoDetalleStore = signalStore(
             });
         },
 
-        getFileNameFromResponse(response: any): string | null {
-            const contentDisposition = response.headers?.get('Content-Disposition');
+        getFileNameFromResponse(response: HttpResponse<Blob>): string | null {
+            const contentDisposition = response.headers.get('Content-Disposition');
 
             if (!contentDisposition) {
                 return null;

@@ -20,8 +20,11 @@ export class RecuperoDetalleApi {
     private http = inject(HttpClient);
     private readonly apiUrl = `${environment.URL}/LiquidacionRecuperoDetalle`;
 
-    getByRecupero(liquidacionRecuperoId: number, page: number = 1, pageSize: number = 10): Observable<BaseResponse<PaginatedData<LiquidacionRecuperoDetalle>>> {
-        const params = `?page=${page}&pageSize=${pageSize}`;
+    getByRecupero(liquidacionRecuperoId: number, page: number = 1, pageSize: number = 10, searchFilter?: string): Observable<BaseResponse<PaginatedData<LiquidacionRecuperoDetalle>>> {
+        let params = `?page=${page}&pageSize=${pageSize}`;
+        if (searchFilter && searchFilter.trim()) {
+            params += `&searchFilter=${encodeURIComponent(searchFilter)}`;
+        }
         return this.http.get<BaseResponse<PaginatedData<LiquidacionRecuperoDetalle>>>(`${this.apiUrl}/liquidacion/${liquidacionRecuperoId}${params}`).pipe(catchError(handleHttpError));
     }
 

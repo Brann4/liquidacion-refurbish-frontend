@@ -1,37 +1,49 @@
-import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PrimeModules } from '@/utils/PrimeModule';
+import { FormsModule } from '@angular/forms';
+import { debounceTime, Subject, takeUntil } from 'rxjs';
 import { Table, TableLazyLoadEvent } from 'primeng/table';
+import { FileUploadHandlerEvent } from 'primeng/fileupload';
+import { format, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { RecuperoDetalleStore } from '@/pages/recupero-detalle/stores/recupero-detalle.store';
 import { PreviewLiquidacionRecuperoDetalleRequest } from '@/pages/recupero-detalle/entities/preview-liquidacion-recupero-detalle-request';
 import { CreateLiquidacionRecuperoDetalleRequest } from '@/pages/recupero-detalle/entities/create-liquidacion-recupero-detalle-request';
+import { DeleteLiquidacionRecuperoDetalleByIdsRequest } from '@/pages/recupero-detalle/entities/delete-liquidacion-recupero-detalle-by-ids-request';
 import { LiquidacionRecuperoDetalle } from '@/pages/recupero-detalle/entities/liquidacion-recupero-detalle';
 import { TipoZona } from '@/pages/precio-zona/entities/precio-zona';
 import { EstadoPago } from '@/pages/recupero-detalle/entities/estado-pago';
-import { EstadoLiquidacion } from '@/utils/estado-liquidacion';
 import { ConfirmationDialog } from '@/pages/service/confirmation-dialog';
-import { format, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { ShortDatePipe } from '@/layout/pipes/shortDate.pipe';
+import { ToastService } from '@/layout/service/toast.service';
 import { FormatCurrencyPipe } from '@/utils/format-currency-pipe';
+import { EstadoLiquidacion } from '@/utils/estado-liquidacion';
+import { PrimeModules } from '@/utils/PrimeModule';
 
 @Component({
     selector: 'app-view-recupero-detalle',
-    imports: [PrimeModules, ShortDatePipe, FormatCurrencyPipe],
+    imports: [PrimeModules, ShortDatePipe, FormatCurrencyPipe, FormsModule],
     templateUrl: './view-recupero-detalle.html',
     styles: ``
 })
-export class ViewRecuperoDetalle implements OnInit {
+export class ViewRecuperoDetalle implements OnInit, OnDestroy {
+    private readonly destroy$ = new Subject<void>();
+    private readonly searchSubject = new Subject<string>();
     private readonly recuperoDetalleStore = inject(RecuperoDetalleStore);
-    private confirmationDialogService = inject(ConfirmationDialog);
+    private readonly confirmationDialogService = inject(ConfirmationDialog);
     private readonly route = inject(ActivatedRoute);
+    private readonly toast = inject(ToastService);
     private readonly router = inject(Router);
+
+    private readonly maxFileSizeInMB = 10;
+    readonly maxFileSizeInBytes = this.maxFileSizeInMB * 1024 * 1024;
+    private readonly searchDebounceTimeMs = 500;
 
     protected readonly showUploadSection = signal(false);
     protected readonly liquidacionRecuperoId = signal<number | null>(null);
     protected readonly selectedItems = signal<LiquidacionRecuperoDetalle[]>([]);
-    protected readonly currentPage = signal(1);
-    protected readonly pageSize = signal(10);
+    protected readonly pageSize = computed(() => this.recuperoDetalleStore.pageSize());
+    protected searchModel = '';
 
     protected readonly entities = computed(() => this.recuperoDetalleStore.entities());
     protected readonly entitiesPreview = computed(() => this.recuperoDetalleStore.entitiesPreview());
@@ -43,6 +55,13 @@ export class ViewRecuperoDetalle implements OnInit {
     protected readonly isLoadingPreview = computed(() => this.recuperoDetalleStore.isLoadingPreview());
     protected readonly isLoadingCreate = computed(() => this.recuperoDetalleStore.isLoadingCreate());
     protected readonly isExporting = computed(() => this.recuperoDetalleStore.isExporting());
+    protected readonly isDeleting = computed(() => this.recuperoDetalleStore.isDeleting());
+    protected readonly deleteButtonLabel = computed(() => {
+        const count = this.selectedItems().length;
+        return count ? `Eliminar (${count})` : 'Eliminar';
+    });
+
+    protected readonly dataTable = viewChild.required<Table>('dataTable');
 
     constructor() {
         effect(() => {
@@ -51,6 +70,13 @@ export class ViewRecuperoDetalle implements OnInit {
                 this.loadContrata(liquidacionRecupero.contrataId);
             }
         });
+
+        this.setupSearchSubscription();
+    }
+
+    ngOnDestroy(): void {
+        this.destroy$.next();
+        this.destroy$.complete();
     }
 
     ngOnInit(): void {
@@ -64,10 +90,6 @@ export class ViewRecuperoDetalle implements OnInit {
 
     protected loadRecuperoById(id: number): void {
         this.recuperoDetalleStore.getRecuperoById(id);
-    }
-
-    protected loadEntitiesByRecupero(liquidacionRecuperoId: number, page: number = 1, pageSize: number = 10): void {
-        this.recuperoDetalleStore.getByRecupero(liquidacionRecuperoId, page, pageSize);
     }
 
     protected loadContrata(contrataId: number): void {
@@ -86,8 +108,18 @@ export class ViewRecuperoDetalle implements OnInit {
         this.recuperoDetalleStore.clearPreview();
     }
 
-    protected onUpload(event: { files: File[] }): void {
-        const file = event.files[0];
+    protected onUpload(event: FileUploadHandlerEvent): void {
+        const [file] = event.files;
+
+        if (!file) {
+            this.toast.error('No se seleccionó ningún archivo.');
+            return;
+        }
+
+        if (file.size > this.maxFileSizeInBytes) {
+            this.toast.error(`El archivo es demasiado grande (${this.formatSizeInMB(file.size)}). El límite es 10MB.`);
+            return;
+        }
 
         const request: PreviewLiquidacionRecuperoDetalleRequest = {
             file: file
@@ -159,14 +191,42 @@ export class ViewRecuperoDetalle implements OnInit {
         return estadoPago === EstadoPago.SinPago ? 'danger' : 'success';
     }
 
-    protected onGlobalFilter(event: Event, dataTable: Table): void {
-        const target = event.target as HTMLInputElement | null;
-        const filterValue = target?.value ?? '';
-        dataTable.filterGlobal(filterValue, 'contains');
+    protected onSearchInputChange(): void {
+        this.searchSubject.next(this.searchModel);
     }
 
-    protected onClearFilters(dataTable: Table): void {
-        dataTable.clear();
+    private performSearch(searchValue: string): void {
+        this.recuperoDetalleStore.setSearchFilter(searchValue);
+
+        const liquidacionRecuperoId = this.liquidacionRecuperoId();
+        if (!liquidacionRecuperoId) {
+            return;
+        }
+
+        this.dataTable().reset();
+    }
+
+    protected onClearFilters(): void {
+        this.clearSearchState();
+        this.reloadData();
+    }
+
+    private clearSearchState(): void {
+        this.searchModel = '';
+        this.recuperoDetalleStore.setSearchFilter('');
+    }
+
+    private reloadData(): void {
+        const liquidacionRecuperoId = this.liquidacionRecuperoId();
+        if (liquidacionRecuperoId) {
+            this.dataTable().reset();
+        }
+    }
+
+    private setupSearchSubscription(): void {
+        this.searchSubject.pipe(debounceTime(this.searchDebounceTimeMs), takeUntil(this.destroy$)).subscribe((searchValue) => {
+            this.performSearch(searchValue);
+        });
     }
 
     protected getEstadoLiquidacionLabel(): string {
@@ -179,7 +239,7 @@ export class ViewRecuperoDetalle implements OnInit {
         return estado === EstadoLiquidacion.Pendiente ? 'warning' : 'success';
     }
 
-    protected formatFileSize(sizeInBytes: number): string {
+    protected formatSizeInMB(sizeInBytes: number): string {
         const sizeInMB = sizeInBytes / (1024 * 1024);
         return `${sizeInMB.toFixed(2)} MB`;
     }
@@ -201,34 +261,52 @@ export class ViewRecuperoDetalle implements OnInit {
         this.confirmationDialogService.confirmDelete().subscribe((confirmed) => {
             if (confirmed) {
                 const selectedItems = this.selectedItems();
-                const allItems = this.entities();
+
+                if (selectedItems.length === 0) {
+                    return;
+                }
+
+                const deleteRequest: DeleteLiquidacionRecuperoDetalleByIdsRequest = {
+                    liquidacionRecuperoDetalleIds: selectedItems.map((item) => item.id)
+                };
+
+                this.recuperoDetalleStore.deleteByIds(deleteRequest);
+                this.selectedItems.set([]);
+            }
+        });
+    }
+
+    protected deleteAllItems() {
+        this.confirmationDialogService.confirmDelete().subscribe((confirmed) => {
+            if (confirmed) {
                 const liquidacionRecuperoId = this.liquidacionRecuperoId();
 
                 if (!liquidacionRecuperoId) {
                     return;
                 }
 
-                if (selectedItems.length === allItems.length) {
-                    this.recuperoDetalleStore.deleteByLiquidacionRecuperoId(liquidacionRecuperoId);
-                } else {
-                    const deleteRequest = {
-                        liquidacionRecuperoDetalleIds: selectedItems.map((item) => item.id)
-                    };
-                    this.recuperoDetalleStore.deleteByIds(deleteRequest);
-                }
-
-                this.selectedItems.set([]);
+                this.recuperoDetalleStore.deleteByLiquidacionRecuperoId(liquidacionRecuperoId);
+                this.dataTable().reset();
             }
         });
     }
 
     protected onPageChange(event: TableLazyLoadEvent): void {
+        if (this.isDeleting()) {
+            return;
+        }
+
         const liquidacionRecuperoId = this.liquidacionRecuperoId();
         if (liquidacionRecuperoId && event.first !== undefined && event.rows !== null && event.rows !== undefined) {
+            this.selectedItems.set([]);
             const currentPage = Math.floor(event.first / event.rows) + 1;
-            this.currentPage.set(currentPage);
-            this.pageSize.set(event.rows);
-            this.loadEntitiesByRecupero(liquidacionRecuperoId, this.currentPage(), this.pageSize());
+
+            this.recuperoDetalleStore.setCurrentPage(currentPage);
+            if (event.rows !== this.pageSize()) {
+                this.recuperoDetalleStore.setPageSize(event.rows);
+            }
+
+            this.recuperoDetalleStore.loadCurrentData(liquidacionRecuperoId);
         }
     }
 }

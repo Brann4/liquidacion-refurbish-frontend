@@ -50,7 +50,7 @@
                     accept=".xlsx,.xls"
                     invalidFileTypeMessageSummary="Tipo de archivo no válido."
                     invalidFileTypeMessageDetail="Solo se permiten archivos Excel (.xlsx, .xls)."
-                    [maxFileSize]="10485760"
+                    [maxFileSize]="maxFileSizeInBytes"
                     [showCancelButton]="false"
                     [showUploadButton]="false"
                     [multiple]="false"
@@ -82,7 +82,7 @@
                             <div class="flex items-center justify-center gap-3">
                                 <i class="pi pi-file-excel text-green-600" style="font-size: 2rem"></i>
                                 <span class="font-semibold">{{ file.name }}</span>
-                                <p-badge [value]="formatFileSize(file.size)" severity="secondary"></p-badge>
+                                <p-badge [value]="formatSizeInMB(file.size)" severity="secondary"></p-badge>
                             </div>
                         </div>
                     </ng-template>
@@ -170,13 +170,16 @@
             [value]="entities()"
             [selection]="selectedItems()"
             (selectionChange)="selectedItems.set($event)"
-            [rows]="10"
+            [rows]="pageSize()"
             [rowHover]="true"
             [paginator]="true"
             [showCurrentPageReport]="true"
             [rowsPerPageOptions]="[10, 20, 30]"
             [globalFilterFields]="['codigoSAP', 'codigoSOT']"
             [loading]="isLoadingEntities()"
+            [totalRecords]="totalRecords()"
+            [lazy]="true"
+            (onLazyLoad)="onPageChange($event)"
             currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
             [tableStyle]="{ 'min-width': '75rem' }"
         >
@@ -185,12 +188,18 @@
                     <div class="flex flex-row gap-2">
                         <p-iconfield>
                             <p-inputicon class="pi pi-search" />
-                            <input pInputText type="text" (input)="onGlobalFilter($event, dataTable)"
+                            <input pInputText type="text" [(ngModel)]="searchModel"
+                                   (ngModelChange)="onSearchInputChange()"
+                                   pTooltip="Buscar por Código SAP o Código SOT" tooltipPosition="top"
                                    placeholder="Buscar por Código SAP o Código SOT" />
                         </p-iconfield>
-                        <p-button icon="pi pi-filter-slash" [outlined]="true" (click)="onClearFilters(dataTable)" />
-                        <p-button severity="danger" label="Eliminar" icon="pi pi-trash"
+                        <p-button icon="pi pi-filter-slash" [outlined]="true" [disabled]="!searchModel"
+                                  (click)="onClearFilters()" />
+                        <p-button severity="danger" [label]="deleteButtonLabel()"
+                                  icon="pi pi-trash" [disabled]="!selectedItems().length"
                                   (onClick)="deleteSelectedItems()" />
+                        <p-button label="Eliminar todo" severity="danger" [outlined]="true" icon="pi pi-trash"
+                                  [disabled]="!entities().length" (onClick)="deleteAllItems()" />
                     </div>
                     <div class="flex flex-row">
                         <div class="card flex justify-center">
@@ -212,7 +221,7 @@
                             <p-sortIcon field="codigoSAP" />
                         </div>
                     </th>
-                    <th pSortableColumn="descripcion" style="min-width: 25rem">
+                    <th pSortableColumn="descripcion" style="min-width: 30rem">
                         <div class="flex items-center gap-2">
                             Descripción
                             <p-sortIcon field="descripcion" />
@@ -242,7 +251,7 @@
                             <p-sortIcon field="codigoCliente" />
                         </div>
                     </th>
-                    <th pSortableColumn="cliente" style="min-width: 15rem">
+                    <th pSortableColumn="cliente" style="min-width: 30rem">
                         <div class="flex items-center gap-2">
                             Cliente
                             <p-sortIcon field="cliente" />
@@ -266,7 +275,7 @@
                             <p-sortIcon field="tipoZonaId" />
                         </div>
                     </th>
-                    <th pSortableColumn="distrito" style="min-width: 15rem">
+                    <th pSortableColumn="distrito" style="min-width: 25rem">
                         <div class="flex items-center gap-2">
                             Distrito
                             <p-sortIcon field="distrito" />

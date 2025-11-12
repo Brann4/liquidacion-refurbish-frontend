@@ -15,7 +15,7 @@ export class AuthService {
     private readonly module = "Auth";
 
     constructor() { }
-    
+
     login(credentials: { nombreUsuario: string, passwordHash: string }) {
         return this.http.post<DTOAuthResponse>(`${this.apiUrl}/Auth/Autenticar`, credentials)
     }

@@ -8,11 +8,12 @@ import { AuthService } from '../service/auth.service';
 import { Rol } from '@/utils/Constants';
 import { Router } from '@angular/router';
 import { ToastService } from '@/layout/service/toast.service';
+import { Helper } from '@/utils/Helper';
 
 export type AuthState = {
     userAuthenticated: DTOUsuario | null;
     isAuthenticated: boolean;
-    isSubmitting : boolean;
+    isSubmitting: boolean;
 };
 
 const initialState: AuthState = {
@@ -25,16 +26,13 @@ export const AuthStore = signalStore(
     { providedIn: 'root' },
     withState<AuthState>(initialState),
     withMethods((store, tokenService = inject(TokenService), usuarioService = inject(UsuarioService), toast = inject(ToastService), authService = inject(AuthService), router = inject(Router)) => ({
-        
-    
-        isLoggedIn() {
+        isLoggedIn(): boolean {
             const token = this.getJWT();
             if (!token || token === '{}') {
                 return false;
             }
 
             if (this.isTokenExpired()) {
-                this.clearAuthData();
                 return false;
             }
 
@@ -70,11 +68,13 @@ export const AuthStore = signalStore(
         },
 
         parseJWTClaims(JWT: string): any | null {
+            if(!JWT) return null;
             try {
                 const payload = JWT.split('.')[1];
+                if (!payload) return null;
 
                 if (typeof window !== 'undefined') {
-                    const decoded = window.atob(payload);
+                    const decoded = Helper._base64UrlDecode(payload);
                     return JSON.parse(decoded);
                 }
             } catch (error) {
@@ -105,7 +105,7 @@ export const AuthStore = signalStore(
             return Number(userId) || null;
         },
 
-        getTokenExpInfo(): { exp: string; nbf: string } | null {
+        getTokenExpInfo() {
             const claims = this.parseJWTClaims(this.getJWT() || '');
             if (!claims) return null;
 
@@ -119,20 +119,26 @@ export const AuthStore = signalStore(
                 timeZone: 'America/Lima'
             });
 
-            return { exp: expDate, nbf: nbfDate };
+            return { exp: expDate, nbf: nbfDate, tokenExp: tokenExpirationDate, tokenGenerate: tokenGenerateDate  };
         },
 
         isTokenExpired(): boolean {
             const tokenInfo = this.getTokenExpInfo();
+            if (!tokenInfo) return true;
+
             const currentTime = Math.floor(Date.now() / 1000);
-            return currentTime > Number(tokenInfo?.exp);
+            console.log("==================================")
+            console.log("TOKENINFO: {0}",tokenInfo.tokenExp)
+            console.log("CURRENT: {0}",currentTime)
+            return currentTime > tokenInfo.tokenExp;
         },
+
         async fetchUserDetails(userId: number): Promise<DTOUsuario | null> {
             try {
                 const response = await firstValueFrom(usuarioService.getById(userId));
                 if (!response) return null;
                 const user = response.value;
-                patchState(store, { userAuthenticated: user });
+               //patchState(store, { userAuthenticated: user });
                 return user;
             } catch (error) {
                 console.error('Error al obtener los detalles del usuario:', error);
@@ -200,23 +206,32 @@ export const AuthStore = signalStore(
 
         logout() {
             this.clearAuthData();
-            this.updateIsAuthenticated(this.isLoggedIn())
-            router.navigate(['/'], { replaceUrl: true })
+            patchState(store, {
+                isAuthenticated: false,
+                userAuthenticated: null
+            });
+
+            router.navigate(['/'], { replaceUrl: true });
         },
-        login(data: any){
-            patchState(store,{ isSubmitting: true})
+        login(data: any) {
+            patchState(store, { isSubmitting: true });
             authService.login(data).subscribe({
-                next: async(response)  => {
+                next: async (response) => {
                     const success = await this.handleLoginResponse(response);
-                    if(!response.status){
-                        this.clearAuthData()
-                        patchState(store,{ isSubmitting: false})
+                    if (success) {
+                        patchState(store, { isSubmitting: false });
+                        toast.success(response.msg);
+                        router.navigate(['dashboard']);
+                    } else {
+                        this.clearAuthData();
+                        patchState(store, { isSubmitting: false });
                         toast.warn(response.msg);
                         router.navigate(['/']);
                     }
                 },
-                error: () => {
-                    patchState(store,{isSubmitting: false})
+                error: (err) => {
+                    toast.error(`${err.message}`);
+                    patchState(store, { isSubmitting: false });
                 }
             });
         },
@@ -231,13 +246,11 @@ export const AuthStore = signalStore(
                     router.navigate(['dashboard']);
                     state.set(true);
                 }
-            }
-            else {
+            } else {
                 router.navigate(['/']);
                 state.set(false);
             }
             return state();
-
         }
     }))
 );

@@ -48,9 +48,9 @@ export class Login implements OnInit {
 
         if (this.frmLogin.valid) {
             this.frmLogin.get('nombreUsuario')?.setValue(this.frmLogin.get('nombreUsuario')?.value.trim());
-            
+            this.authStore.login(this.frmLogin.getRawValue());
+            this.router.navigate(['dashboard']);
         }
 
-        this.router.navigate(['dashboard']);
     }
 }

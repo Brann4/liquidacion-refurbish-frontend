@@ -2,35 +2,36 @@
     <div class="px-4">
         <div class="flex justify-between">
             <p-button label="Volver" icon="pi pi-arrow-left" severity="secondary" (onClick)="goBack()"></p-button>
-            @if (postventaStore.entity()?.estado == 1) {
-                <p-button
-                    label="Importar Liquidaciones"
-                    [disabled]="postventaDetalleStore.entitiesPreview().length > 0 && !postventaStore.isSubmitting()"
-                    icon="pi pi-file-import"
-                    severity="primary"
-                    [raised]="true"
-                    size="large"
-                    (onClick)="handleToggleImport(postventaStore.entity()?.estado)"
-                ></p-button>
-            }
+            <p-button
+                label="Importar Liquidaciones"
+                [disabled]="postventaDetalleStore.entitiesPreview().length > 0 && !postventaDetalleStore.isLoadingPostventa()"
+                icon="pi pi-file-import"
+                severity="primary"
+                [raised]="true"
+                size="large"
+                (onClick)="handleToggleImport()"
+            ></p-button>
         </div>
 
-        @if (!postventaStore.entity() && postventaStore.isSubmitting()) {
+        @if (!postventaDetalleStore.liquidacionPostventa() && postventaDetalleStore.isLoadingPostventa()) {
             <div class="flex justify-center items-center">
                 <p-progressSpinner class="w-10 h-10" strokeWidth="4" animationDuration=".5s"></p-progressSpinner>
             </div>
-        } @else if (postventaStore.entity()) {
+        } @else if (postventaDetalleStore.contrata()) {
             <p-toolbar class="my-6 flex items-center">
-                <ng-template #start class="flex justify-center">
-                    <h2>
-                        Contrata: <span class="text-4xl text-primary">{{ postventaDetalleStore.contrata()?.razonSocial }}</span>
-                    </h2>
+                <ng-template pTemplate="start">
+                    <div class="flex items-center justify-center">
+                        <p class="text-4xl font-bold">
+                            Contrata: <span class="text-4xl text-primary">{{ postventaDetalleStore.contrata()?.razonSocial }}</span>
+                        </p>
+                    </div>
                 </ng-template>
 
-                <ng-template #end>
-                    <div class="flex gap-1">
-                        <p-tag icon="pi pi-info-circle" [value]="postventaStore.entity()?.estado ? 'Activo' : 'Inactivo'" [severity]="getSeverity(postventaStore.entity()!.estado)" />
-                        <p-tag icon="pi pi-calendar" severity="secondary" [value]="postventaStore.entity()?.fechaIngreso! | shortDate"></p-tag>
+                <ng-template pTemplate="end">
+                    <div class="flex items-center justify-center gap-1">
+                        <p-tag [value]="getEstadoLiquidacionLabel()" [severity]="getEstadoLiquidacionSeverity()" />
+                        <p-tag [value]="formatFechaIngreso(postventaDetalleStore.liquidacionPostventa()?.fechaIngreso)" icon="pi pi-calendar"
+                               severity="secondary" />
                     </div>
                 </ng-template>
             </p-toolbar>
@@ -57,8 +58,9 @@
                         mode="advanced"
                         [multiple]="false"
                         accept=".xlsx,.xls"
-                        [invalidFileTypeMessageSummary]="'Tipo de archivo no válido. Solo se permiten archivos Excel (.xlsx, .xls).'"
-                        [maxFileSize]="10000000"
+                        invalidFileTypeMessageSummary="Tipo de archivo no válido."
+                        invalidFileTypeMessageDetail="Solo se permiten archivos Excel (.xlsx, .xls)."
+                        [maxFileSize]="maxFileSizeInBytes"
                         [showCancelButton]="false"
                         [showUploadButton]="false"
                         chooseLabel="Seleccionar archivo"
@@ -103,13 +105,17 @@
                 </div>
             }
 
-            @if (postventaDetalleStore.entitiesPreview().length > 0 && !postventaStore.isSubmitting()) {
+            @if (postventaDetalleStore.entitiesPreview().length > 0 && !postventaDetalleStore.isLoadingCreate()) {
                 <div class="mt-6 border-1 border-dashed border-primary p-4 rounded-lg">
                     <div class="flex justify-between items-center">
                         <h3 class="text-xl font-semibold">Previsualización de Datos</h3>
                         <div class="flex gap-1">
-                            <p-button label="Volver a importar" [outlined]="true" icon="pi pi-arrow-left" [loading]="postventaStore.isSubmitting()" (onClick)="handleImportAgain()"> </p-button>
-                            <p-button label="Guardar Datos Importados" icon="pi pi-save" [loading]="postventaStore.isSubmitting()" (onClick)="handleSubmitDetail()"> </p-button>
+                            <p-button label="Volver a importar" [outlined]="true" icon="pi pi-arrow-left"
+                                      [loading]="postventaDetalleStore.isLoadingCreate()"
+                                      (onClick)="handleImportAgain()"></p-button>
+                            <p-button label="Guardar Datos Importados" icon="pi pi-save"
+                                      [loading]="postventaDetalleStore.isLoadingCreate()"
+                                      (onClick)="handleSubmitDetail()"></p-button>
                         </div>
                     </div>
 
@@ -189,20 +195,23 @@
 <div class="flex flex-col flex-1 h-full">
     <p-card class="mt-4 flex-1 relative overflow-hidden">
         <p-table
-            #dt
-            [value]="postventaDetalleStore.entities()"
+            #dataTable
             dataKey="id"
+            [value]="postventaDetalleStore.entities()"
+            [selection]="selectedItems()"
+            (selectionChange)="selectedItems.set($event)"
+            [rows]="pageSize()"
             [paginator]="true"
             [tableStyle]="{ 'min-width': '75rem' }"
-            [rows]="10"
             [rowsPerPageOptions]="[10, 20, 30]"
             [showCurrentPageReport]="true"
-            [(selection)]="selectedData"
             [rowHover]="true"
             [scrollable]="true"
             [loading]="this.postventaDetalleStore.isLoadingDetailData()"
+            [totalRecords]="totalRecords()"
+            [lazy]="true"
+            (onLazyLoad)="onPageChange($event)"
             scrollHeight="h-[calc(100dvh-20rem)]"
-            [globalFilterFields]="['liquidacion', 'plataforma', 'codigoLiquidacion', 'codigoEntrega', 'codigoSAP', 'nombreProducto', 'serieOrigen', 'serieFinal', 'trabajoRealizado']"
             currentPageReportTemplate="Visualizar {first} a {last} de {totalRecords} registros"
         >
             <ng-template #caption>
@@ -210,10 +219,18 @@
                     <div class="flex flex-row gap-2">
                         <p-iconfield>
                             <p-inputicon class="pi pi-search" />
-                            <input pInputText type="text" (input)="dt.filterGlobal($any($event.target).value, 'contains')" placeholder="Buscar por nombre" />
+                            <input pInputText type="text" [(ngModel)]="searchModel"
+                                   (ngModelChange)="onSearchInputChange()"
+                                   pTooltip="Buscar por Código SAP o Código SOT o Orden de Compra" tooltipPosition="top"
+                                   placeholder="Buscar por Código SAP o Código SOT o Orden de Compra" />
                         </p-iconfield>
-                        <p-button label="Limpiar Filtros" [outlined]="true" icon="pi pi-filter-slash" (click)="clearFilters(dt)" />
-                        <p-button severity="danger" label="Eliminar" icon="pi pi-trash" (onClick)="deleteSelectedProducts()" [disabled]="!selectedData || !selectedData.length" />
+                        <p-button icon="pi pi-filter-slash" [outlined]="true" [disabled]="!searchModel"
+                                  (click)="onClearFilters()" />
+                        <p-button severity="danger" [label]="deleteButtonLabel()"
+                                  icon="pi pi-trash" [disabled]="!selectedItems().length"
+                                  (onClick)="deleteSelectedItems()" />
+                        <p-button label="Eliminar todo" severity="danger" [outlined]="true" icon="pi pi-trash"
+                                  [disabled]="!postventaDetalleStore.entities().length" (onClick)="deleteAllItems()" />
                     </div>
 
                     <div class="flex flex-row gap-2">

@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Table } from 'primeng/table';
 import { PrimeModules } from '@/utils/PrimeModule';
 import { PostventaStore } from '@/pages/postventa/stores/postventa.store';
+import { PostVentaDetalleStore } from '@/pages/postventa-detalle/stores/PostVentaDetalleStore';
 import { PostventaModal } from '@/pages/postventa/components/postventa-modal/postventa-modal';
 import { ConfirmationDialog } from '@/pages/service/confirmation-dialog';
 import { LiquidacionPostventaResponse } from '@/pages/postventa/entities/liquidacion-postventa-response';
@@ -19,6 +20,7 @@ import { EstadoLiquidacion } from '@/utils/estado-liquidacion';
 })
 export class ViewPostventa implements OnInit {
     private readonly postventaStore = inject(PostventaStore);
+    private readonly postventaDetalleStore = inject(PostVentaDetalleStore);
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private confirmationDialogService = inject(ConfirmationDialog);
@@ -39,8 +41,7 @@ export class ViewPostventa implements OnInit {
     }
 
     protected onViewDetail(item: LiquidacionPostventaResponse) {
-        //PASO 1
-        this.postventaStore.setEntity(item);
+        this.postventaDetalleStore.clear();
         this.router.navigate([item.id], { relativeTo: this.route });
     }
 

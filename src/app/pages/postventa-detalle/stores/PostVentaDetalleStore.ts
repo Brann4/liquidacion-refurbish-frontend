@@ -3,27 +3,37 @@ import { inject } from '@angular/core';
 import { ToastService } from '@/layout/service/toast.service';
 import { Subject, takeUntil } from 'rxjs';
 import { DTOPartida } from '@/pages/partida/entities/partida/DTOPartida';
-import { Eliminar } from '@/pages/remanufactura/stores/RemanufacturaStore';
 import { PostVentaDetalleService } from '../services/postventa-detalle.service';
 import type { DTOLiquidacionPostVentaDetalle } from '../entities/postventa-detalle/DTOPostVentaDetalle';
 import { ContrataApi } from '@/pages/contrata/services/contrata.api';
 import { Contrata } from '@/pages/contrata/entities/contrata';
 import { DTOCreatePostVentaDetalle } from '../entities/postventa-detalle/DTOCreatePostVentaDetalle';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { format } from 'date-fns';
+import { PaginationInfo } from '@/utils/paginated-data';
+import { DeleteLiquidacionPostventaDetalleByIdsRequest } from '@/pages/postventa-detalle/entities/delete-liquidacion-postventa-detalle-by-ids-request';
+import { LiquidacionPostventa } from '@/pages/postventa/entities/liquidacion-postventa';
+import { PostventaApi } from '@/pages/postventa/services/postventa.api';
 
 export type PostVentaDetalleState = {
     entities: DTOLiquidacionPostVentaDetalle[];
     entity: DTOLiquidacionPostVentaDetalle | null;
     entitiesPreview: DTOLiquidacionPostVentaDetalle[];
     contrata: Contrata | null;
+    liquidacionPostventa: LiquidacionPostventa | null;
+    pagination: PaginationInfo | null;
+    currentPage: number;
+    pageSize: number;
+    searchFilter: string;
     isOpenCreate: boolean;
     isOpenEdit: boolean;
     isSubmitting: boolean;
     isLoadingDetailData: boolean;
     isLoadingContrata: boolean;
     isLoadingCreate: boolean;
+    isLoadingPostventa: boolean;
     isExporting: boolean;
+    isDeleting: boolean;
     isLoadingDataPreview: boolean;
     error: string | null;
 };
@@ -33,21 +43,28 @@ const initialState: PostVentaDetalleState = {
     entitiesPreview: [],
     entities: [],
     contrata: null,
+    liquidacionPostventa: null,
+    pagination: null,
+    currentPage: 1,
+    pageSize: 10,
+    searchFilter: '',
     isOpenCreate: false,
     isOpenEdit: false,
     isSubmitting: false,
     isLoadingContrata: false,
     isLoadingCreate: false,
+    isLoadingPostventa: false,
     isLoadingDetailData: false,
     isLoadingDataPreview: false,
     isExporting: false,
+    isDeleting: false,
     error: null
 };
 
 export const PostVentaDetalleStore = signalStore(
     { providedIn: 'root' },
     withState<PostVentaDetalleState>(initialState),
-    withMethods((store, postVentaDetalleService = inject(PostVentaDetalleService), contrataService = inject(ContrataApi), toast = inject(ToastService)) => {
+    withMethods((store, postVentaDetalleService = inject(PostVentaDetalleService), postVentaService = inject(PostventaApi), contrataService = inject(ContrataApi), toast = inject(ToastService)) => {
         // Declarar los Subjects dentro del withMethods
         const cancelDetailData$ = new Subject<void>();
         const cancelExportData$ = new Subject<void>();
@@ -55,11 +72,26 @@ export const PostVentaDetalleStore = signalStore(
         return {
             clear() {
                 patchState(store, {
-                    isSubmitting: false,
-                    isExporting: false,
-                    isLoadingDetailData: false,
+                    entity: null,
                     entitiesPreview: [],
-                    entity: null
+                    entities: [],
+                    contrata: null,
+                    liquidacionPostventa: null,
+                    pagination: null,
+                    currentPage: 1,
+                    pageSize: 10,
+                    searchFilter: '',
+                    isOpenCreate: false,
+                    isOpenEdit: false,
+                    isSubmitting: false,
+                    isLoadingContrata: false,
+                    isLoadingCreate: false,
+                    isLoadingPostventa: false,
+                    isLoadingDetailData: false,
+                    isLoadingDataPreview: false,
+                    isExporting: false,
+                    isDeleting: false,
+                    error: null
                 });
             },
 
@@ -97,22 +129,56 @@ export const PostVentaDetalleStore = signalStore(
                 patchState(store, { entitiesPreview: entity });
             },
 
-            getDetailData(idLiquidacion: number) {
+            clearPreview() {
+                patchState(store, { entitiesPreview: [], error: null });
+            },
+
+            setDeleting(isDeleting: boolean) {
+                patchState(store, { isDeleting });
+            },
+
+            setCurrentPage(currentPage: number) {
+                patchState(store, { currentPage });
+            },
+
+            setPageSize(pageSize: number) {
+                patchState(store, { pageSize });
+            },
+
+            setSearchFilter(searchFilter: string) {
+                const normalizedFilter = searchFilter.trim();
+                patchState(store, { searchFilter: normalizedFilter });
+            },
+
+            loadCurrentData(liquidacionPostventaId: number) {
+                this.getDetailData(liquidacionPostventaId, store.currentPage(), store.pageSize(), store.searchFilter() || undefined);
+            },
+
+            getDetailData(liquidacionPostventaId: number, page: number = 1, pageSize: number = 10, searchFilter?: string) {
                 // Cancelar petición anterior
                 cancelDetailData$.next();
 
                 patchState(store, { isLoadingDetailData: true, error: null });
 
                 postVentaDetalleService
-                    .list(idLiquidacion)
+                    .list(liquidacionPostventaId, page, pageSize, searchFilter)
                     .pipe(takeUntil(cancelDetailData$))
                     .subscribe({
                         next: (response) => {
-                            if (response) {
+                            if (response.status && response.value) {
                                 patchState(store, {
-                                    entities: response.value!,
-                                    isLoadingDetailData: false
+                                    entities: response.value.items,
+                                    pagination: response.value.pagination,
+                                    isLoadingDetailData: false,
+                                    error: null
                                 });
+                            } else {
+                                const errorMessage = response.msg || 'Error al cargar los detalles del postventa';
+                                patchState(store, {
+                                    isLoadingDetailData: false,
+                                    error: errorMessage
+                                });
+                                toast.error(errorMessage);
                             }
                         },
                         error: (error: HttpErrorResponse) => {
@@ -138,11 +204,13 @@ export const PostVentaDetalleStore = signalStore(
                         if (response.status && response.value) {
                             patchState(store, {
                                 isLoadingCreate: false,
-                                entitiesPreview: response.value
+                                entitiesPreview: []
                             });
                             toast.success(response.msg || 'Detalle del postventa creado correctamente');
+                            this.loadCurrentData(request.liquidacionPostventaId);
+                            this.getPostventaById(request.liquidacionPostventaId);
                         } else {
-                            const errorMessage = response.msg || 'Error al crear el detalle del recupero';
+                            const errorMessage = response.msg || 'Error al crear el detalle del postventa';
                             patchState(store, {
                                 isLoadingCreate: false,
                                 error: errorMessage
@@ -190,6 +258,37 @@ export const PostVentaDetalleStore = signalStore(
                     }
                 });
             },
+
+            getPostventaById(id: number) {
+                patchState(store, { isLoadingPostventa: true, error: null });
+
+                postVentaService.getById(id).subscribe({
+                    next: (response) => {
+                        if (response.status && response.value) {
+                            patchState(store, {
+                                liquidacionPostventa: response.value,
+                                isLoadingPostventa: false,
+                                error: null
+                            });
+                        } else {
+                            const errorMessage = response.msg || 'Error al cargar el recupero';
+                            patchState(store, {
+                                isLoadingPostventa: false,
+                                error: errorMessage
+                            });
+                            toast.error(errorMessage);
+                        }
+                    },
+                    error: (error) => {
+                        patchState(store, {
+                            isLoadingPostventa: false,
+                            error: error.message || 'Error al cargar el recupero'
+                        });
+                        toast.error('Error al cargar el recupero');
+                    }
+                });
+            },
+
             export(liquidacionPostventaId: number) {
                 patchState(store, { isExporting: true, error: null });
 
@@ -204,7 +303,7 @@ export const PostVentaDetalleStore = signalStore(
 
                         patchState(store, { isExporting: false });
 
-                        const defaultFileName = `Reporte-Recupero_${format(new Date(), 'yyyy-MM-dd_HHmmss')}.xlsx`;
+                        const defaultFileName = `Reporte-Postventa_${format(new Date(), 'yyyy-MM-dd_HHmmss')}.xlsx`;
                         const fileName = this.getFileNameFromResponse(response) || defaultFileName;
 
                         this.downloadFile(response.body, fileName);
@@ -220,43 +319,70 @@ export const PostVentaDetalleStore = signalStore(
                     }
                 });
             },
-            deleteMany(idLiquidacion: number, ids: number[]) {
-                patchState(store, { isLoadingDetailData: true });
 
-                postVentaDetalleService.deleteMany(ids).subscribe({
+            deleteByLiquidacionPostventaId(liquidacionPostventaId: number) {
+                patchState(store, { isDeleting: true, error: null });
+
+                postVentaDetalleService.deleteByLiquidacionPostventaId(liquidacionPostventaId).subscribe({
                     next: (response) => {
-                        if (response.status) {
-                            toast.success(response.msg);
-                            //this.getDetailData(idLiquidacion);
+                        if (response.status && response.value) {
+                            patchState(store, {
+                                isDeleting: false,
+                                entities: [],
+                                pagination: null
+                            });
+                            toast.success(response.msg || 'Detalles del postventa eliminados correctamente');
+                        } else {
+                            const errorMessage = response.msg || 'Error al eliminar los detalles del postventa';
+                            patchState(store, {
+                                isDeleting: false,
+                                error: errorMessage
+                            });
+                            toast.error(errorMessage);
                         }
-                        patchState(store, { isLoadingDetailData: false });
                     },
                     error: (error) => {
-                        patchState(store, { isSubmitting: false, error: error.message });
-                        toast.error(error.error.msg);
+                        const errorMessage = error.message || 'Error al eliminar los detalles del postventa';
+                        patchState(store, {
+                            isDeleting: false,
+                            error: errorMessage
+                        });
+                        toast.error(errorMessage);
                     }
                 });
             },
 
-            deleteAll(idLiquidacion: number) {
-                patchState(store, { isLoadingDetailData: true });
-                postVentaDetalleService.deleteAll(idLiquidacion).subscribe({
+            deleteByIds(liquidacionPostventaId: number, request: DeleteLiquidacionPostventaDetalleByIdsRequest) {
+                patchState(store, { isDeleting: true, error: null });
+
+                postVentaDetalleService.deleteByIds(request).subscribe({
                     next: (response) => {
-                        if (response.status && response.value == Eliminar.Correcto) {
-                            toast.success(response.msg);
-                            patchState(store, { isLoadingDetailData: false });
-                            //this.getDetailData(idLiquidacion, Estado.Todos);
+                        if (response.status && response.value) {
+                            patchState(store, { isDeleting: false });
+                            toast.success(response.msg || 'Detalles del postventa eliminados correctamente');
+                            this.loadCurrentData(liquidacionPostventaId);
+                        } else {
+                            const errorMessage = response.msg || 'Error al eliminar los detalles del postventa';
+                            patchState(store, {
+                                isDeleting: false,
+                                error: errorMessage
+                            });
+                            toast.error(errorMessage);
                         }
                     },
                     error: (error) => {
-                        patchState(store, { isLoadingDetailData: false, error: error.message });
-                        toast.error(error.error.msg);
+                        const errorMessage = error.message || 'Error al eliminar los detalles del postventa';
+                        patchState(store, {
+                            isDeleting: false,
+                            error: errorMessage
+                        });
+                        toast.error(errorMessage);
                     }
                 });
             },
 
-            getFileNameFromResponse(response: any): string | null {
-                const contentDisposition = response.headers?.get('Content-Disposition');
+            getFileNameFromResponse(response: HttpResponse<Blob>): string | null {
+                const contentDisposition = response.headers.get('Content-Disposition');
 
                 if (!contentDisposition) {
                     return null;
@@ -265,8 +391,7 @@ export const PostVentaDetalleStore = signalStore(
                 let matches = /filename\*=UTF-8''([^;]+)/.exec(contentDisposition);
 
                 if (matches && matches[1]) {
-                    const decodedFilename = decodeURIComponent(matches[1]);
-                    return decodedFilename;
+                    return decodeURIComponent(matches[1]);
                 }
 
                 matches = /filename="?([^";]+)"?/.exec(contentDisposition);

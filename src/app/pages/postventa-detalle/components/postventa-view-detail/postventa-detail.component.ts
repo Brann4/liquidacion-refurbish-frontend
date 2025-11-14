@@ -1,72 +1,91 @@
 import * as XLSX from 'xlsx';
-import { PrimeModules } from '@/utils/PrimeModule';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, computed, effect, inject, OnDestroy, OnInit, signal, viewChild, ViewChild } from '@angular/core';
+import { debounceTime, Subject, takeUntil } from 'rxjs';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ShortDatePipe } from '@/layout/pipes/shortDate.pipe';
-import { Table } from 'primeng/table';
-import { Helper } from '@/utils/Helper';
-import { ToastService } from '@/layout/service/toast.service';
 import { FileUpload } from 'primeng/fileupload';
+import { Table, TableLazyLoadEvent } from 'primeng/table';
+import { ToastService } from '@/layout/service/toast.service';
+import { ShortDatePipe } from '@/layout/pipes/shortDate.pipe';
 import { ConfirmationDialog } from '@/pages/service/confirmation-dialog';
-import { DTOLiquidacionRemanufacturaDetalle } from '@/pages/remanufactura-detalle/entities/remanufactura-detalle/DTOLiquidacionRemanufacturaDetalle';
-import { PostVentaDetalleStore } from '../../stores/PostVentaDetalleStore';
-import { PostventaStore } from '@/pages/postventa/stores/postventa.store';
-import { DTOLiquidacionPostVentaDetalle } from '../../entities/postventa-detalle/DTOPostVentaDetalle';
+import { PostVentaDetalleStore } from '@/pages/postventa-detalle/stores/PostVentaDetalleStore';
+import { DTOLiquidacionPostVentaDetalle } from '@/pages/postventa-detalle/entities/postventa-detalle/DTOPostVentaDetalle';
+import { DTOCreatePostVentaDetalle } from '@/pages/postventa-detalle/entities/postventa-detalle/DTOCreatePostVentaDetalle';
+import { DeleteLiquidacionPostventaDetalleByIdsRequest } from '@/pages/postventa-detalle/entities/delete-liquidacion-postventa-detalle-by-ids-request';
+import { EstadoLiquidacion } from '@/utils/estado-liquidacion';
 import { FormatCurrencyPipe } from '@/utils/format-currency-pipe';
-import { DTOCreatePostVentaDetalle } from '../../entities/postventa-detalle/DTOCreatePostVentaDetalle';
+import { Helper } from '@/utils/Helper';
+import { PrimeModules } from '@/utils/PrimeModule';
+import { format, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 @Component({
     selector: 'postventa-detail',
-    standalone: true,
-    imports: [PrimeModules, ShortDatePipe, FormatCurrencyPipe],
+    imports: [PrimeModules, ShortDatePipe, FormatCurrencyPipe, FormsModule],
     templateUrl: './postventa-detail.component.html',
-    styleUrl: './postventa-detail.component.css',
-    changeDetection: ChangeDetectionStrategy.OnPush
+    styleUrl: './postventa-detail.component.css'
 })
-export class PostVentaDetailComponent implements OnInit {
+export class PostVentaDetailComponent implements OnInit, OnDestroy {
+    private readonly destroy$ = new Subject<void>();
+    private readonly searchSubject = new Subject<string>();
     breadcrumbs = [{ label: 'Remanufactura' }];
 
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     postventaDetalleStore = inject(PostVentaDetalleStore);
-    postventaStore = inject(PostventaStore);
-
-    protected readonly liquidacionPostventaId = signal<number | null>(null);
-
-    detalles = signal<DTOLiquidacionPostVentaDetalle[]>([]);
-
     toast = inject(ToastService);
     confirmationDialogService = inject(ConfirmationDialog);
 
+    private readonly maxFileSizeInMB = 10;
+    readonly maxFileSizeInBytes = this.maxFileSizeInMB * 1024 * 1024;
+    private readonly searchDebounceTimeMs = 500;
+
+    detalles = signal<DTOLiquidacionPostVentaDetalle[]>([]);
     showImportDialog = signal<boolean>(false);
-    isSorted = signal<boolean | null>(null);
-    selectedData!: DTOLiquidacionRemanufacturaDetalle[] | null;
+
+    protected readonly liquidacionPostventaId = signal<number | null>(null);
+    protected readonly pagination = computed(() => this.postventaDetalleStore.pagination());
+    protected readonly totalRecords = computed(() => this.pagination()?.totalItems || 0);
+    protected readonly selectedItems = signal<DTOLiquidacionPostVentaDetalle[]>([]);
+    protected readonly pageSize = computed(() => this.postventaDetalleStore.pageSize());
+    protected searchModel = '';
+    protected readonly isDeleting = computed(() => this.postventaDetalleStore.isDeleting());
+    protected readonly deleteButtonLabel = computed(() => {
+        const count = this.selectedItems().length;
+        return count ? `Eliminar (${count})` : 'Eliminar';
+    });
 
     @ViewChild('fileUploader') fileUploader?: FileUpload;
-    @ViewChild('dt') dt!: Table;
+    protected readonly dataTable = viewChild.required<Table>('dataTable');
 
     constructor() {
         effect(() => {
-            const entity = this.postventaStore.entity();
+            const entity = this.postventaDetalleStore.liquidacionPostventa();
             if (entity) {
                 this.loadContrata(entity.contrataId);
-                this.postventaDetalleStore.getDetailData(entity.id);
 
                 if (!this.postventaDetalleStore.isSubmitting() && this.fileUploader?.hasFiles()) {
                     this.fileUploader.clear();
                 }
             }
         });
-        this.verifyStatus();
+
+        this.setupSearchSubscription();
     }
 
     ngOnInit(): void {
         const id = Number(this.route.snapshot.paramMap.get('id'));
         if (id) {
-            this.postventaStore.getById(id); //para carga de datos al recargar la pagina
+            this.postventaDetalleStore.getPostventaById(id);
             this.liquidacionPostventaId.set(id);
         }
     }
+
+    ngOnDestroy(): void {
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
+
     protected loadContrata(contrataId: number): void {
         this.postventaDetalleStore.getContrataById(contrataId);
     }
@@ -77,20 +96,8 @@ export class PostVentaDetailComponent implements OnInit {
         this.router.navigate(['../'], { relativeTo: this.route });
     }
 
-    onGlobalFilter(table: Table, event: Event) {
-        table.filterGlobal((event.target as HTMLInputElement).value.trim(), 'contains');
-    }
-
-    handleToggleImport(entityStatus?: boolean | number) {
-        if (entityStatus) {
-            this.showImportDialog.set(!this.showImportDialog());
-        } else {
-            this.toast.warn('La liquidacion debe de estar activada');
-        }
-    }
-
-    getSeverity(status: boolean | number) {
-        return Helper.setStatus(status);
+    handleToggleImport() {
+        this.showImportDialog.set(!this.showImportDialog());
     }
 
     downloadExcelTemplate() {
@@ -98,13 +105,74 @@ export class PostVentaDetailComponent implements OnInit {
     }
 
     handleImportAgain() {
-        this.postventaDetalleStore.clear();
+        this.postventaDetalleStore.clearPreview();
         this.showImportDialog.set(true);
+    }
+
+    protected onSearchInputChange(): void {
+        this.searchSubject.next(this.searchModel);
+    }
+
+    private performSearch(searchValue: string): void {
+        this.postventaDetalleStore.setSearchFilter(searchValue);
+
+        const liquidacionPostventaId = this.liquidacionPostventaId();
+        if (!liquidacionPostventaId) {
+            return;
+        }
+
+        this.dataTable().reset();
+    }
+
+    protected onClearFilters(): void {
+        this.clearSearchState();
+        this.reloadData();
+    }
+
+    private clearSearchState(): void {
+        this.searchModel = '';
+        this.postventaDetalleStore.setSearchFilter('');
+    }
+
+    private reloadData(): void {
+        const liquidacionPostventaId = this.liquidacionPostventaId();
+        if (liquidacionPostventaId) {
+            this.dataTable().reset();
+        }
+    }
+
+    private setupSearchSubscription(): void {
+        this.searchSubject.pipe(debounceTime(this.searchDebounceTimeMs), takeUntil(this.destroy$)).subscribe((searchValue) => {
+            this.performSearch(searchValue);
+        });
+    }
+
+    protected getEstadoLiquidacionLabel(): string {
+        const estado = this.postventaDetalleStore.liquidacionPostventa()?.estado;
+        return estado === EstadoLiquidacion.Pendiente ? 'Pendiente' : 'Importado';
+    }
+
+    protected getEstadoLiquidacionSeverity(): 'warning' | 'success' {
+        const estado = this.postventaDetalleStore.liquidacionPostventa()?.estado;
+        return estado === EstadoLiquidacion.Pendiente ? 'warning' : 'success';
+    }
+
+    protected formatFechaIngreso(fechaIngreso: string | null | undefined): string {
+        if (!fechaIngreso) {
+            return 'Sin fecha';
+        }
+
+        try {
+            const fecha = parseISO(fechaIngreso);
+            return format(fecha, 'MMMM yyyy', { locale: es }).toUpperCase();
+        } catch (error) {
+            return 'Fecha inválida';
+        }
     }
 
     async handleUploadFile(event: { files: File[] }): Promise<void> {
         const file = event.files[0];
-        const fechaLiquidacionPostventa = this.postventaStore.entity()!.fechaIngreso;
+        const fechaLiquidacionPostventa = this.postventaDetalleStore.liquidacionPostventa()!.fechaIngreso;
         const contratistaLiquidacion = this.postventaDetalleStore.contrata()!.razonSocial;
 
         if (!file || !fechaLiquidacionPostventa || !contratistaLiquidacion) {
@@ -266,10 +334,6 @@ export class PostVentaDetailComponent implements OnInit {
         return { mappedData, validationErrors };
     }
 
-    verifyStatus() {
-        return !!this.postventaStore.entity()?.estado;
-    }
-
     handleSubmitDetail() {
         this.confirmationDialogService.confirmSave().subscribe((accepted) => {
             if (accepted) {
@@ -306,14 +370,9 @@ export class PostVentaDetailComponent implements OnInit {
     }
 
     exportDataTable() {
-        const nombre = this.postventaStore.entity()?.id;
+        const nombre = this.postventaDetalleStore.liquidacionPostventa()?.id;
         if (!nombre) return this.toast.warn('No hay una liquidación seleccionada.');
         this.postventaDetalleStore.export(nombre);
-    }
-
-    clearFilters(table: Table) {
-        table.clear();
-        table.filterGlobal('', '');
     }
 
     getFileSizeInMB(sizeKB: number): string {
@@ -321,22 +380,65 @@ export class PostVentaDetailComponent implements OnInit {
         const sizeMB = sizeKB / (1024 * 1024);
         return `${sizeMB.toFixed(2)} MB`;
     }
-    deleteSelectedProducts() {
-        this.confirmationDialogService.confirmDelete().subscribe((accepted) => {
-            if (!accepted || !this.selectedData?.length) return;
 
-            const allSelected = this.selectedData?.length === this.postventaDetalleStore.entities().length;
+    protected deleteSelectedItems() {
+        this.confirmationDialogService.confirmDelete().subscribe((confirmed) => {
+            if (confirmed) {
+                const selectedItems = this.selectedItems();
 
-            if (accepted) {
-                if (allSelected) {
-                    //this.postventaDetalleStore.deleteAll(this.postventaStore.entity()!.id);
-                } else {
-                    const itemsIdSelected = this.selectedData.map((x) => x.id);
-                    //this.postventaDetalleStore.deleteMany(this.postventaStore.entity()!.id, itemsIdSelected);
+                if (selectedItems.length === 0) {
+                    return;
                 }
-                this.selectedData = null;
+
+                const liquidacionPostventaId = this.liquidacionPostventaId();
+
+                if (!liquidacionPostventaId) {
+                    return;
+                }
+
+                const deleteRequest: DeleteLiquidacionPostventaDetalleByIdsRequest = {
+                    liquidacionPostventaDetalleIds: selectedItems.map((item) => item.id)
+                };
+
+                this.postventaDetalleStore.deleteByIds(liquidacionPostventaId, deleteRequest);
+                this.selectedItems.set([]);
             }
         });
+    }
+
+    protected deleteAllItems() {
+        this.confirmationDialogService.confirmDelete().subscribe((confirmed) => {
+            if (confirmed) {
+                const liquidacionPostventaId = this.liquidacionPostventaId();
+
+                if (!liquidacionPostventaId) {
+                    return;
+                }
+
+                this.postventaDetalleStore.deleteByLiquidacionPostventaId(liquidacionPostventaId);
+                this.selectedItems.set([]);
+                this.dataTable().reset();
+            }
+        });
+    }
+
+    protected onPageChange(event: TableLazyLoadEvent): void {
+        if (this.isDeleting()) {
+            return;
+        }
+
+        const liquidacionPostventaId = this.liquidacionPostventaId();
+        if (liquidacionPostventaId && event.first !== undefined && event.rows !== null && event.rows !== undefined) {
+            this.selectedItems.set([]);
+            const currentPage = Math.floor(event.first / event.rows) + 1;
+
+            this.postventaDetalleStore.setCurrentPage(currentPage);
+            if (event.rows !== this.pageSize()) {
+                this.postventaDetalleStore.setPageSize(event.rows);
+            }
+
+            this.postventaDetalleStore.loadCurrentData(liquidacionPostventaId);
+        }
     }
 
     private parseString(value: any): string {
@@ -345,6 +447,7 @@ export class PostVentaDetailComponent implements OnInit {
         }
         return String(value).trim();
     }
+
     private parseIntSafe(value: any, columnName: string): number {
         if (value === null || value === undefined || String(value).trim() === '') {
             // C# Convert.ChangeType fallaría, así que lanzamos un error
